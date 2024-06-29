@@ -10,12 +10,51 @@ import { Spacer } from "@nextui-org/spacer"
 import { Button } from "@nextui-org/button"
 import { Spinner } from "@nextui-org/spinner"
 import { Input } from "@nextui-org/input"
+import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
+import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
-import { user } from '@nextui-org/theme';
+import { getAgentsPerLevel } from '@/managers/agentsManager';
+import { getConversations, createConversation, getConversation, deleteConversation } from '@/managers/conversationsManager';
+import { TrashIcon } from "@heroicons/react/24/outline";
 
+interface Agent {
+    id: string;
+    name: string;
+    type: string;
+    prompt: string;
+    temperature: number;
+    level: number;
+}
+
+interface Message {
+    id: string;
+    text: string;
+    username: string;
+    type: string;
+}
+
+interface Conversation {
+    id: string;
+    name: string;
+    context: [Context];
+}
+
+interface Context {
+    user: string;
+    system: string;
+}
+
+interface Column {
+    key: string;
+    name: string;
+}
+
+const columns: Column[] = [
+    { key: "id", name: "Conversations" }
+];
 
 let socket: Socket<DefaultEventsMap, DefaultEventsMap>
 const defaultPic = "./profile.png"
@@ -27,11 +66,16 @@ export default function ChatPage() {
 
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
-    const [messages, setMessages] = useState<Array<{ id: string; username: string; text: string, type: string }>>([]);
+    const [messages, setMessages] = useState<Array<Message>>([]);
     const [messageText, setMessageText] = useState<string>('');
     const [userId, setUserId] = useState('')
     const [profileImage, setProfileImage] = useState(defaultPic);
     const [fullName, setFullName] = useState('Guest')
+    const [agents, setAgents] = useState<Agent[]>([]);
+    const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+    const [currentConversation, setCurrentConversation] = useState<string>('');
+    const [conversations, setConversations] = useState<Array<Conversation>>([]);
+    const [nextMessageId, setNextMessageId] = useState(0);
 
     useEffect(() => {
         let user_id
@@ -43,6 +87,12 @@ export default function ChatPage() {
             const first_name = current_user.first_name
             const last_name = current_user.last_name
             setFullName(`${first_name} ${last_name}`)
+
+            const all_agents = await getAgentsPerLevel(current_user.subscription_level)
+            setAgents(all_agents)
+
+            const all_conversations = await getConversations();
+            setConversations(all_conversations);
 
             Cookies.set('user_name', `${first_name} ${last_name}`)
 
@@ -61,13 +111,12 @@ export default function ChatPage() {
         if (!isAuthenticatedClient) {
             window.location.href = '/';
         } else {
+            fetchData()
             if (window.location.href.includes('session_id')) {
                 console.log("Session ID found")
                 setIsSuccessModalOpen(true)
             }
         }
-
-        fetchData()
 
         socket = io('http://localhost:8090', {
             query: { user_id }
@@ -98,7 +147,6 @@ export default function ChatPage() {
             });
         };
 
-
         socket.on('message', messageListener);
 
         // Cleanup this component is unmounted or messages change
@@ -112,6 +160,74 @@ export default function ChatPage() {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
     }, [messages]);
+
+    const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
+        if (columnKey === "id") {
+            return (
+                <div className="flex justify-between">
+                    <div className='flex justify-start'>
+                        {item.name ? <span>{item.name}</span> : <span>{item.id}</span>}
+                    </div>
+                    <div className='flex justify-end'>
+                        <Button
+                            variant='light'
+                            color="danger"
+                            onClick={async () => {
+                                setIsLoading(true);
+                                /*await deleteConversation(item.id);
+                                const all_conversations = await getConversations();
+                                setConversations(all_conversations);
+                                if (all_conversations.length > 0) {
+                                    if (currentConversation === item.id) {
+                                        setCurrentConversation(all_conversations[0].id);
+                                        Cookies.set('current_conversation', all_conversations[0].id, { expires: 1 });
+                                        const conversation = await getConversation(all_conversations[0].id);
+                                        let conversation_messages = [];
+                                        let messageId = 0;
+                                        for (let i = 0; i < conversation.context.length; i++) {
+                                            const user_message: Message = {
+                                                id: messageId++,
+                                                text: conversation.context[i].user,
+                                                username: userName
+                                            };
+                                            const system_message: Message = {
+                                                id: messageId++,
+                                                text: conversation.context[i].system,
+                                                username: 'Riccardo AI'
+                                            };
+                                            conversation_messages.push(user_message);
+                                            conversation_messages.push(system_message);
+                                        }
+                                        setMessages(conversation_messages);
+                                        setNextMessageId(messageId);
+                                    }
+                                } else {
+                                    const new_conversation = await newConversation();
+                                    setCurrentConversation(new_conversation.id);
+                                    setConversations([new_conversation]);
+                                    Cookies.set('current_conversation', new_conversation.id, { expires: 1 });
+                                    const ai_configuration = await getAIConfiguration();
+                                    setMessages([
+                                        {
+                                            id: 0,
+                                            text: ai_configuration.initial_message,
+                                            username: 'Riccardo AI'
+                                        }
+                                    ]);
+                                    setNextMessageId(1);
+                                }*/
+                                setIsLoading(false);
+                            }}
+                        >
+                            <TrashIcon width={15} />
+                        </Button>
+                    </div>
+                </div>
+            );
+        } else {
+            return null;
+        }
+    };
 
     const sendChatMessage = useCallback((text = messageText, title: string) => {
         if (text.trim()) {
@@ -129,7 +245,8 @@ export default function ChatPage() {
             // Emit the user message to the server
             socket.emit('sendMessage', {
                 senderId: userId,
-                message: text
+                message: text,
+                agent_id: selectedAgentId
             });
 
             // Display the user message immediately
@@ -171,84 +288,196 @@ export default function ChatPage() {
     }
 
     return (
-        <>
-            <Card>
-                <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
-                    <CardBody>
-                        {messages.map((message) => (
-                            <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                    className="flex items-start rounded-lg"
-                                    style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}
+        <div className='flex justify-between gap-2' style={{ height: '100vh' }}>
+            <div className='flex flex-col w-1/4'>
+                <Button
+                    className='mb-4'
+                    size='sm'
+                    color='secondary'
+                    onClick={async () => {
+                        setIsLoading(true);
+                        /*const all_conversations = await getConversations();
+                        setConversations(all_conversations);
+
+                        const new_conversation = await newConversation();
+                        setCurrentConversation(new_conversation.id);
+                        setConversations(prev => [new_conversation, ...prev]);
+                        Cookies.set('current_conversation', new_conversation.id, { expires: 1 });*/
+
+                        /*const ai_configuration = await getAIConfiguration();
+                        setMessages([
+                            {
+                                id: 0,
+                                text: ai_configuration.initial_message,
+                                username: 'plemeo AI'
+                            }
+                        ]);
+                        setNextMessageId(1);
+
+                        setIsTrain(false)*/
+                        setIsLoading(false);
+                    }}
+                >
+                    New Conversation
+                </Button>
+                <div style={{ height: '75%', overflowY: 'auto' }}>
+                    <Table
+                        aria-label="Conversations"
+                        selectionMode="single"
+                        selectedKeys={[currentConversation]}
+                    >
+                        <TableHeader columns={columns}>
+                            {(column: Column) => (
+                                <TableColumn key={column.key}>
+                                    {column.name}
+                                </TableColumn>
+                            )}
+                        </TableHeader>
+                        <TableBody items={conversations}>
+                            {(item: Conversation) => (
+                                <TableRow
+                                    key={item.id.toString()}
+                                    onClick={async () => {
+                                        setIsLoading(true);
+                                        setCurrentConversation(item.id);
+
+                                        const conversation = await getConversation(item.id);
+                                        console.log(conversation)
+                                        let conversation_messages = [];
+                                        let messageId = 0;
+                                        for (let i = 0; i < conversation.context.chatMessages.length; i++) {
+                                            const conversation_message: Message = {
+                                                id: "",
+                                                text: conversation.context.chatMessages[i].content,
+                                                username: conversation.context.chatMessages[i].role,
+                                                type: "chat"
+                                            };
+                                            conversation_messages.push(conversation_message);
+                                        }
+                                        setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
+                                        setNextMessageId(messageId);
+
+                                        /*const lastContext = conversation.context[conversation.context.length - 1];
+                                        if (lastContext.user && !lastContext.system) {
+                                            const typingMessage: Message = {
+                                                id: conversation.context.length * 2 + 1,
+                                                text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
+                                                username: 'plemeo AI'
+                                            };
+                                            conversation_messages.push(typingMessage);
+                                        }*/
+                                        setIsLoading(false)
+                                    }}
                                 >
-                                    {message.username === Cookies.get('user_name') && (
-                                        <Avatar
-                                            src={profileImage}
-                                            className="transition-transform mr-2 mt-2 ml-2"
-                                        />
-                                    )}
-                                    {message.username !== Cookies.get('user_name') && (
-                                        <Avatar
-                                            src={aiPic}
-                                            className="transition-transform mr-2 mt-2 ml-2"
-                                        />
-                                    )}
+                                    {columns.map((column) => (
+                                        <TableCell key={column.key}>{renderCell(item, column.key as keyof Conversation)}</TableCell>
+                                    ))}
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+
+            <div className='w-3/4'>
+                <Card>
+                    <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
+                        <CardBody>
+                            {messages.map((message) => (
+                                <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
                                     <div
-                                        className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`}
-                                        style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}
+                                        className="flex items-start rounded-lg"
+                                        style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}
                                     >
+                                        {message.username === Cookies.get('user_name') && (
+                                            <Avatar
+                                                src={profileImage}
+                                                className="transition-transform mr-2 mt-2 ml-2"
+                                            />
+                                        )}
                                         {message.username !== Cookies.get('user_name') && (
-                                            <p className="font-semibold">Riccardo AI</p>
+                                            <Avatar
+                                                src={aiPic}
+                                                className="transition-transform mr-2 mt-2 ml-2"
+                                            />
                                         )}
-                                        {message.username == Cookies.get('user_name') && (
-                                            <p className="font-semibold">{fullName}</p>
-                                        )}
-                                        {message.type === 'chat' ? (
-                                            <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
-                                        ) : (
-                                            <img src={message.text} alt="Received Image" className="max-w-full h-auto rounded-lg" />
-                                        )}
+                                        <div
+                                            className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`}
+                                            style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}
+                                        >
+                                            {message.username !== Cookies.get('user_name') && (
+                                                <p className="font-semibold">Riccardo AI</p>
+                                            )}
+                                            {message.username == Cookies.get('user_name') && (
+                                                <p className="font-semibold">{fullName}</p>
+                                            )}
+                                            {message.type === 'chat' ? (
+                                                <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
+                                            ) : (
+                                                <img src={message.text} alt="Received Image" className="max-w-full h-auto rounded-lg" />
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
 
-                    </CardBody>
+                        </CardBody>
 
-                </div>
-
-                <CardFooter>
-                    <div className='flex flex-col w-full'>
-                        <Input
-                            fullWidth
-                            type='text'
-                            size='sm'
-                            label="Type your message..."
-                            value={messageText}
-                            onChange={e => setMessageText(e.target.value)}
-                            onKeyDown={async e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    sendChatMessage(messageText, messageText)
-                                }
-                            }}
-                        />
-                        <Spacer y={4} />
-
-                        <Button
-                            fullWidth
-                            color='secondary'
-                            style={{ color: "white" }}
-                            onClick={async () => {
-                                sendChatMessage(messageText, messageText)
-                            }}
-                        >
-                            Send
-                        </Button>
                     </div>
 
-                </CardFooter>
-            </Card>
+                    <CardFooter>
+                        <div className='flex flex-col w-full'>
+                            <div className='flex gap-4'>
+                                <Input
+                                    fullWidth
+                                    type='text'
+                                    size='sm'
+                                    label="Type your message..."
+                                    value={messageText}
+                                    onChange={e => setMessageText(e.target.value)}
+                                    onKeyDown={async e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            sendChatMessage(messageText, messageText)
+                                        }
+                                    }}
+                                />
+                                <Select
+                                    className='w-1/3'
+                                    size="sm"
+                                    label="Type"
+                                    placeholder="Select an agent"
+                                    onChange={(e) => {
+                                        console.log(e.target.value)
+                                        setSelectedAgentId(e.target.value)
+                                    }}
+                                >
+                                    {agents.map((agent) => (
+                                        <SelectItem key={agent.id} value={agent.id}>
+                                            {agent.name}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                            </div>
+
+                            <Spacer y={4} />
+
+                            <Button
+                                fullWidth
+                                color='secondary'
+                                style={{ color: "white" }}
+                                onClick={async () => {
+                                    sendChatMessage(messageText, messageText)
+                                }}
+                            >
+                                Send
+                            </Button>
+                        </div>
+
+                    </CardFooter>
+                </Card>
+            </div>
+
 
             <SuccessModal
                 isOpen={isSuccessModalOpen}
@@ -258,6 +487,6 @@ export default function ChatPage() {
                 }}
                 message="Your subscription is now active!"
             />
-        </>
+        </div>
     )
 }

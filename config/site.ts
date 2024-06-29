@@ -9,12 +9,22 @@ export const siteConfig = {
       'href': '/chat',
       'allow_user': true
     },
+    {
+      'label': 'Agents',
+      'href': '/agents',
+      'allow_user': false
+    },
   ],
   navMenuItems: [
     {
       'label': 'Chat',
       'href': '/chat',
       'allow_user': true
+    },
+    {
+      'label': 'Agents',
+      'href': '/agents',
+      'allow_user': false
     },
   ]
 };

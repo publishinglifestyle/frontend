@@ -39,7 +39,13 @@ export default function RootLayout({
         className={clsx(
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable,
+          "bg-cover bg-center",
+          "bg-no-repeat",
+          "relative"
         )}
+        style={{
+          backgroundImage: `url("/background.jpg")`, // Reference the image from the public folder
+        }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col h-screen">

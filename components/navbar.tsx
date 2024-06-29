@@ -17,7 +17,6 @@ import { Spacer } from "@nextui-org/spacer";
 import { Divider } from "@nextui-org/divider";
 import { Link } from "@nextui-org/link";
 import NextLink from "next/link";
-import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
 import {
@@ -38,6 +37,7 @@ export const Navbar = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [currentPage, setCurrentPage] = useState('')
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [userRole, setUserRole] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [profileImage, setProfileImage] = useState(defaultPic);
@@ -50,6 +50,11 @@ export const Navbar = () => {
         break;
       case '/chat': {
         setCurrentPage('chat')
+        setShowMenu(true)
+      }
+        break;
+      case '/agents': {
+        setCurrentPage('agents')
         setShowMenu(true)
       }
         break;
@@ -74,6 +79,7 @@ export const Navbar = () => {
       }
       setName(full_name)
       setEmail(result.email)
+      setUserRole(result.role)
 
       try {
         const logo_img = await getProfilePic()
@@ -97,8 +103,8 @@ export const Navbar = () => {
 
   const logOut = async () => {
     logout()
-    setIsAuthenticated(false)
-    window.location.href = '/'
+    //setIsAuthenticated(false)
+    //window.location.href = '/'
   }
 
   return (
@@ -111,21 +117,24 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => (
-            isAuthenticated ? (
-              <NavbarItem key={item.href}>
-                <NextLink
-                  style={{
-                    color: currentPage === item.label.toLowerCase() ? '#9353D3' : 'initial'
-                  }}
-                  href={item.href}
-                >
-                  {item.label}
-                </NextLink>
-              </NavbarItem>
-            ) : null
-          ))}
+          {siteConfig.navItems.map((item) =>
+            isAuthenticated && (
+              (userRole === 'user' && item.allow_user) || userRole !== 'user' ? (
+                <NavbarItem key={item.href}>
+                  <NextLink
+                    style={{
+                      color: currentPage === item.label.toLowerCase() ? '#9353D3' : 'initial'
+                    }}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </NextLink>
+                </NavbarItem>
+              ) : null
+            )
+          )}
         </ul>
+
       </NavbarContent>
 
       <NavbarContent
@@ -170,8 +179,8 @@ export const Navbar = () => {
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {showMenu &&
-            siteConfig.navMenuItems.map((item, index) => (
-              name ? (
+            siteConfig.navMenuItems.map((item, index) =>
+              ((userRole === 'user' && item.allow_user) || userRole !== 'user') && name ? (
                 <NavbarMenuItem key={`${item}-${index}`}>
                   <Link
                     style={{
@@ -184,7 +193,7 @@ export const Navbar = () => {
                   </Link>
                 </NavbarMenuItem>
               ) : null
-            ))}
+            )}
           <Spacer y={4} />
           <Divider />
           <NavbarMenuItem key="profile">
