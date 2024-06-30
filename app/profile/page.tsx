@@ -9,7 +9,7 @@ import { Input } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
 
 import { getUser, updateProfile, deleteUser, getProfilePic, uploadProfilePic } from "@/managers/userManager";
-import { isSubscriptionActive, getPortal } from '@/managers/subscriptionManager'
+import { getSubscription, getPortal } from '@/managers/subscriptionManager'
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth-context';
 
@@ -38,6 +38,7 @@ export default function ProfilePage() {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
+    const [credits, setCredits] = useState("");
 
     const [initialFirstName, setInitialFirstName] = useState("");
     const [initialLastName, setInitialLastName] = useState("");
@@ -75,8 +76,11 @@ export default function ProfilePage() {
                 setInitialLastName(result.last_name);
                 setInitialEmail(result.email);
 
-                const subscription_status = await isSubscriptionActive(result.id)
-                setSubscriptionActive(subscription_status)
+                const current_subscription = await getSubscription()
+                console.log(current_subscription)
+                setSubscriptionActive(current_subscription.is_active)
+
+                setCredits(current_subscription.credits)
 
                 const logoResponse = await getProfilePic();
                 if (logoResponse) {
@@ -269,9 +273,8 @@ export default function ProfilePage() {
                                     <span style={{ fontSize: "14px" }}>{email}</span>
                             }
                         </p>
-                        <Spacer y={4} />
+                        <Spacer y={2} />
                     </CardBody>
-                    <Divider />
                     <CardFooter className="pl-6 justify-end">
                         {
                             isEdit &&
@@ -307,8 +310,13 @@ export default function ProfilePage() {
                         </CardHeader>
                         <Divider />
                         <CardBody>
-                            <div className="flex flex-row gap-4">
-                                <b>Status:&nbsp;</b>{subscriptionActive ? <span style={{ color: "#9353D3" }}>Active</span> : <span style={{ color: "#9353D3" }}>Inactive</span>}
+                            <div className="flex flex-col">
+                                <div className="flex flex-row gap-4">
+                                    <b>Status:&nbsp;</b>{subscriptionActive ? <span style={{ color: "#9353D3" }}>Active</span> : <span style={{ color: "#9353D3" }}>Inactive</span>}
+                                </div>
+                                <div className="flex flex-row gap-4">
+                                    <b>Credits:&nbsp;</b>{credits}
+                                </div>
                             </div>
                             <Spacer y={8} />
                             {
@@ -339,11 +347,11 @@ export default function ProfilePage() {
                                     </Button>
                             }
 
-                            <Spacer y={10} />
+                            <Spacer y={4} />
                         </CardBody>
                     </Card>
                 </div>
-                <Spacer y={6} />
+                <Spacer y={4} />
                 <div>
                     <Card className="w-full md:w-[500px] lg:w-[500px]">
                         <CardHeader className="flex gap-3 justify-between">

@@ -7,11 +7,10 @@ const headers = {
     'Authorization': Cookie.get('authToken')
 }
 
-export async function createConversation(name, context) {
-    let response = await axios.post(endpoint + "create_conversation",
-        { name, context }, {
-        headers: headers
-    });
+export async function createConversation() {
+    let response = await axios.get(endpoint + "create_conversation",
+        { headers: headers }
+    );
 
     if (response) {
         return response.data.response;

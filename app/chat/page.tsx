@@ -20,6 +20,8 @@ import { getAgentsPerLevel } from '@/managers/agentsManager';
 import { getConversations, createConversation, getConversation, deleteConversation } from '@/managers/conversationsManager';
 import { TrashIcon } from "@heroicons/react/24/outline";
 
+const GREETING_MESSAGE = "Hello! How can I help you today?";
+
 interface Agent {
     id: string;
     name: string;
@@ -34,6 +36,7 @@ interface Message {
     text: string;
     username: string;
     type: string;
+    conversation_id: string;
 }
 
 interface Conversation {
@@ -94,6 +97,27 @@ export default function ChatPage() {
             const all_conversations = await getConversations();
             setConversations(all_conversations);
 
+            let current_conversation
+            if (all_conversations.length > 0) {
+                current_conversation = all_conversations[all_conversations.length - 1]
+                setCurrentConversation(current_conversation.id);
+
+                let conversation_messages = [];
+                let messageId = 0;
+                for (let i = 0; i < current_conversation.context.length; i++) {
+                    const conversation_message: Message = {
+                        id: i.toString(),
+                        text: i > 0 ? current_conversation.context[i].content : GREETING_MESSAGE,
+                        username: current_conversation.context[i].role == 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
+                        type: "chat",
+                        conversation_id: current_conversation.id
+                    };
+                    conversation_messages.push(conversation_message);
+                }
+                setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
+                setNextMessageId(messageId);
+            }
+
             Cookies.set('user_name', `${first_name} ${last_name}`)
 
             try {
@@ -122,8 +146,11 @@ export default function ChatPage() {
             query: { user_id }
         });
 
-        const messageListener = (message: { id: string, username: string, text: string, type: string }) => {
+        const messageListener = (message: { id: string, username: string, text: string, type: string, conversation_id: string, title: string }) => {
             setMessages((prevMessages) => {
+                console.log("message.title", message.title)
+                setCurrentConversation(message.conversation_id)
+
                 // Check if the last message is from the AI
                 if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
                     // Remove the last message
@@ -144,6 +171,19 @@ export default function ChatPage() {
                     // If no existing message, add a new entry
                     return [...prevMessages, message];
                 }
+            });
+
+            setConversations((prevConversations) => {
+                const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
+                if (conversationIndex !== -1) {
+                    const updatedConversations = [...prevConversations];
+                    updatedConversations[conversationIndex] = {
+                        ...updatedConversations[conversationIndex],
+                        name: message.title
+                    };
+                    return updatedConversations;
+                }
+                return prevConversations;
             });
         };
 
@@ -174,49 +214,8 @@ export default function ChatPage() {
                             color="danger"
                             onClick={async () => {
                                 setIsLoading(true);
-                                /*await deleteConversation(item.id);
-                                const all_conversations = await getConversations();
-                                setConversations(all_conversations);
-                                if (all_conversations.length > 0) {
-                                    if (currentConversation === item.id) {
-                                        setCurrentConversation(all_conversations[0].id);
-                                        Cookies.set('current_conversation', all_conversations[0].id, { expires: 1 });
-                                        const conversation = await getConversation(all_conversations[0].id);
-                                        let conversation_messages = [];
-                                        let messageId = 0;
-                                        for (let i = 0; i < conversation.context.length; i++) {
-                                            const user_message: Message = {
-                                                id: messageId++,
-                                                text: conversation.context[i].user,
-                                                username: userName
-                                            };
-                                            const system_message: Message = {
-                                                id: messageId++,
-                                                text: conversation.context[i].system,
-                                                username: 'Riccardo AI'
-                                            };
-                                            conversation_messages.push(user_message);
-                                            conversation_messages.push(system_message);
-                                        }
-                                        setMessages(conversation_messages);
-                                        setNextMessageId(messageId);
-                                    }
-                                } else {
-                                    const new_conversation = await newConversation();
-                                    setCurrentConversation(new_conversation.id);
-                                    setConversations([new_conversation]);
-                                    Cookies.set('current_conversation', new_conversation.id, { expires: 1 });
-                                    const ai_configuration = await getAIConfiguration();
-                                    setMessages([
-                                        {
-                                            id: 0,
-                                            text: ai_configuration.initial_message,
-                                            username: 'Riccardo AI'
-                                        }
-                                    ]);
-                                    setNextMessageId(1);
-                                }*/
-                                setIsLoading(false);
+                                await deleteConversation(item.id);
+                                window.location.reload();
                             }}
                         >
                             <TrashIcon width={15} />
@@ -246,11 +245,12 @@ export default function ChatPage() {
             socket.emit('sendMessage', {
                 senderId: userId,
                 message: text,
-                agent_id: selectedAgentId
+                agent_id: selectedAgentId,
+                conversation_id: currentConversation
             });
 
             // Display the user message immediately
-            setMessages(prevMessages => [...prevMessages, userMessage]);
+            setMessages(prevMessages => [...prevMessages, { ...userMessage, conversation_id: currentConversation }]);
 
             // Insert a typing indicator
             const typingMessageId = `typing-${Date.now()}`;
@@ -258,7 +258,8 @@ export default function ChatPage() {
                 id: typingMessageId,
                 username: 'Riccardo AI',
                 text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
-                type: 'chat'
+                type: 'chat',
+                conversation_id: currentConversation
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
@@ -296,26 +297,8 @@ export default function ChatPage() {
                     color='secondary'
                     onClick={async () => {
                         setIsLoading(true);
-                        /*const all_conversations = await getConversations();
-                        setConversations(all_conversations);
-
-                        const new_conversation = await newConversation();
-                        setCurrentConversation(new_conversation.id);
-                        setConversations(prev => [new_conversation, ...prev]);
-                        Cookies.set('current_conversation', new_conversation.id, { expires: 1 });*/
-
-                        /*const ai_configuration = await getAIConfiguration();
-                        setMessages([
-                            {
-                                id: 0,
-                                text: ai_configuration.initial_message,
-                                username: 'plemeo AI'
-                            }
-                        ]);
-                        setNextMessageId(1);
-
-                        setIsTrain(false)*/
-                        setIsLoading(false);
+                        await createConversation();
+                        window.location.reload();
                     }}
                 >
                     New Conversation
@@ -337,35 +320,28 @@ export default function ChatPage() {
                             {(item: Conversation) => (
                                 <TableRow
                                     key={item.id.toString()}
+
                                     onClick={async () => {
                                         setIsLoading(true);
                                         setCurrentConversation(item.id);
 
                                         const conversation = await getConversation(item.id);
-                                        console.log(conversation)
+
                                         let conversation_messages = [];
                                         let messageId = 0;
-                                        for (let i = 0; i < conversation.context.chatMessages.length; i++) {
+                                        for (let i = 0; i < conversation.context.length; i++) {
                                             const conversation_message: Message = {
-                                                id: "",
-                                                text: conversation.context.chatMessages[i].content,
-                                                username: conversation.context.chatMessages[i].role,
-                                                type: "chat"
+                                                id: i.toString(),
+                                                text: conversation.context[i].content,
+                                                username: conversation.context[i].role == 'user' ? fullName : 'Riccardo AI',
+                                                type: "chat",
+                                                conversation_id: item.id
                                             };
                                             conversation_messages.push(conversation_message);
                                         }
                                         setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
                                         setNextMessageId(messageId);
 
-                                        /*const lastContext = conversation.context[conversation.context.length - 1];
-                                        if (lastContext.user && !lastContext.system) {
-                                            const typingMessage: Message = {
-                                                id: conversation.context.length * 2 + 1,
-                                                text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
-                                                username: 'plemeo AI'
-                                            };
-                                            conversation_messages.push(typingMessage);
-                                        }*/
                                         setIsLoading(false)
                                     }}
                                 >
@@ -429,6 +405,7 @@ export default function ChatPage() {
                         <div className='flex flex-col w-full'>
                             <div className='flex gap-4'>
                                 <Input
+                                    isDisabled={conversations.length === 0}
                                     fullWidth
                                     type='text'
                                     size='sm'
@@ -443,6 +420,7 @@ export default function ChatPage() {
                                     }}
                                 />
                                 <Select
+                                    isDisabled={conversations.length === 0}
                                     className='w-1/3'
                                     size="sm"
                                     label="Type"
@@ -463,6 +441,7 @@ export default function ChatPage() {
                             <Spacer y={4} />
 
                             <Button
+                                isDisabled={conversations.length === 0}
                                 fullWidth
                                 color='secondary'
                                 style={{ color: "white" }}

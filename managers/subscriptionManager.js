@@ -31,9 +31,8 @@ export async function getSubscriptions() {
     }
 }
 
-export async function isSubscriptionActive(user_id) {
-    let response = await axios.post(endpoint + "is_subscription_active",
-        { user_id },
+export async function getSubscription() {
+    let response = await axios.get(endpoint + "get_subscription",
         { headers: headers });
 
     if (response) {
