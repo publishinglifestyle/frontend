@@ -5,26 +5,46 @@ export const siteConfig = {
   description: "AI Chatbot",
   navItems: [
     {
+      'value': 'Chat',
       'label': 'Chat',
       'href': '/chat',
       'allow_user': true
     },
     {
+      'value': 'Agents',
       'label': 'Agents',
       'href': '/agents',
-      'allow_user': false
+      'allow_user': false,
+      'language': 'en'
+    },
+    {
+      'value': 'Agents',
+      'label': 'Agenti',
+      'href': '/agents',
+      'allow_user': false,
+      'language': 'it'
     },
   ],
   navMenuItems: [
     {
+      'value': 'Chat',
       'label': 'Chat',
       'href': '/chat',
       'allow_user': true
     },
     {
+      'value': 'Agents',
       'label': 'Agents',
       'href': '/agents',
-      'allow_user': false
+      'allow_user': false,
+      'language': 'en'
+    },
+    {
+      'value': 'Agents',
+      'label': 'Agenti',
+      'href': '/agents',
+      'allow_user': false,
+      'language': 'it'
     },
   ]
 };

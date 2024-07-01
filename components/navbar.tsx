@@ -26,6 +26,8 @@ import {
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth-context';
 import { getUser, getProfilePic } from '@/managers/userManager';
+import { getTranslations } from '../managers/languageManager';
+import { Translations } from '../translations.d';
 
 const defaultPic = "./profile.png"
 
@@ -41,6 +43,22 @@ export const Navbar = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [profileImage, setProfileImage] = useState(defaultPic);
+  const [language, setLanguage] = useState('');
+  const [translations, setTranslations] = useState<Translations | null>(null);
+
+  useEffect(() => {
+    const detectLanguage = async () => {
+      // Detect browser language
+      const browserLanguage = navigator.language;
+      setLanguage(browserLanguage);
+
+      // Get translations for the detected language
+      const translations = await getTranslations(browserLanguage);
+      setTranslations(translations);
+    };
+
+    detectLanguage();
+  }, []);
 
   useEffect(() => {
     switch (pathname) {
@@ -120,16 +138,18 @@ export const Navbar = () => {
           {siteConfig.navItems.map((item) =>
             isAuthenticated && (
               (userRole === 'user' && item.allow_user) || userRole !== 'user' ? (
-                <NavbarItem key={item.href}>
-                  <NextLink
-                    style={{
-                      color: currentPage === item.label.toLowerCase() ? '#9353D3' : 'initial'
-                    }}
-                    href={item.href}
-                  >
-                    {item.label}
-                  </NextLink>
-                </NavbarItem>
+                ((!item.language || item.language === language) &&
+                  <NavbarItem key={item.href}>
+                    <NextLink
+                      style={{
+                        color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
+                      }}
+                      href={item.href}
+                    >
+                      {item.label}
+                    </NextLink>
+                  </NavbarItem>
+                )
               ) : null
             )
           )}
@@ -160,7 +180,7 @@ export const Navbar = () => {
                 </DropdownTrigger>
                 <DropdownMenu aria-label="User Actions" variant="flat">
                   <DropdownItem key="profile" onClick={() => router.push('/profile')}>
-                    My Profile
+                    {translations?.my_profile}
                   </DropdownItem>
                   <DropdownItem key="logout" color="danger" onClick={logOut}>
                     Log Out
@@ -181,17 +201,19 @@ export const Navbar = () => {
           {showMenu &&
             siteConfig.navMenuItems.map((item, index) =>
               ((userRole === 'user' && item.allow_user) || userRole !== 'user') && name ? (
-                <NavbarMenuItem key={`${item}-${index}`}>
-                  <Link
-                    style={{
-                      color: currentPage === item.label.toLowerCase() ? '#9353D3' : 'initial'
-                    }}
-                    href={item.href}
-                    size="lg"
-                  >
-                    {item.label}
-                  </Link>
-                </NavbarMenuItem>
+                ((!item.language || item.language === language) &&
+                  <NavbarMenuItem key={`${item}-${index}`}>
+                    <Link
+                      style={{
+                        color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
+                      }}
+                      href={item.href}
+                      size="lg"
+                    >
+                      {item.label}
+                    </Link>
+                  </NavbarMenuItem>
+                )
               ) : null
             )}
           <Spacer y={4} />
@@ -204,7 +226,7 @@ export const Navbar = () => {
               key="profile"
               size="lg"
             >
-              My Profile
+              {translations?.my_profile}
             </Link>
           </NavbarMenuItem>
           <NavbarMenuItem key="logout">

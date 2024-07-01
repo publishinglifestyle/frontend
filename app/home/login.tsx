@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Button } from "@nextui-org/button"
@@ -9,6 +9,8 @@ import { Spinner } from "@nextui-org/spinner"
 import { useAuth } from '../auth-context';
 import ErrorModal from "@/app/modals/errorModal";
 import { logIn } from '../../managers/userManager';
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
 type LoginProps = {
     toggleToSignUp: () => void;
@@ -16,6 +18,9 @@ type LoginProps = {
 };
 
 const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword }) => {
+    const [language, setLanguage] = useState('');
+    const [translations, setTranslations] = useState<Translations | null>(null);
+
     const router = useRouter();
     const { login } = useAuth();
 
@@ -30,6 +35,20 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
 
     const isInvalidEmail = useMemo(() => email === "" ? null : !validateEmail(email), [email]);
     const isInvalidPassword = useMemo(() => password === "" ? null : !validatePassword(password), [password]);
+
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+        };
+
+        detectLanguage();
+    }, []);
 
     const handleLogin = async () => {
         try {
@@ -60,8 +79,8 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
                             <h1 className="text-4xl font-bold">Login</h1>
                             <br />
                             <div className="flex gap-2">
-                                <span>Are you new here?</span>
-                                <span style={{ cursor: 'pointer', color: "#9353D3" }} onClick={toggleToSignUp}>Sign Up</span>
+                                <span>{translations?.login_1}</span>
+                                <span style={{ cursor: 'pointer', color: "#9353D3" }} onClick={toggleToSignUp}>{translations?.sign_up}</span>
                             </div>
                         </CardHeader>
 
@@ -69,7 +88,7 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             fullWidth
-                            label="Enter your email"
+                            label={translations?.enter_email}
                             type="email"
                             isRequired
                             size='sm'
@@ -77,14 +96,14 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
                             variant="bordered"
                             className='mt-16'
                             isInvalid={isInvalidEmail == null ? undefined : isInvalidEmail}
-                            errorMessage={isInvalidEmail && "Please enter a valid email"}
+                            errorMessage={isInvalidEmail && translations?.enter_valid_email}
                             color={isInvalidEmail == null ? undefined : (isInvalidEmail ? "danger" : "success")}
                         />
                         <Input
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             fullWidth
-                            label="Enter your password"
+                            label={translations?.enter_password}
                             type="password"
                             isRequired
                             size='sm'
@@ -92,10 +111,10 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
                             variant="bordered"
                             className='mt-4'
                             isInvalid={isInvalidPassword == null ? undefined : isInvalidPassword}
-                            errorMessage={isInvalidPassword && "Please enter your password"}
+                            errorMessage={isInvalidPassword && translations?.enter_password}
                             color={isInvalidPassword == null ? undefined : (isInvalidPassword ? "danger" : "success")}
                         />
-                        {/*<a href="#" style={{ fontSize: "14px", color: "#9353D3" }} className="ml-2 mt-2" onClick={toggleToForgotPassword}>Forgot password</a>*/}
+                        <a href="#" style={{ fontSize: "14px", color: "#9353D3" }} className="ml-2 mt-2" onClick={toggleToForgotPassword}>{translations?.forgot_password}</a>
                         <Button
                             fullWidth
                             color="secondary"

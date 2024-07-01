@@ -12,11 +12,10 @@ import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from 
 import { useAuth } from '@/app/auth-context';
 import { useRouter } from 'next/navigation';
 import ErrorModal from "@/app/modals/errorModal";
-
 import { getAllAgents, getAgent, createAgent, updateAgent, deleteAgent } from "@/managers/agentsManager";
-
 import { TrashIcon } from "@heroicons/react/24/outline";
-
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
 interface Agent {
     id: string;
@@ -32,7 +31,7 @@ interface Column {
     name: string;
 }
 
-const columns: Column[] = [
+let columns: Column[] = [
     { key: "name", name: "NAME" },
     { key: "actions", name: "" }
 ];
@@ -64,7 +63,10 @@ const agent_levels = [
 ]
 
 export default function AgentsPage() {
+    const [language, setLanguage] = useState('');
+    const [translations, setTranslations] = useState<Translations | null>(null);
     const router = useRouter()
+
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
@@ -77,6 +79,25 @@ export default function AgentsPage() {
     const [agentPrompt, setAgentPrompt] = useState("");
     const [agentTemperature, setAgentTemperature] = useState(0);
     const [agentLevel, setAgentLevel] = useState(1);
+
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+
+            columns = [
+                { key: "name", name: translations?.name },
+                { key: "actions", name: "" }
+            ];
+        };
+
+        detectLanguage();
+    }, []);
 
     // Simulate fetching documents from an API
     useEffect(() => {
@@ -154,13 +175,13 @@ export default function AgentsPage() {
         <div>
             <div className="flex justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Agents</h1>
+                    <h1 className="text-3xl font-bold">{translations?.agents}</h1>
                 </div>
                 {
                     <Button color="secondary" style={{ color: "white" }} size="sm" onClick={async () => {
                         setSelectedAgentId("new");
                     }}>
-                        New Agent
+                        {translations?.new_agent}
                     </Button>
 
                 }
@@ -175,7 +196,7 @@ export default function AgentsPage() {
                                 <Select
                                     isRequired
                                     size="sm"
-                                    label="Type"
+                                    label={translations?.type}
                                     placeholder="Select a type"
                                     defaultSelectedKeys={[agentType]}
                                     onChange={(e) => {
@@ -196,7 +217,7 @@ export default function AgentsPage() {
                                         setAgentName(e.target.value);
                                     }}
                                     fullWidth
-                                    label="Name"
+                                    label={translations?.name}
                                     type="text"
                                     size='sm'
                                     radius='lg'
@@ -208,8 +229,8 @@ export default function AgentsPage() {
                                 <Select
                                     isRequired
                                     size="sm"
-                                    label="Level"
-                                    placeholder="Select a level"
+                                    label={translations?.level}
+                                    placeholder={translations?.select_level}
                                     defaultSelectedKeys={[agentLevel]}
                                     onChange={(e) => {
                                         console.log(e.target.value)
@@ -234,7 +255,7 @@ export default function AgentsPage() {
                                         }
                                     }}
                                     fullWidth
-                                    label="Temperature"
+                                    label={translations?.temperature}
                                     type="number"
                                     size='sm'
                                     radius='lg'
@@ -268,7 +289,7 @@ export default function AgentsPage() {
                                     setAgentTemperature(0);
                                     setAgentType("");
                                 }}>
-                                Cancel
+                                {translations?.cancel}
                             </Button>
                             <Button
                                 fullWidth
@@ -292,7 +313,7 @@ export default function AgentsPage() {
                                         setIsLoading(false)
                                     }
                                 }}>
-                                Update Agent
+                                {translations?.update_agent}
                             </Button>
                         </CardFooter>
                     </Card>

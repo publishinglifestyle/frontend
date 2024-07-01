@@ -1,23 +1,31 @@
 "use client"
 
+import Cookies from 'js-cookie';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../auth-context';
 import { Card, CardHeader, CardBody } from "@nextui-org/card";
 import { Button } from "@nextui-org/button"
 import { Input } from "@nextui-org/input"
 import { Spinner } from "@nextui-org/spinner"
+import { Switch } from "@nextui-org/switch";
 import ErrorModal from "@/app/modals/errorModal";
 import { signUp } from '../../managers/userManager';
 import { getSubscriptions, startSubscription } from '../../managers/subscriptionManager';
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
 interface Subscription {
     id: string;
     name: string;
     price_id: string;
     price: number;
+    type: string;
 }
 
 const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
+    const [language, setLanguage] = useState('');
+    const [translations, setTranslations] = useState<Translations | null>(null);
+
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
 
     const [email, setEmail] = useState('');
@@ -31,6 +39,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [subscriptionsFetched, setSubscriptionsFetched] = useState(false);
+    const [isAnnual, setIsAnnual] = useState(true);
     const [step, setStep] = useState(1);
 
     const validateEmail = (email: string): boolean => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email);
@@ -44,15 +53,29 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     }, [password, password_2]);
 
     useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+        };
+
+        detectLanguage();
+    }, []);
+
+    useEffect(() => {
         if (isAuthenticatedClient) {
             window.location.href = '/chat';
         } else if (!subscriptionsFetched) {
             const fetchSubscriptions = async () => {
                 try {
                     const all_subscriptions = await getSubscriptions();
-                    console.log(all_subscriptions);
+                    const filteredSubscriptions = all_subscriptions.filter((subscription: { type: string; }) => subscription.type === 'year');
+                    setSubscriptions(filteredSubscriptions);
                     setSubscriptionsFetched(true);
-                    setSubscriptions(all_subscriptions)
 
                 } catch (error) {
                     console.error('Failed to fetch subscriptions:', error);
@@ -65,12 +88,11 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
 
     const handleSignUp = async (price_id: string) => {
         try {
-            console.log("hello")
             setIsLoading(true);
             const response = await signUp(firstName, lastName, email, password, password_2);
+            Cookies.set('authToken', response.token, { expires: 1 });
             const url = await startSubscription(response.token, price_id)
             window.location.href = url;
-            console.log(`Selected subscription: ${selectedSubscription}`);
             // Add success modal logic if needed
         } catch (e) {
             setIsLoading(false);
@@ -92,10 +114,10 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                 <Card>
                     <CardBody>
                         <CardHeader className='flex flex-col'>
-                            <h1 className="text-4xl font-bold">Sign Up</h1>
+                            <h1 className="text-4xl font-bold">{translations?.sign_up}</h1>
                             <br />
                             <div className="flex gap-2">
-                                <span>Already have an account?</span>
+                                <span>{translations?.already_have_an_account}</span>
                                 <span style={{ cursor: 'pointer', color: "#9353D3" }} onClick={toggleToLogin}>Login</span>
                             </div>
                         </CardHeader>
@@ -105,7 +127,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
                                     fullWidth
-                                    label="Enter your email"
+                                    label={translations?.enter_email}
                                     type="email"
                                     isRequired
                                     size='sm'
@@ -113,14 +135,14 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     variant="bordered"
                                     className='mt-16'
                                     isInvalid={isInvalidEmail == null ? undefined : isInvalidEmail}
-                                    errorMessage={isInvalidEmail && "Please enter a valid email"}
+                                    errorMessage={isInvalidEmail && translations?.enter_valid_email}
                                     color={isInvalidEmail == null ? undefined : (isInvalidEmail ? "danger" : "success")}
                                 />
                                 <Input
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     fullWidth
-                                    label="Enter your password"
+                                    label={translations?.enter_password}
                                     type="password"
                                     isRequired
                                     size='sm'
@@ -128,14 +150,14 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     variant="bordered"
                                     className='mt-4'
                                     isInvalid={isInvalidPassword == null ? undefined : isInvalidPassword}
-                                    errorMessage={isInvalidPassword && "The password must be at least 8 characters long and contain 1 capital letter and 1 number."}
+                                    errorMessage={isInvalidPassword && translations?.password_invalid_format}
                                     color={isInvalidPassword == null ? undefined : (isInvalidPassword ? "danger" : "success")}
                                 />
                                 <Input
                                     value={password_2}
                                     onChange={e => setPassword_2(e.target.value)}
                                     fullWidth
-                                    label="Re-enter your password"
+                                    label={translations?.re_enter_password}
                                     type="password"
                                     isRequired
                                     size='sm'
@@ -143,7 +165,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     variant="bordered"
                                     className='mt-4'
                                     isInvalid={isInvalidPassword_2 == null ? undefined : isInvalidPassword_2}
-                                    errorMessage={isInvalidPassword_2 && "Passwords do not match or do not meet requirements"}
+                                    errorMessage={isInvalidPassword_2 && translations?.password_mismatch}
                                     color={isInvalidPassword_2 == null ? undefined : (isInvalidPassword_2 ? "danger" : "success")}
                                 />
                                 <Button
@@ -155,7 +177,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     onClick={() => setStep(2)}
                                     isDisabled={Boolean((!validateEmail(email) || !validatePassword(password) || !validatePassword(password_2) || password !== password_2))}
                                 >
-                                    Next
+                                    {translations?.next}
                                 </Button>
                             </>
                         )}
@@ -165,7 +187,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     value={firstName}
                                     onChange={e => setFirstName(e.target.value)}
                                     fullWidth
-                                    label="Enter your first name"
+                                    label={translations?.enter_first_name}
                                     type="text"
                                     isRequired
                                     size='sm'
@@ -177,7 +199,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     value={lastName}
                                     onChange={e => setLastName(e.target.value)}
                                     fullWidth
-                                    label="Enter your last name"
+                                    label={translations?.enter_last_name}
                                     type="text"
                                     isRequired
                                     size='sm'
@@ -194,12 +216,28 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     onClick={() => setStep(3)}
                                     isDisabled={Boolean((firstName === "" || lastName === ""))}
                                 >
-                                    Next
+                                    {translations?.next}
                                 </Button>
                             </>
                         )}
                         {step === 3 && (
-                            <>
+                            <div className='flex flex-col'>
+                                <Switch isSelected={isAnnual} color='secondary' className='mt-8' size='sm' onChange={async () => {
+                                    setIsLoading(true);
+                                    let filteredSubscriptions = await getSubscriptions();
+                                    if (isAnnual) {
+                                        filteredSubscriptions = filteredSubscriptions.filter((subscription: { type: string; }) => subscription.type === 'month');
+                                        setSubscriptions(filteredSubscriptions);
+                                    } else {
+                                        filteredSubscriptions = filteredSubscriptions.filter((subscription: { type: string; }) => subscription.type === 'year');
+                                        setSubscriptions(filteredSubscriptions);
+                                    }
+                                    setIsLoading(false);
+                                    setIsAnnual(!isAnnual)
+
+                                }}>
+                                    {translations?.save_annually}
+                                </Switch>
                                 <div className="flex flex-col md:flex-row md:space-x-4 mt-8 mb-8">
                                     {subscriptions.map(sub => (
                                         <Card
@@ -212,7 +250,13 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                         >
                                             <CardHeader className="flex flex-col items-center justify-center" style={{ height: '100%' }}>
                                                 <h2 className="text-3xl">{sub.name}</h2>
-                                                <p style={{ color: "#9353D3" }}>$ {sub.price} / month</p>
+                                                {
+                                                    isAnnual ? (
+                                                        <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.yearly}</p>
+                                                    ) : (
+                                                        <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.monthly}</p>
+                                                    )
+                                                }
                                             </CardHeader>
                                         </Card>
                                     ))}
@@ -228,10 +272,10 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                         className='mt-12 mb-6'
                                         onClick={async () => await handleSignUp(selectedSubscription.price_id)}
                                     >
-                                        Sign Up
+                                        {translations?.sign_up}
                                     </Button>
                                 )}
-                            </>
+                            </div>
                         )}
                     </CardBody>
                 </Card>

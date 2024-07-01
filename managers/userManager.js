@@ -138,3 +138,34 @@ export async function changePassword(new_password, new_password_2) {
         return response.data.response;
     }
 }
+
+export async function initiatePasswordReset(email) {
+    let response = await axios.post(endpoint + "initiate_password_reset",
+        {
+            "email": email
+        }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (response) {
+        console.log(response.data)
+        return response.data.response;
+    }
+}
+
+export async function resetPassword(token, password_1, password_2) {
+    let response = await axios.post(endpoint + "reset_password",
+        {
+            token, password_1, password_2
+        }, {
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (response) {
+        return response.data.response;
+    }
+}

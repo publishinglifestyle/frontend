@@ -1,11 +1,13 @@
 "use client"
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
 import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
 import { Spacer } from "@nextui-org/spacer"
 import { changePassword } from "@/managers/userManager";
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
 interface PasswordModalProps {
     isOpen: boolean;
@@ -16,6 +18,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
     const [password, setPassword] = useState('');
     const [password_2, setPassword_2] = useState('');
     const [serverError, setServerError] = useState(null);
+    const [translations, setTranslations] = useState<Translations | null>(null);
 
     const validatePassword = (password: string): boolean => {
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -33,10 +36,26 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
         onClose()
     };
 
+    const [language, setLanguage] = useState('');
+
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+        };
+
+        detectLanguage();
+    }, []);
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="2xl" className="apply-modal">
             <ModalContent>
-                <ModalHeader className="modal-header">Change Password</ModalHeader>
+                <ModalHeader className="modal-header">{translations?.change_password}</ModalHeader>
                 <ModalBody>
                     <Input
                         value={password}
@@ -46,12 +65,12 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
                         }}
                         fullWidth
                         labelPlacement="outside"
-                        label="New Password"
+                        label={translations?.new_password}
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder={translations?.enter_password}
                         isRequired
                         isInvalid={isInvalidPassword == null ? undefined : isInvalidPassword}
-                        errorMessage={isInvalidPassword && "Password must be at least 8 characters long with 1 capital letter, 1 number and 1 special character"}
+                        errorMessage={isInvalidPassword && translations?.password_invalid_format}
                         color={isInvalidPassword == null ? undefined : (isInvalidPassword ? "danger" : "success")}
                     />
                     <Spacer y={4} />
@@ -60,12 +79,12 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
                         onChange={(e: { target: { value: React.SetStateAction<string>; }; }) => setPassword_2(e.target.value)}
                         fullWidth
                         labelPlacement="outside"
-                        label="Confirm New Password"
+                        label={translations?.confirm_new_password}
                         type="password"
-                        placeholder="Re-enter your password"
+                        placeholder={translations?.re_enter_password}
                         isRequired
                         isInvalid={isInvalidPassword_2 == null ? undefined : isInvalidPassword_2}
-                        errorMessage={isInvalidPassword_2 && "Passwords do not match or does not meet requirements"}
+                        errorMessage={isInvalidPassword_2 && translations?.password_mismatch}
                         color={isInvalidPassword_2 == null ? undefined : (isInvalidPassword_2 ? "danger" : "success")}
                     />
                 </ModalBody>
@@ -77,7 +96,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
                         radius="lg"
                         size="md"
                         onPress={onClose}>
-                        Cancel
+                        {translations?.cancel}
                     </Button>
                     <Button
                         color="secondary"
@@ -86,7 +105,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
                         radius="lg"
                         size="md"
                     >
-                        Update
+                        {translations?.confirm}
                     </Button>
                 </ModalFooter>
             </ModalContent>

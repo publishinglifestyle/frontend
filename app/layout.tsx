@@ -4,7 +4,6 @@ import { Link } from "@nextui-org/link";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
-
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
@@ -44,7 +43,7 @@ export default function RootLayout({
           "relative"
         )}
         style={{
-          backgroundImage: `url("/background.jpg")`, // Reference the image from the public folder
+          backgroundImage: `url("/background.jpg")`,
         }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>

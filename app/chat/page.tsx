@@ -19,8 +19,10 @@ import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel } from '@/managers/agentsManager';
 import { getConversations, createConversation, getConversation, deleteConversation } from '@/managers/conversationsManager';
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
-const GREETING_MESSAGE = "Hello! How can I help you today?";
+let GREETING_MESSAGE = ""
 
 interface Agent {
     id: string;
@@ -55,7 +57,7 @@ interface Column {
     name: string;
 }
 
-const columns: Column[] = [
+let columns: Column[] = [
     { key: "id", name: "Conversations" }
 ];
 
@@ -64,6 +66,9 @@ const defaultPic = "./profile.png"
 const aiPic = "./ai.png"
 
 export default function ChatPage() {
+    const [language, setLanguage] = useState('');
+    const [translations, setTranslations] = useState<Translations | null>(null);
+
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +84,26 @@ export default function ChatPage() {
     const [currentConversation, setCurrentConversation] = useState<string>('');
     const [conversations, setConversations] = useState<Array<Conversation>>([]);
     const [nextMessageId, setNextMessageId] = useState(0);
+
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+
+            columns = [
+                { key: "id", name: translations?.conversations || "" }
+            ];
+
+            GREETING_MESSAGE = translations?.greeting || ""
+        };
+
+        detectLanguage();
+    }, []);
 
     useEffect(() => {
         let user_id
@@ -301,11 +326,11 @@ export default function ChatPage() {
                         window.location.reload();
                     }}
                 >
-                    New Conversation
+                    {translations?.new_conversation}
                 </Button>
                 <div style={{ height: '75%', overflowY: 'auto' }}>
                     <Table
-                        aria-label="Conversations"
+                        aria-label={translations?.conversations || ""}
                         selectionMode="single"
                         selectedKeys={[currentConversation]}
                     >
@@ -409,7 +434,7 @@ export default function ChatPage() {
                                     fullWidth
                                     type='text'
                                     size='sm'
-                                    label="Type your message..."
+                                    label={translations?.type_message}
                                     value={messageText}
                                     onChange={e => setMessageText(e.target.value)}
                                     onKeyDown={async e => {
@@ -423,8 +448,8 @@ export default function ChatPage() {
                                     isDisabled={conversations.length === 0}
                                     className='w-1/3'
                                     size="sm"
-                                    label="Type"
-                                    placeholder="Select an agent"
+                                    label={translations?.type}
+                                    placeholder={translations?.select_agent || ""}
                                     onChange={(e) => {
                                         console.log(e.target.value)
                                         setSelectedAgentId(e.target.value)
@@ -449,7 +474,7 @@ export default function ChatPage() {
                                     sendChatMessage(messageText, messageText)
                                 }}
                             >
-                                Send
+                                {translations?.send}
                             </Button>
                         </div>
 
@@ -464,7 +489,7 @@ export default function ChatPage() {
                     setIsSuccessModalOpen(false)
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }}
-                message="Your subscription is now active!"
+                message={translations?.subscription_is_active || ""}
             />
         </div>
     )

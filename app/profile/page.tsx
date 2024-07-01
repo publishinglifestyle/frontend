@@ -7,16 +7,16 @@ import { Spacer } from "@nextui-org/spacer";
 import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
-
 import { getUser, updateProfile, deleteUser, getProfilePic, uploadProfilePic } from "@/managers/userManager";
 import { getSubscription, getPortal } from '@/managers/subscriptionManager'
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth-context';
-
 import SubscriptionModal from "../modals/subscriptionModal";
 import PasswordModal from "@/app/modals/passwordModal";
 import ErrorModal from "@/app/modals/errorModal";
 import ConfirmModal from "@/app/modals/confirmModal";
+import { getTranslations } from '../../managers/languageManager';
+import { Translations } from '../../translations.d';
 
 import {
     PencilSquareIcon,
@@ -27,7 +27,10 @@ import {
 const defaultPic = "./profile.png";
 
 export default function ProfilePage() {
+    const [language, setLanguage] = useState('');
+    const [translations, setTranslations] = useState<Translations | null>(null);
     const router = useRouter();
+
     const { isAuthenticated: isAuthenticatedClient, logout } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +58,20 @@ export default function ProfilePage() {
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
     const [errorModalMessage, setErrorModalMessage] = useState('');
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+    useEffect(() => {
+        const detectLanguage = async () => {
+            // Detect browser language
+            const browserLanguage = navigator.language;
+            setLanguage(browserLanguage);
+
+            // Get translations for the detected language
+            const translations = await getTranslations(browserLanguage);
+            setTranslations(translations);
+        };
+
+        detectLanguage();
+    }, []);
 
     useEffect(() => {
         if (!isAuthenticatedClient) {
@@ -224,7 +241,7 @@ export default function ProfilePage() {
                         </div>
                         <Spacer y={6} />
                         <p style={{ fontSize: "14px" }}>
-                            <b style={{ fontSize: "14px" }}>First name</b>
+                            <b style={{ fontSize: "14px" }}>{translations?.first_name}</b>
                             <Spacer y={2} />
                             {
                                 isEdit ?
@@ -233,7 +250,7 @@ export default function ProfilePage() {
                                         value={firstName}
                                         onChange={e => setFirstName(e.target.value)}
                                         type="text"
-                                        placeholder="Enter your name"
+                                        placeholder={translations?.enter_first_name}
                                     />
                                     :
                                     <span style={{ fontSize: "14px" }}>{firstName}</span>
@@ -241,7 +258,7 @@ export default function ProfilePage() {
                         </p>
                         <Spacer y={4} />
                         <p style={{ fontSize: "14px" }}>
-                            <b style={{ fontSize: "14px" }}>Last name</b>
+                            <b style={{ fontSize: "14px" }}>{translations?.last_name}</b>
                             <Spacer y={2} />
                             {
                                 isEdit ?
@@ -250,7 +267,7 @@ export default function ProfilePage() {
                                         value={lastName}
                                         onChange={e => setLastName(e.target.value)}
                                         type="text"
-                                        placeholder="Enter your surname"
+                                        placeholder={translations?.enter_last_name}
                                     />
                                     :
                                     <span style={{ fontSize: "14px" }}>{lastName}</span>
@@ -286,14 +303,14 @@ export default function ProfilePage() {
                                     radius="lg"
                                     size="md"
                                     onClick={handleCancel}
-                                >Cancel</Button>
+                                >{translations?.cancel}</Button>
                                 <Button
                                     color="secondary"
                                     style={{ color: "white", width: "150px" }}
                                     radius="lg"
                                     size="md"
                                     onClick={async () => await updateUserProfile()}
-                                >Update</Button>
+                                >{translations?.update}</Button>
                             </div>
                         }
                     </CardFooter>
@@ -305,17 +322,17 @@ export default function ProfilePage() {
                     <Card className="w-full md:w-[500px] lg:w-[500px]">
                         <CardHeader>
                             <div className="flex flex-col items-start">
-                                <p className="text-lg">My Plan</p>
+                                <p className="text-lg">{translations?.my_plan}</p>
                             </div>
                         </CardHeader>
                         <Divider />
                         <CardBody>
                             <div className="flex flex-col">
                                 <div className="flex flex-row gap-4">
-                                    <b>Status:&nbsp;</b>{subscriptionActive ? <span style={{ color: "#9353D3" }}>Active</span> : <span style={{ color: "#9353D3" }}>Inactive</span>}
+                                    <b>{translations?.status}:&nbsp;</b>{subscriptionActive ? <span style={{ color: "#9353D3" }}>{translations?.active}</span> : <span style={{ color: "#9353D3" }}>{translations?.inactive}</span>}
                                 </div>
                                 <div className="flex flex-row gap-4">
-                                    <b>Credits:&nbsp;</b>{credits}
+                                    <b>{translations?.credits}:&nbsp;</b>{credits}
                                 </div>
                             </div>
                             <Spacer y={8} />
@@ -333,7 +350,7 @@ export default function ProfilePage() {
                                             setIsLoading(false)
                                         }}
                                     >
-                                        Manage Subscription
+                                        {translations?.manage_subscription}
                                     </Button>
                                     :
                                     <Button
@@ -343,7 +360,7 @@ export default function ProfilePage() {
                                             setIsSubscriptionModalOpen(true)
                                         }}
                                     >
-                                        Start Subscription
+                                        {translations?.start_subscription}
                                     </Button>
                             }
 
@@ -366,9 +383,9 @@ export default function ProfilePage() {
                         <CardBody className="pl-6">
                             <Spacer y={4} />
                             <p style={{ fontSize: "14px" }}>
-                                <b style={{ fontSize: "14px" }} className="flex"><CheckCircleIcon style={{ width: "5%", marginRight: "1%", color: "#9353D3" }} />Password has been set</b>
+                                <b style={{ fontSize: "14px" }} className="flex"><CheckCircleIcon style={{ width: "5%", marginRight: "1%", color: "#9353D3" }} />{translations?.password_set}</b>
                                 <Spacer y={2} />
-                                <span style={{ fontSize: "14px" }}>Choose a strong, unique password that’s at least 8 characters long.</span>
+                                <span style={{ fontSize: "14px" }}>{translations?.choose_password}</span>
                             </p>
                             <Spacer y={4} />
                         </CardBody>
