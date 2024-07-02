@@ -394,12 +394,14 @@ export default function ChatPage() {
                                             <Avatar
                                                 src={profileImage}
                                                 className="transition-transform mr-2 mt-2 ml-2"
+                                                alt='Profile Picture'
                                             />
                                         )}
                                         {message.username !== Cookies.get('user_name') && (
                                             <Avatar
                                                 src={aiPic}
                                                 className="transition-transform mr-2 mt-2 ml-2"
+                                                alt='Profile Picture'
                                             />
                                         )}
                                         <div
@@ -415,7 +417,7 @@ export default function ChatPage() {
                                             {message.type === 'chat' ? (
                                                 <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                                             ) : (
-                                                <img src={message.text} alt="Received Image" className="max-w-full h-auto rounded-lg" />
+                                                <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
                                             )}
                                         </div>
                                     </div>
