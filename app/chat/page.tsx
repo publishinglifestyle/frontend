@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import Cookies from 'js-cookie';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,10 +6,10 @@ import { useAuth } from '../auth-context';
 import React, { useRef, useCallback, useState, useEffect } from "react";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { io, Socket } from 'socket.io-client';
-import { Spacer } from "@nextui-org/spacer"
-import { Button } from "@nextui-org/button"
-import { Spinner } from "@nextui-org/spinner"
-import { Input } from "@nextui-org/input"
+import { Spacer } from "@nextui-org/spacer";
+import { Button } from "@nextui-org/button";
+import { Spinner } from "@nextui-org/spinner";
+import { Input } from "@nextui-org/input";
 import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
@@ -22,7 +22,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
-let GREETING_MESSAGE = ""
+let GREETING_MESSAGE = "";
 
 interface Agent {
     id: string;
@@ -44,12 +44,12 @@ interface Message {
 interface Conversation {
     id: string;
     name: string;
-    context: [Context];
+    context: Context[];
 }
 
 interface Context {
-    user: string;
-    system: string;
+    role: string;
+    content: string;
 }
 
 interface Column {
@@ -61,9 +61,9 @@ let columns: Column[] = [
     { key: "id", name: "Conversations" }
 ];
 
-let socket: Socket<DefaultEventsMap, DefaultEventsMap>
-const defaultPic = "./profile.png"
-const aiPic = "./ai.png"
+let socket: Socket<DefaultEventsMap, DefaultEventsMap>;
+const defaultPic = "./profile.png";
+const aiPic = "./ai.png";
 
 export default function ChatPage() {
     const [language, setLanguage] = useState('');
@@ -72,13 +72,13 @@ export default function ChatPage() {
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
-    const [isLoading, setIsLoading] = useState(false)
-    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [messageText, setMessageText] = useState<string>('');
-    const [userId, setUserId] = useState('')
+    const [userId, setUserId] = useState('');
     const [profileImage, setProfileImage] = useState(defaultPic);
-    const [fullName, setFullName] = useState('Guest')
+    const [fullName, setFullName] = useState('Guest');
     const [agents, setAgents] = useState<Agent[]>([]);
     const [selectedAgentId, setSelectedAgentId] = useState<string>('');
     const [currentConversation, setCurrentConversation] = useState<string>('');
@@ -87,11 +87,9 @@ export default function ChatPage() {
 
     useEffect(() => {
         const detectLanguage = async () => {
-            // Detect browser language
             const browserLanguage = navigator.language;
             setLanguage(browserLanguage);
 
-            // Get translations for the detected language
             const translations = await getTranslations(browserLanguage);
             setTranslations(translations);
 
@@ -99,32 +97,31 @@ export default function ChatPage() {
                 { key: "id", name: translations?.conversations || "" }
             ];
 
-            GREETING_MESSAGE = translations?.greeting || ""
+            GREETING_MESSAGE = translations?.greeting || "";
         };
 
         detectLanguage();
     }, []);
 
     useEffect(() => {
-        let user_id
+        let user_id;
         async function fetchData() {
-            const current_user = await getUser()
-            user_id = current_user.id
-            setUserId(current_user.id)
+            const current_user = await getUser();
+            user_id = current_user.id;
+            setUserId(current_user.id);
 
-            const first_name = current_user.first_name
-            const last_name = current_user.last_name
-            setFullName(`${first_name} ${last_name}`)
+            const first_name = current_user.first_name;
+            const last_name = current_user.last_name;
+            setFullName(`${first_name} ${last_name}`);
 
-            const all_agents = await getAgentsPerLevel(current_user.subscription_level)
-            setAgents(all_agents)
+            const all_agents = await getAgentsPerLevel();
+            setAgents(all_agents);
 
             const all_conversations = await getConversations();
             setConversations(all_conversations);
 
-            let current_conversation
             if (all_conversations.length > 0) {
-                current_conversation = all_conversations[all_conversations.length - 1]
+                const current_conversation = all_conversations[all_conversations.length - 1];
                 setCurrentConversation(current_conversation.id);
 
                 let conversation_messages = [];
@@ -133,7 +130,7 @@ export default function ChatPage() {
                     const conversation_message: Message = {
                         id: i.toString(),
                         text: i > 0 ? current_conversation.context[i].content : GREETING_MESSAGE,
-                        username: current_conversation.context[i].role == 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
+                        username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
                         type: "chat",
                         conversation_id: current_conversation.id
                     };
@@ -143,49 +140,46 @@ export default function ChatPage() {
                 setNextMessageId(messageId);
             }
 
-            Cookies.set('user_name', `${first_name} ${last_name}`)
+            Cookies.set('user_name', `${first_name} ${last_name}`);
 
             try {
-                const logo_img = await getProfilePic()
+                const logo_img = await getProfilePic();
                 if (logo_img) {
-                    setProfileImage(logo_img)
+                    setProfileImage(logo_img);
                 } else {
-                    setProfileImage(defaultPic)
+                    setProfileImage(defaultPic);
                 }
             } catch {
-                setProfileImage(defaultPic)
+                setProfileImage(defaultPic);
             }
         }
 
         if (!isAuthenticatedClient) {
             window.location.href = '/';
         } else {
-            fetchData()
+            fetchData();
             if (window.location.href.includes('session_id')) {
-                console.log("Session ID found")
-                setIsSuccessModalOpen(true)
+                console.log("Session ID found");
+                setIsSuccessModalOpen(true);
             }
         }
 
-        socket = io('http://localhost:8090', {
+        socket = io('https://chatbot-books-9d87f0a90bbe.herokuapp.com', {
             query: { user_id }
         });
 
         const messageListener = (message: { id: string, username: string, text: string, type: string, conversation_id: string, title: string }) => {
             setMessages((prevMessages) => {
-                console.log("message.title", message.title)
-                setCurrentConversation(message.conversation_id)
+                console.log("message.title", message.title);
+                setCurrentConversation(message.conversation_id);
 
-                // Check if the last message is from the AI
                 if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
-                    // Remove the last message
                     prevMessages.pop();
                 }
 
                 const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
 
                 if (existingMessageIndex !== -1) {
-                    // If we find an existing message with the same ID, append the new text
                     const updatedMessages = [...prevMessages];
                     updatedMessages[existingMessageIndex] = {
                         ...updatedMessages[existingMessageIndex],
@@ -193,7 +187,6 @@ export default function ChatPage() {
                     };
                     return updatedMessages;
                 } else {
-                    // If no existing message, add a new entry
                     return [...prevMessages, message];
                 }
             });
@@ -214,7 +207,6 @@ export default function ChatPage() {
 
         socket.on('message', messageListener);
 
-        // Cleanup this component is unmounted or messages change
         return () => {
             socket.off('message', messageListener);
         };
@@ -264,9 +256,8 @@ export default function ChatPage() {
                 type: 'chat'
             };
 
-            console.log("userId: ", userId)
+            console.log("userId: ", userId);
 
-            // Emit the user message to the server
             socket.emit('sendMessage', {
                 senderId: userId,
                 message: text,
@@ -274,10 +265,8 @@ export default function ChatPage() {
                 conversation_id: currentConversation
             });
 
-            // Display the user message immediately
             setMessages(prevMessages => [...prevMessages, { ...userMessage, conversation_id: currentConversation }]);
 
-            // Insert a typing indicator
             const typingMessageId = `typing-${Date.now()}`;
             const typingMessage = {
                 id: typingMessageId,
@@ -289,18 +278,13 @@ export default function ChatPage() {
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
 
-            // Clear the input field
             setMessageText('');
         }
     }, [messageText, setMessages]);
 
     function formatMessageText(text: string) {
-        // Replace markdown bold "**text**" with HTML "<strong>text</strong>"
         const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-        // Preserve new line characters by converting them into <br> HTML tags
         const newLineFormatted = boldFormatted.replace(/\n/g, '<br>');
-
         console.log(newLineFormatted);
         return newLineFormatted;
     }
@@ -310,7 +294,7 @@ export default function ChatPage() {
             <div className='text-center align-center items-center justify-center' style={{ marginTop: "15%" }}>
                 <Spinner color='secondary' />
             </div>
-        )
+        );
     }
 
     return (
@@ -358,7 +342,7 @@ export default function ChatPage() {
                                             const conversation_message: Message = {
                                                 id: i.toString(),
                                                 text: conversation.context[i].content,
-                                                username: conversation.context[i].role == 'user' ? fullName : 'Riccardo AI',
+                                                username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
                                                 type: "chat",
                                                 conversation_id: item.id
                                             };
@@ -367,7 +351,7 @@ export default function ChatPage() {
                                         setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
                                         setNextMessageId(messageId);
 
-                                        setIsLoading(false)
+                                        setIsLoading(false);
                                     }}
                                 >
                                     {columns.map((column) => (
@@ -411,13 +395,13 @@ export default function ChatPage() {
                                             {message.username !== Cookies.get('user_name') && (
                                                 <p className="font-semibold">Riccardo AI</p>
                                             )}
-                                            {message.username == Cookies.get('user_name') && (
+                                            {message.username === Cookies.get('user_name') && (
                                                 <p className="font-semibold">{fullName}</p>
                                             )}
-                                            {message.type === 'chat' ? (
-                                                <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
-                                            ) : (
+                                            {message.text.startsWith("http") ? (
                                                 <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                            ) : (
+                                                <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                                             )}
                                         </div>
                                     </div>
@@ -425,7 +409,6 @@ export default function ChatPage() {
                             ))}
 
                         </CardBody>
-
                     </div>
 
                     <CardFooter>
@@ -440,9 +423,9 @@ export default function ChatPage() {
                                     value={messageText}
                                     onChange={e => setMessageText(e.target.value)}
                                     onKeyDown={async e => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                        if (e.key === 'Enter' && !e.shiftKey && messageText) {
                                             e.preventDefault();
-                                            sendChatMessage(messageText, messageText)
+                                            sendChatMessage(messageText, messageText);
                                         }
                                     }}
                                 />
@@ -453,8 +436,8 @@ export default function ChatPage() {
                                     label={translations?.type}
                                     placeholder={translations?.select_agent || ""}
                                     onChange={(e) => {
-                                        console.log(e.target.value)
-                                        setSelectedAgentId(e.target.value)
+                                        console.log(e.target.value);
+                                        setSelectedAgentId(e.target.value);
                                     }}
                                 >
                                     {agents.map((agent) => (
@@ -468,12 +451,12 @@ export default function ChatPage() {
                             <Spacer y={4} />
 
                             <Button
-                                isDisabled={conversations.length === 0}
+                                isDisabled={conversations.length === 0 || !messageText}
                                 fullWidth
                                 color='secondary'
                                 style={{ color: "white" }}
                                 onClick={async () => {
-                                    sendChatMessage(messageText, messageText)
+                                    sendChatMessage(messageText, messageText);
                                 }}
                             >
                                 {translations?.send}
@@ -484,15 +467,14 @@ export default function ChatPage() {
                 </Card>
             </div>
 
-
             <SuccessModal
                 isOpen={isSuccessModalOpen}
                 onClose={() => {
-                    setIsSuccessModalOpen(false)
+                    setIsSuccessModalOpen(false);
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }}
                 message={translations?.subscription_is_active || ""}
             />
         </div>
-    )
+    );
 }

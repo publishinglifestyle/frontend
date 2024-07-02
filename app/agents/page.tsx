@@ -231,7 +231,7 @@ export default function AgentsPage() {
                                     size="sm"
                                     label={translations?.level}
                                     placeholder={translations?.select_level}
-                                    defaultSelectedKeys={[agentLevel]}
+                                    defaultSelectedKeys={[agentLevel.toString()]}
                                     onChange={(e) => {
                                         console.log(e.target.value)
                                         setAgentLevel(parseInt(e.target.value))

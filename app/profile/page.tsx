@@ -93,20 +93,23 @@ export default function ProfilePage() {
                 setInitialLastName(result.last_name);
                 setInitialEmail(result.email);
 
+                try {
+                    const logoResponse = await getProfilePic();
+                    console.log("logoResponse", logoResponse)
+                    if (logoResponse) {
+                        setProfileImage(logoResponse);
+                        setInitialProfileImage(logoResponse);
+                    } else {
+                        setProfileImage(defaultPic);
+                        setInitialProfileImage(defaultPic);
+                    }
+                } catch { }
+
                 const current_subscription = await getSubscription()
-                console.log(current_subscription)
+                console.log("current_subscription", current_subscription)
                 setSubscriptionActive(current_subscription.is_active)
 
                 setCredits(current_subscription.credits)
-
-                const logoResponse = await getProfilePic();
-                if (logoResponse) {
-                    setProfileImage(logoResponse);
-                    setInitialProfileImage(logoResponse);
-                } else {
-                    setProfileImage(defaultPic);
-                    setInitialProfileImage(defaultPic);
-                }
 
                 setIsLoading(false);
             } catch (e) {

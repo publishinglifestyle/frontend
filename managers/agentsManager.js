@@ -40,8 +40,8 @@ export async function getAllAgents() {
     }
 }
 
-export async function getAgentsPerLevel(level) {
-    let response = await axios.get(endpoint + "get_agents_per_level?level=" + level,
+export async function getAgentsPerLevel() {
+    let response = await axios.get(endpoint + "get_agents_per_level",
         { headers: headers });
 
     if (response) {
