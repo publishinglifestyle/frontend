@@ -9,7 +9,7 @@ import { io, Socket } from 'socket.io-client';
 import { Spacer } from "@nextui-org/spacer";
 import { Button } from "@nextui-org/button";
 import { Spinner } from "@nextui-org/spinner";
-import { Input } from "@nextui-org/input";
+import { Textarea } from "@nextui-org/input";
 import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
@@ -127,9 +127,10 @@ export default function ChatPage() {
                 let conversation_messages = [];
                 let messageId = 0;
                 for (let i = 0; i < current_conversation.context.length; i++) {
+                    const textMessage = i == 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
                     const conversation_message: Message = {
                         id: i.toString(),
-                        text: i > 0 ? current_conversation.context[i].content : GREETING_MESSAGE,
+                        text: textMessage,
                         username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
                         type: "chat",
                         conversation_id: current_conversation.id
@@ -339,9 +340,10 @@ export default function ChatPage() {
                                         let conversation_messages = [];
                                         let messageId = 0;
                                         for (let i = 0; i < conversation.context.length; i++) {
+                                            const textMessage = i == 0 ? GREETING_MESSAGE : conversation.context[i].content;
                                             const conversation_message: Message = {
                                                 id: i.toString(),
-                                                text: conversation.context[i].content,
+                                                text: textMessage,
                                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
                                                 type: "chat",
                                                 conversation_id: item.id
@@ -414,7 +416,7 @@ export default function ChatPage() {
                     <CardFooter>
                         <div className='flex flex-col w-full'>
                             <div className='flex gap-4'>
-                                <Input
+                                <Textarea
                                     isDisabled={conversations.length === 0}
                                     fullWidth
                                     type='text'
