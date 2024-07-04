@@ -46,3 +46,13 @@ export async function deleteConversation(conversation_id) {
         return response.data.response;
     }
 }
+
+export async function generateImage(msg, agent_id, conversation_id) {
+    let response = await axios.post(endpoint + "generate_image",
+        { msg, agent_id, conversation_id },
+        { headers: headers });
+
+    if (response) {
+        return response.data;
+    }
+}

@@ -16,11 +16,13 @@ import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
-import { getAgentsPerLevel } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation } from '@/managers/conversationsManager';
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage } from '@/managers/conversationsManager';
+import { TrashIcon, StopIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
+import ImageWithFallback from './ImageWithFallback';
+
 
 let GREETING_MESSAGE = "";
 
@@ -37,7 +39,6 @@ interface Message {
     id: string;
     text: string;
     username: string;
-    type: string;
     conversation_id: string;
 }
 
@@ -71,6 +72,7 @@ export default function ChatPage() {
 
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const isUserAtBottomRef = useRef(true); // Define isUserAtBottomRef here
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -84,6 +86,7 @@ export default function ChatPage() {
     const [currentConversation, setCurrentConversation] = useState<string>('');
     const [conversations, setConversations] = useState<Array<Conversation>>([]);
     const [nextMessageId, setNextMessageId] = useState(0);
+    const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -132,12 +135,11 @@ export default function ChatPage() {
                         id: i.toString(),
                         text: textMessage,
                         username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
-                        type: "chat",
                         conversation_id: current_conversation.id
                     };
                     conversation_messages.push(conversation_message);
                 }
-                setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
+                setMessages(conversation_messages.map((message) => ({ ...message })));
                 setNextMessageId(messageId);
             }
 
@@ -166,44 +168,52 @@ export default function ChatPage() {
         }
 
         socket = io('https://chatbot-books-9d87f0a90bbe.herokuapp.com', {
+            //socket = io('http://localhost:8090', {
             query: { user_id }
         });
 
-        const messageListener = (message: { id: string, username: string, text: string, type: string, conversation_id: string, title: string }) => {
-            setMessages((prevMessages) => {
-                console.log("message.title", message.title);
-                setCurrentConversation(message.conversation_id);
+        const messageListener = (message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }) => {
+            if (!message.complete) {
+                /*setIsGeneratingResponse(true);
 
-                if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
-                    prevMessages.pop();
-                }
+                setMessages((prevMessages) => {
+                    setCurrentConversation(message.conversation_id);
 
-                const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
+                    if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
+                        prevMessages.pop();
+                    }
 
-                if (existingMessageIndex !== -1) {
-                    const updatedMessages = [...prevMessages];
-                    updatedMessages[existingMessageIndex] = {
-                        ...updatedMessages[existingMessageIndex],
-                        text: updatedMessages[existingMessageIndex].text + message.text
-                    };
-                    return updatedMessages;
-                } else {
-                    return [...prevMessages, message];
-                }
-            });
+                    const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
 
-            setConversations((prevConversations) => {
-                const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
-                if (conversationIndex !== -1) {
-                    const updatedConversations = [...prevConversations];
-                    updatedConversations[conversationIndex] = {
-                        ...updatedConversations[conversationIndex],
-                        name: message.title
-                    };
-                    return updatedConversations;
-                }
-                return prevConversations;
-            });
+                    if (existingMessageIndex !== -1) {
+                        const updatedMessages = [...prevMessages];
+                        updatedMessages[existingMessageIndex] = {
+                            ...updatedMessages[existingMessageIndex],
+                            text: updatedMessages[existingMessageIndex].text + message.text
+                        };
+                        return updatedMessages;
+                    } else {
+                        return [...prevMessages, message];
+                    }
+                });
+
+                setConversations((prevConversations) => {
+                    const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
+                    if (conversationIndex !== -1) {
+                        const updatedConversations = [...prevConversations];
+                        updatedConversations[conversationIndex] = {
+                            ...updatedConversations[conversationIndex],
+                            name: message.title
+                        };
+                        return updatedConversations;
+                    }
+                    return prevConversations;
+                });*/
+                setIsGeneratingResponse(true);
+                formatMessages(message)
+            } else {
+                setIsGeneratingResponse(false);
+            }
         };
 
         socket.on('message', messageListener);
@@ -214,10 +224,73 @@ export default function ChatPage() {
     }, [isAuthenticatedClient]);
 
     useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        const chatContainer = chatContainerRef.current;
+
+        const handleScroll = () => {
+            if (chatContainer) {
+                const scrollTop = chatContainer.scrollTop;
+                const scrollHeight = chatContainer.scrollHeight;
+                const clientHeight = chatContainer.clientHeight;
+
+                // Check if the user is at the bottom
+                isUserAtBottomRef.current = scrollTop + clientHeight >= scrollHeight - 10;
+            }
+        };
+
+        if (chatContainer) {
+            chatContainer.addEventListener('scroll', handleScroll);
+        }
+
+        return () => {
+            if (chatContainer) {
+                chatContainer.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const chatContainer = chatContainerRef.current;
+
+        if (chatContainer && isUserAtBottomRef.current) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
     }, [messages]);
+
+    function formatMessages(message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }) {
+        setMessages((prevMessages) => {
+            setCurrentConversation(message.conversation_id);
+
+            if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
+                prevMessages.pop();
+            }
+
+            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
+
+            if (existingMessageIndex !== -1) {
+                const updatedMessages = [...prevMessages];
+                updatedMessages[existingMessageIndex] = {
+                    ...updatedMessages[existingMessageIndex],
+                    text: updatedMessages[existingMessageIndex].text + message.text
+                };
+                return updatedMessages;
+            } else {
+                return [...prevMessages, message];
+            }
+        });
+
+        setConversations((prevConversations) => {
+            const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
+            if (conversationIndex !== -1) {
+                const updatedConversations = [...prevConversations];
+                updatedConversations[conversationIndex] = {
+                    ...updatedConversations[conversationIndex],
+                    name: message.title
+                };
+                return updatedConversations;
+            }
+            return prevConversations;
+        });
+    }
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {
@@ -246,7 +319,7 @@ export default function ChatPage() {
         }
     };
 
-    const sendChatMessage = useCallback((text = messageText, title: string) => {
+    const sendChatMessage = useCallback(async (text = messageText, title: string) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
 
@@ -254,17 +327,11 @@ export default function ChatPage() {
                 id: userMessageId,
                 username: fullName,
                 text: title,
-                type: 'chat'
             };
 
-            console.log("userId: ", userId);
-
-            socket.emit('sendMessage', {
-                senderId: userId,
-                message: text,
-                agent_id: selectedAgentId,
-                conversation_id: currentConversation
-            });
+            if (socket.disconnected) {
+                socket.connect();
+            }
 
             setMessages(prevMessages => [...prevMessages, { ...userMessage, conversation_id: currentConversation }]);
 
@@ -273,13 +340,31 @@ export default function ChatPage() {
                 id: typingMessageId,
                 username: 'Riccardo AI',
                 text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
-                type: 'chat',
                 conversation_id: currentConversation
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
 
             setMessageText('');
+
+            console.log("userId: ", userId);
+            const current_agent = await getAgent(selectedAgentId);
+            if (current_agent.type === 'image') {
+                setIsGeneratingResponse(true);
+                const image_response = await generateImage(text, selectedAgentId, currentConversation);
+                console.log("Image Response: ", image_response);
+
+                const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true }
+                formatMessages(message)
+                setIsGeneratingResponse(false);
+            } else {
+                socket.emit('sendMessage', {
+                    senderId: userId,
+                    message: text,
+                    agent_id: selectedAgentId,
+                    conversation_id: currentConversation
+                });
+            }
         }
     }, [messageText, setMessages]);
 
@@ -345,12 +430,11 @@ export default function ChatPage() {
                                                 id: i.toString(),
                                                 text: textMessage,
                                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
-                                                type: "chat",
                                                 conversation_id: item.id
                                             };
                                             conversation_messages.push(conversation_message);
                                         }
-                                        setMessages(conversation_messages.map((message) => ({ ...message, type: 'chat' })));
+                                        setMessages(conversation_messages.map((message) => ({ ...message })));
                                         setNextMessageId(messageId);
 
                                         setIsLoading(false);
@@ -370,30 +454,17 @@ export default function ChatPage() {
                 <Card>
                     <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
                         <CardBody>
+
                             {messages.map((message) => (
                                 <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
-                                    <div
-                                        className="flex items-start rounded-lg"
-                                        style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}
-                                    >
+                                    <div className="flex items-start rounded-lg" style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}>
                                         {message.username === Cookies.get('user_name') && (
-                                            <Avatar
-                                                src={profileImage}
-                                                className="transition-transform mr-2 mt-2 ml-2"
-                                                alt='Profile Picture'
-                                            />
+                                            <Avatar src={profileImage} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
                                         )}
                                         {message.username !== Cookies.get('user_name') && (
-                                            <Avatar
-                                                src={aiPic}
-                                                className="transition-transform mr-2 mt-2 ml-2"
-                                                alt='Profile Picture'
-                                            />
+                                            <Avatar src={aiPic} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
                                         )}
-                                        <div
-                                            className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`}
-                                            style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}
-                                        >
+                                        <div className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`} style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}>
                                             {message.username !== Cookies.get('user_name') && (
                                                 <p className="font-semibold">Riccardo AI</p>
                                             )}
@@ -401,7 +472,7 @@ export default function ChatPage() {
                                                 <p className="font-semibold">{fullName}</p>
                                             )}
                                             {message.text.startsWith("http") ? (
-                                                <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                                <ImageWithFallback key={message.id} src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
                                             ) : (
                                                 <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                                             )}
@@ -410,6 +481,9 @@ export default function ChatPage() {
                                 </div>
                             ))}
 
+
+
+
                         </CardBody>
                     </div>
 
@@ -417,7 +491,7 @@ export default function ChatPage() {
                         <div className='flex flex-col w-full'>
                             <div className='flex gap-4'>
                                 <Textarea
-                                    isDisabled={conversations.length === 0}
+                                    isDisabled={conversations.length === 0 || isGeneratingResponse}
                                     fullWidth
                                     type='text'
                                     size='sm'
@@ -452,17 +526,30 @@ export default function ChatPage() {
 
                             <Spacer y={4} />
 
-                            <Button
-                                isDisabled={conversations.length === 0 || !messageText}
-                                fullWidth
-                                color='secondary'
-                                style={{ color: "white" }}
-                                onClick={async () => {
-                                    sendChatMessage(messageText, messageText);
-                                }}
-                            >
-                                {translations?.send}
-                            </Button>
+                            <div className='flex gap-2'>
+                                <Button
+                                    isDisabled={conversations.length === 0 || !messageText}
+                                    fullWidth
+                                    color='secondary'
+                                    style={{ color: "white" }}
+                                    onClick={async () => {
+                                        sendChatMessage(messageText, messageText);
+                                    }}
+                                >
+                                    {translations?.send}
+                                </Button>
+                                <Button
+                                    isDisabled={!isGeneratingResponse}
+                                    size='sm'
+                                    onClick={async () => {
+                                        socket.disconnect();
+                                        setIsGeneratingResponse(false)
+                                    }}
+                                >
+                                    <StopIcon />
+                                </Button>
+                            </div>
+
                         </div>
 
                     </CardFooter>

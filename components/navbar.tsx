@@ -198,24 +198,25 @@ export const Navbar = () => {
 
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {showMenu &&
-            siteConfig.navMenuItems.map((item, index) =>
-              ((userRole === 'user' && item.allow_user) || userRole !== 'user') && name ? (
-                ((!item.language || item.language === language) &&
-                  <NavbarMenuItem key={`${item}-${index}`}>
-                    <Link
-                      style={{
-                        color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
-                      }}
-                      href={item.href}
-                      size="lg"
-                    >
-                      {item.label}
-                    </Link>
-                  </NavbarMenuItem>
-                )
+          {showMenu && siteConfig.navMenuItems
+            .filter(item => (userRole === 'user' && item.allow_user) || userRole !== 'user')
+            .filter(item => !item.language || item.language === language)
+            .map((item, index) => (
+              name ? (
+                <NavbarMenuItem key={`${item}-${index}`}>
+                  <Link
+                    style={{
+                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
+                    }}
+                    href={item.href}
+                    size="lg"
+                  >
+                    {item.label}
+                  </Link>
+                </NavbarMenuItem>
               ) : null
-            )}
+            ))}
+
           <Spacer y={4} />
           <Divider />
           <NavbarMenuItem key="profile">
