@@ -55,4 +55,6 @@ export interface Translations {
     select_subscription: string;
     success: string;
     my_profile: string;
+    change_conversation_name: string;
+    new_name: string;
 }

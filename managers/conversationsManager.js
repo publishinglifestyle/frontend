@@ -56,3 +56,13 @@ export async function generateImage(msg, agent_id, conversation_id) {
         return response.data;
     }
 }
+
+export async function changeName(conversation_id, name) {
+    let response = await axios.post(endpoint + "change_conversation_name",
+        { conversation_id, name },
+        { headers: headers });
+
+    if (response) {
+        return response.data;
+    }
+}

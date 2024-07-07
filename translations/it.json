@@ -54,5 +54,7 @@
     "confirm_new_password": "Conferma nuova password",
     "select_subscription": "Seleziona sottoscrizione",
     "success": "Successo!",
-    "my_profile": "Il mio profilo"
+    "my_profile": "Il mio profilo",
+    "change_conversation_name": "Cambia nome della conversazione",
+    "new_name": "Nuovo nome"
 }

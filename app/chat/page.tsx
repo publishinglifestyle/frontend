@@ -9,7 +9,7 @@ import { io, Socket } from 'socket.io-client';
 import { Spacer } from "@nextui-org/spacer";
 import { Button } from "@nextui-org/button";
 import { Spinner } from "@nextui-org/spinner";
-import { Textarea } from "@nextui-org/input";
+import { Textarea, Input } from "@nextui-org/input";
 import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
@@ -17,12 +17,11 @@ import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage } from '@/managers/conversationsManager';
-import { TrashIcon, StopIcon } from "@heroicons/react/24/outline";
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName } from '@/managers/conversationsManager';
+import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
-import ImageWithFallback from './ImageWithFallback';
-
+import ConversationNameModal from '../modals/conversationName';
 
 let GREETING_MESSAGE = "";
 
@@ -87,6 +86,7 @@ export default function ChatPage() {
     const [conversations, setConversations] = useState<Array<Conversation>>([]);
     const [nextMessageId, setNextMessageId] = useState(0);
     const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+    const [isConversationNameModalOpen, setIsConversationNameModalOpen] = useState(false);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -129,16 +129,18 @@ export default function ChatPage() {
 
                 let conversation_messages = [];
                 let messageId = 0;
+
                 for (let i = 0; i < current_conversation.context.length; i++) {
-                    const textMessage = i == 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
+                    const textMessage = i === 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
                     const conversation_message: Message = {
-                        id: i.toString(),
+                        id: uuidv4(),  // Use uuid for unique keys
                         text: textMessage,
                         username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
                         conversation_id: current_conversation.id
                     };
                     conversation_messages.push(conversation_message);
                 }
+
                 setMessages(conversation_messages.map((message) => ({ ...message })));
                 setNextMessageId(messageId);
             }
@@ -174,43 +176,8 @@ export default function ChatPage() {
 
         const messageListener = (message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }) => {
             if (!message.complete) {
-                /*setIsGeneratingResponse(true);
-
-                setMessages((prevMessages) => {
-                    setCurrentConversation(message.conversation_id);
-
-                    if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
-                        prevMessages.pop();
-                    }
-
-                    const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
-
-                    if (existingMessageIndex !== -1) {
-                        const updatedMessages = [...prevMessages];
-                        updatedMessages[existingMessageIndex] = {
-                            ...updatedMessages[existingMessageIndex],
-                            text: updatedMessages[existingMessageIndex].text + message.text
-                        };
-                        return updatedMessages;
-                    } else {
-                        return [...prevMessages, message];
-                    }
-                });
-
-                setConversations((prevConversations) => {
-                    const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
-                    if (conversationIndex !== -1) {
-                        const updatedConversations = [...prevConversations];
-                        updatedConversations[conversationIndex] = {
-                            ...updatedConversations[conversationIndex],
-                            name: message.title
-                        };
-                        return updatedConversations;
-                    }
-                    return prevConversations;
-                });*/
                 setIsGeneratingResponse(true);
-                formatMessages(message)
+                formatMessages(message, 'chat')
             } else {
                 setIsGeneratingResponse(false);
             }
@@ -256,7 +223,7 @@ export default function ChatPage() {
         }
     }, [messages]);
 
-    function formatMessages(message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }) {
+    function formatMessages(message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }, type: string) {
         setMessages((prevMessages) => {
             setCurrentConversation(message.conversation_id);
 
@@ -274,7 +241,12 @@ export default function ChatPage() {
                 };
                 return updatedMessages;
             } else {
-                return [...prevMessages, message];
+                if (type == 'chat') {
+                    return [...prevMessages, message];
+                } else {
+                    return [...prevMessages, { ...message, id: uuidv4() }];
+                }
+
             }
         });
 
@@ -295,21 +267,32 @@ export default function ChatPage() {
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {
             return (
-                <div className="flex justify-between">
-                    <div className='flex justify-start'>
-                        {item.name ? <span>{item.name}</span> : <span>{item.id}</span>}
+                <div className="flex justify-between items-center">
+                    <div className='flex-1'>
+                        <span>{item.name}</span>
                     </div>
-                    <div className='flex justify-end'>
+                    <div className='flex'>
                         <Button
                             variant='light'
                             color="danger"
-                            onClick={async () => {
+                            onClick={async (e) => {
+                                e.stopPropagation(); // Prevent row click
                                 setIsLoading(true);
                                 await deleteConversation(item.id);
                                 window.location.reload();
                             }}
                         >
                             <TrashIcon width={15} />
+                        </Button>
+                        <Button
+                            variant='light'
+                            color="secondary"
+                            className='-ml-8'
+                            onClick={(e) => {
+                                setIsConversationNameModalOpen(true);
+                            }}
+                        >
+                            <PencilSquareIcon width={15} />
                         </Button>
                     </div>
                 </div>
@@ -318,6 +301,8 @@ export default function ChatPage() {
             return null;
         }
     };
+
+
 
     const sendChatMessage = useCallback(async (text = messageText, title: string) => {
         if (text.trim()) {
@@ -355,7 +340,7 @@ export default function ChatPage() {
                 console.log("Image Response: ", image_response);
 
                 const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true }
-                formatMessages(message)
+                formatMessages(message, 'image');
                 setIsGeneratingResponse(false);
             } else {
                 socket.emit('sendMessage', {
@@ -385,7 +370,7 @@ export default function ChatPage() {
 
     return (
         <div className='flex justify-between gap-2' style={{ height: '100vh' }}>
-            <div className='flex flex-col w-1/4'>
+            <div className='flex flex-col w-1/3'>
                 <Button
                     className='mb-4'
                     size='sm'
@@ -415,7 +400,6 @@ export default function ChatPage() {
                             {(item: Conversation) => (
                                 <TableRow
                                     key={item.id.toString()}
-
                                     onClick={async () => {
                                         setIsLoading(true);
                                         setCurrentConversation(item.id);
@@ -446,11 +430,12 @@ export default function ChatPage() {
                                 </TableRow>
                             )}
                         </TableBody>
+
                     </Table>
                 </div>
             </div>
 
-            <div className='w-3/4'>
+            <div className='w-2/3'>
                 <Card>
                     <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
                         <CardBody>
@@ -472,7 +457,7 @@ export default function ChatPage() {
                                                 <p className="font-semibold">{fullName}</p>
                                             )}
                                             {message.text.startsWith("http") ? (
-                                                <ImageWithFallback key={message.id} src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                                <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
                                             ) : (
                                                 <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                                             )}
@@ -564,6 +549,27 @@ export default function ChatPage() {
                 }}
                 message={translations?.subscription_is_active || ""}
             />
+
+            <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {
+                if (new_name) { // Ensure new_name is not undefined
+                    setIsConversationNameModalOpen(false);
+                    setIsLoading(true);
+                    await changeName(currentConversation, new_name);
+                    setIsLoading(false);
+                    setConversations(conversations.map((conversation) => {
+                        if (conversation.id === currentConversation) {
+                            return {
+                                ...conversation,
+                                name: new_name as string
+                            };
+                        }
+                        return conversation;
+                    }));
+                } else {
+                    setIsConversationNameModalOpen(false);
+                }
+            }} />
+
         </div>
     );
 }
