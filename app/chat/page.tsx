@@ -4,7 +4,6 @@ import Cookies from 'js-cookie';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../auth-context';
 import React, { useRef, useCallback, useState, useEffect } from "react";
-import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { io, Socket } from 'socket.io-client';
 import { Spacer } from "@nextui-org/spacer";
 import { Button } from "@nextui-org/button";
@@ -39,6 +38,7 @@ interface Message {
     text: string;
     username: string;
     conversation_id: string;
+    complete: boolean;
 }
 
 interface Conversation {
@@ -61,10 +61,10 @@ let columns: Column[] = [
     { key: "id", name: "Conversations" }
 ];
 
-let socket: Socket<DefaultEventsMap, DefaultEventsMap>;
+let socket: Socket | null = null;
 const defaultPic = "./profile.png";
 const aiPic = "./ai.png";
-let pageLoaded = false
+let pageLoaded = false;
 
 export default function ChatPage() {
     const [language, setLanguage] = useState('');
@@ -88,6 +88,161 @@ export default function ChatPage() {
     const [nextMessageId, setNextMessageId] = useState(0);
     const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
     const [isConversationNameModalOpen, setIsConversationNameModalOpen] = useState(false);
+    const [isSocketConnected, setIsSocketConnected] = useState(false);
+    const [isReconnecting, setIsReconnecting] = useState(false);
+
+    const messageListener = (message: Message) => {
+        console.log("Received message:", message);
+
+        setMessages((prevMessages) => {
+            const existingMessageIndex = prevMessages.findIndex(
+                (m) => m.id === message.id
+            );
+
+            const updatedMessages = prevMessages.filter(m => !m.id.startsWith('typing-'));
+
+            if (existingMessageIndex !== -1) {
+                updatedMessages[existingMessageIndex] = {
+                    ...updatedMessages[existingMessageIndex],
+                    text: updatedMessages[existingMessageIndex].text + message.text,
+                };
+
+                return updatedMessages;
+            } else {
+                return [...updatedMessages, message];
+            }
+        });
+
+        if (message.complete) {
+            setIsGeneratingResponse(false);
+        }
+    };
+
+    const sendChatMessage = useCallback(async (text = messageText, title: string) => {
+        if (text.trim()) {
+            const userMessageId = `${Date.now()}`;
+
+            if (!isSocketConnected) {
+                console.log("Socket disconnected, attempting to reconnect...");
+                setIsReconnecting(true);
+                socket?.connect();
+
+                await new Promise<void>((resolve) => {
+                    const checkConnection = () => {
+                        if (socket?.connected) {
+                            resolve();
+                        } else {
+                            setTimeout(checkConnection, 100);
+                        }
+                    };
+                    checkConnection();
+                });
+
+                setIsReconnecting(false);
+            }
+
+            const userMessage = {
+                id: userMessageId,
+                username: fullName,
+                text: title,
+                conversation_id: currentConversation,
+                complete: true // Ensure user message has complete flag
+            };
+
+            setMessages(prevMessages => [...prevMessages, userMessage]);
+
+            const typingMessageId = `typing-${Date.now()}`;
+            const typingMessage = {
+                id: typingMessageId,
+                username: 'Riccardo AI',
+                text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
+                conversation_id: currentConversation,
+                complete: false // Ensure typing indicator has incomplete flag
+            };
+
+            setMessages(prevMessages => [...prevMessages, typingMessage]);
+            setIsGeneratingResponse(true); // Start the loading bubble
+
+            setMessageText('');
+
+            console.log("userId: ", userId);
+            let current_agent;
+            try {
+                current_agent = await getAgent(selectedAgentId);
+            } catch (error) {
+                console.log("Error getting agent: ", error);
+            }
+
+            if (current_agent && current_agent.type === 'image') {
+                setIsGeneratingResponse(true);
+                const image_response = await generateImage(text, selectedAgentId, currentConversation);
+                console.log("Image Response: ", image_response);
+
+                const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true };
+                formatMessages(message, 'image');
+                setIsGeneratingResponse(false); // Stop the loading bubble
+            } else {
+                console.log("Sending message to server:", {
+                    senderId: userId,
+                    message: text,
+                    agent_id: selectedAgentId,
+                    conversation_id: currentConversation
+                });
+                socket?.emit('sendMessage', {
+                    senderId: userId,
+                    message: text,
+                    agent_id: selectedAgentId,
+                    conversation_id: currentConversation
+                });
+            }
+        }
+    }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
+
+    useEffect(() => {
+        if (isAuthenticatedClient && !socket) {
+            console.log('Initializing socket connection...');
+            socket = io('https://chatbot-books-9d87f0a90bbe.herokuapp.com', {
+                //socket = io('http://localhost:8090', {
+                query: { user_id: userId },
+                reconnection: true,
+                reconnectionAttempts: Infinity,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 1000
+            });
+
+            socket.on('connect', () => {
+                console.log('Socket connected:', socket?.id);
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('Socket disconnected:', reason);
+                if (reason === 'io server disconnect') {
+                    socket?.connect();
+                }
+            });
+
+            socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+            });
+
+            // Ensure only one messageListener is attached
+            if (!socket.hasListeners('message')) {
+                socket.on('message', messageListener);
+            }
+
+            return () => {
+                if (socket) {
+                    socket.off('connect');
+                    socket.off('disconnect');
+                    socket.off('connect_error');
+                    socket.off('message', messageListener);
+                    socket.close();
+                    socket = null;
+                }
+            };
+        }
+    }, [isAuthenticatedClient, userId]);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -134,13 +289,16 @@ export default function ChatPage() {
 
                 for (let i = 0; i < current_conversation.context.length; i++) {
                     const textMessage = i === 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
-                    const conversation_message: Message = {
-                        id: uuidv4(),  // Use uuid for unique keys
-                        text: textMessage,
-                        username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
-                        conversation_id: current_conversation.id
-                    };
-                    conversation_messages.push(conversation_message);
+                    if (textMessage && textMessage !== "NaN") {
+                        const conversation_message: Message = {
+                            id: uuidv4(), // Use uuid for unique keys
+                            text: textMessage,
+                            username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
+                            conversation_id: current_conversation.id,
+                            complete: false
+                        };
+                        conversation_messages.push(conversation_message);
+                    }
                 }
 
                 setMessages(conversation_messages.map((message) => ({ ...message })));
@@ -174,26 +332,6 @@ export default function ChatPage() {
                 setIsSuccessModalOpen(true);
             }
         }
-
-        socket = io('https://chatbot-books-9d87f0a90bbe.herokuapp.com', {
-            //socket = io('http://localhost:8090', {
-            query: { user_id }
-        });
-
-        const messageListener = (message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }) => {
-            if (!message.complete) {
-                setIsGeneratingResponse(true);
-                formatMessages(message, 'chat')
-            } else {
-                setIsGeneratingResponse(false);
-            }
-        };
-
-        socket.on('message', messageListener);
-
-        return () => {
-            socket.off('message', messageListener);
-        };
     }, []);
 
     useEffect(() => {
@@ -252,7 +390,6 @@ export default function ChatPage() {
                 } else {
                     return [...prevMessages, { ...message, id: uuidv4() }];
                 }
-
             }
         });
 
@@ -307,62 +444,6 @@ export default function ChatPage() {
             return null;
         }
     };
-
-    const sendChatMessage = useCallback(async (text = messageText, title: string) => {
-        if (text.trim()) {
-            const userMessageId = `${Date.now()}`;
-
-            if (socket.disconnected) {
-                console.log("Socket disconnected")
-                socket.connect();
-            }
-
-            const userMessage = {
-                id: userMessageId,
-                username: fullName,
-                text: title,
-            };
-
-            setMessages(prevMessages => [...prevMessages, { ...userMessage, conversation_id: currentConversation }]);
-
-            const typingMessageId = `typing-${Date.now()}`;
-            const typingMessage = {
-                id: typingMessageId,
-                username: 'Riccardo AI',
-                text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
-                conversation_id: currentConversation
-            };
-
-            setMessages(prevMessages => [...prevMessages, typingMessage]);
-
-            setMessageText('');
-
-            console.log("userId: ", userId);
-            let current_agent
-            try {
-                current_agent = await getAgent(selectedAgentId);
-            } catch (error) {
-                console.log("Error getting agent: ", error);
-            }
-
-            if (current_agent && current_agent.type === 'image') {
-                setIsGeneratingResponse(true);
-                const image_response = await generateImage(text, selectedAgentId, currentConversation);
-                console.log("Image Response: ", image_response);
-
-                const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true }
-                formatMessages(message, 'image');
-                setIsGeneratingResponse(false);
-            } else {
-                socket.emit('sendMessage', {
-                    senderId: userId,
-                    message: text,
-                    agent_id: selectedAgentId,
-                    conversation_id: currentConversation
-                });
-            }
-        }
-    }, [messageText, setMessages]);
 
     function formatMessageText(text: string) {
         const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -424,7 +505,8 @@ export default function ChatPage() {
                                                 id: i.toString(),
                                                 text: textMessage,
                                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
-                                                conversation_id: item.id
+                                                conversation_id: item.id,
+                                                complete: false
                                             };
                                             conversation_messages.push(conversation_message);
                                         }
@@ -450,7 +532,7 @@ export default function ChatPage() {
                     <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
                         <CardBody>
 
-                            {messages.map((message) => (
+                            {messages.filter(message => message.text && message.text !== "NaN").map((message) => (
                                 <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
                                     <div className="flex items-start rounded-lg" style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}>
                                         {message.username === Cookies.get('user_name') && (
@@ -475,6 +557,7 @@ export default function ChatPage() {
                                     </div>
                                 </div>
                             ))}
+
                         </CardBody>
                     </div>
 
@@ -533,8 +616,8 @@ export default function ChatPage() {
                                     isDisabled={!isGeneratingResponse}
                                     size='sm'
                                     onClick={() => {
-                                        setIsGeneratingResponse(false)
-                                        socket.disconnect();
+                                        setIsGeneratingResponse(false);
+                                        socket?.disconnect();
                                     }}
                                 >
                                     <StopIcon />
