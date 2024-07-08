@@ -64,6 +64,7 @@ let columns: Column[] = [
 let socket: Socket<DefaultEventsMap, DefaultEventsMap>;
 const defaultPic = "./profile.png";
 const aiPic = "./ai.png";
+let pageLoaded = false
 
 export default function ChatPage() {
     const [language, setLanguage] = useState('');
@@ -108,6 +109,7 @@ export default function ChatPage() {
 
     useEffect(() => {
         let user_id;
+
         async function fetchData() {
             const current_user = await getUser();
             user_id = current_user.id;
@@ -162,7 +164,11 @@ export default function ChatPage() {
         if (!isAuthenticatedClient) {
             window.location.href = '/';
         } else {
-            fetchData();
+            if (!pageLoaded) {
+                pageLoaded = true
+                fetchData();
+            }
+
             if (window.location.href.includes('session_id')) {
                 console.log("Session ID found");
                 setIsSuccessModalOpen(true);
@@ -188,7 +194,7 @@ export default function ChatPage() {
         return () => {
             socket.off('message', messageListener);
         };
-    }, [isAuthenticatedClient]);
+    }, []);
 
     useEffect(() => {
         const chatContainer = chatContainerRef.current;
@@ -307,6 +313,7 @@ export default function ChatPage() {
             const userMessageId = `${Date.now()}`;
 
             if (socket.disconnected) {
+                console.log("Socket disconnected")
                 socket.connect();
             }
 
@@ -360,7 +367,6 @@ export default function ChatPage() {
     function formatMessageText(text: string) {
         const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         const newLineFormatted = boldFormatted.replace(/\n/g, '<br>');
-        console.log(newLineFormatted);
         return newLineFormatted;
     }
 
@@ -526,9 +532,9 @@ export default function ChatPage() {
                                 <Button
                                     isDisabled={!isGeneratingResponse}
                                     size='sm'
-                                    onClick={async () => {
-                                        socket.disconnect();
+                                    onClick={() => {
                                         setIsGeneratingResponse(false)
+                                        socket.disconnect();
                                     }}
                                 >
                                     <StopIcon />
