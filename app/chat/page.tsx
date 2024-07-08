@@ -302,21 +302,19 @@ export default function ChatPage() {
         }
     };
 
-
-
     const sendChatMessage = useCallback(async (text = messageText, title: string) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
+
+            if (socket.disconnected) {
+                socket.connect();
+            }
 
             const userMessage = {
                 id: userMessageId,
                 username: fullName,
                 text: title,
             };
-
-            if (socket.disconnected) {
-                socket.connect();
-            }
 
             setMessages(prevMessages => [...prevMessages, { ...userMessage, conversation_id: currentConversation }]);
 
@@ -333,8 +331,14 @@ export default function ChatPage() {
             setMessageText('');
 
             console.log("userId: ", userId);
-            const current_agent = await getAgent(selectedAgentId);
-            if (current_agent.type === 'image') {
+            let current_agent
+            try {
+                current_agent = await getAgent(selectedAgentId);
+            } catch (error) {
+                console.log("Error getting agent: ", error);
+            }
+
+            if (current_agent && current_agent.type === 'image') {
                 setIsGeneratingResponse(true);
                 const image_response = await generateImage(text, selectedAgentId, currentConversation);
                 console.log("Image Response: ", image_response);
@@ -465,10 +469,6 @@ export default function ChatPage() {
                                     </div>
                                 </div>
                             ))}
-
-
-
-
                         </CardBody>
                     </div>
 
