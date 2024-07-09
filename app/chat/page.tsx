@@ -16,7 +16,7 @@ import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName } from '@/managers/conversationsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName, stopSequence } from '@/managers/conversationsManager';
 import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
@@ -99,7 +99,7 @@ export default function ChatPage() {
                 (m) => m.id === message.id
             );
 
-            const updatedMessages = prevMessages.filter(m => !m.id.startsWith('typing-'));
+            const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
 
             if (existingMessageIndex !== -1) {
                 updatedMessages[existingMessageIndex] = {
@@ -201,14 +201,10 @@ export default function ChatPage() {
     useEffect(() => {
         if (isAuthenticatedClient && !socket) {
             console.log('Initializing socket connection...');
-            socket = io('https://chatbot-books-9d87f0a90bbe.herokuapp.com', {
+            socket = io('https://18.185.31.235.nip.io', {
                 //socket = io('http://localhost:8090', {
                 query: { user_id: userId },
-                reconnection: true,
-                reconnectionAttempts: Infinity,
-                reconnectionDelay: 1000,
-                reconnectionDelayMax: 5000,
-                timeout: 1000
+                reconnection: false,
             });
 
             socket.on('connect', () => {
@@ -217,9 +213,7 @@ export default function ChatPage() {
 
             socket.on('disconnect', (reason) => {
                 console.log('Socket disconnected:', reason);
-                if (reason === 'io server disconnect') {
-                    socket?.connect();
-                }
+                socket?.connect();
             });
 
             socket.on('connect_error', (error) => {
@@ -241,8 +235,11 @@ export default function ChatPage() {
                     socket = null;
                 }
             };
+        } else if (!isAuthenticatedClient) {
+            window.location.href = '/';
         }
     }, [isAuthenticatedClient, userId]);
+
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -615,9 +612,10 @@ export default function ChatPage() {
                                 <Button
                                     isDisabled={!isGeneratingResponse}
                                     size='sm'
-                                    onClick={() => {
-                                        setIsGeneratingResponse(false);
-                                        socket?.disconnect();
+                                    onClick={async () => {
+                                        //setIsGeneratingResponse(false);
+                                        //socket?.disconnect();
+                                        await stopSequence()
                                     }}
                                 >
                                     <StopIcon />

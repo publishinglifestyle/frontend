@@ -1,8 +1,10 @@
 import Cookie from 'js-cookie';
 import axios from 'axios'
 
-const endpoint = "https://chatbot-books-9d87f0a90bbe.herokuapp.com/"
+//const endpoint = "https://chatbot-books-9d87f0a90bbe.herokuapp.com/"
 //const endpoint = "http://localhost:8090/"
+const endpoint = "https://18.185.31.235.nip.io/"
+
 const headers = {
     'Content-Type': 'application/json',
     'Authorization': Cookie.get('authToken')
