@@ -179,7 +179,30 @@ export default function ChatPage() {
                 console.log("Image Response: ", image_response);
 
                 const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true };
-                formatMessages(message, 'image');
+
+                setMessages((prevMessages) => {
+                    const existingMessageIndex = prevMessages.findIndex(
+                        (m) => m.id === message.id
+                    );
+
+                    const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+                    if (existingMessageIndex !== -1) {
+                        updatedMessages[existingMessageIndex] = {
+                            ...updatedMessages[existingMessageIndex],
+                            text: updatedMessages[existingMessageIndex].text + message.text,
+                            id: message.id
+                        };
+
+                        return updatedMessages;
+                    } else {
+                        return [...updatedMessages, message];
+                    }
+                });
+
+                if (message.complete) {
+                    setIsGeneratingResponse(false);
+                }
                 setIsGeneratingResponse(false); // Stop the loading bubble
             } else {
                 console.log("Sending message to server:", {
@@ -363,46 +386,6 @@ export default function ChatPage() {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
     }, [messages]);
-
-    function formatMessages(message: { id: string, username: string, text: string, conversation_id: string, title: string, complete: boolean }, type: string) {
-        setMessages((prevMessages) => {
-            setCurrentConversation(message.conversation_id);
-
-            if (prevMessages.length > 0 && prevMessages[prevMessages.length - 1].username === 'Riccardo AI') {
-                prevMessages.pop();
-            }
-
-            const existingMessageIndex = prevMessages.findIndex(m => m.id === message.id);
-
-            if (existingMessageIndex !== -1) {
-                const updatedMessages = [...prevMessages];
-                updatedMessages[existingMessageIndex] = {
-                    ...updatedMessages[existingMessageIndex],
-                    text: updatedMessages[existingMessageIndex].text + message.text
-                };
-                return updatedMessages;
-            } else {
-                if (type == 'chat') {
-                    return [...prevMessages, message];
-                } else {
-                    return [...prevMessages, { ...message, id: uuidv4() }];
-                }
-            }
-        });
-
-        setConversations((prevConversations) => {
-            const conversationIndex = prevConversations.findIndex(c => c.id === message.conversation_id);
-            if (conversationIndex !== -1) {
-                const updatedConversations = [...prevConversations];
-                updatedConversations[conversationIndex] = {
-                    ...updatedConversations[conversationIndex],
-                    name: message.title
-                };
-                return updatedConversations;
-            }
-            return prevConversations;
-        });
-    }
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {
