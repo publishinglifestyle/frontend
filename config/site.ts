@@ -8,7 +8,15 @@ export const siteConfig = {
       'value': 'Chat',
       'label': 'Chat',
       'href': '/chat',
-      'allow_user': true
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'Chat',
+      'label': 'Chat',
+      'href': '/chat',
+      'allow_user': true,
+      'language': 'it'
     },
     {
       'value': 'Agents',
@@ -30,7 +38,15 @@ export const siteConfig = {
       'value': 'Chat',
       'label': 'Chat',
       'href': '/chat',
-      'allow_user': true
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'Chat',
+      'label': 'Chat',
+      'href': '/chat',
+      'allow_user': true,
+      'language': 'it'
     },
     {
       'value': 'Agents',

@@ -3,7 +3,7 @@ import axios from 'axios'
 
 //const endpoint = "https://chatbot-books-9d87f0a90bbe.herokuapp.com/"
 //const endpoint = "http://localhost:8090/"
-const endpoint = "https://18.185.31.235.nip.io/"
+const endpoint = "https://3.79.166.136.nip.io/"
 
 const headers = {
     'Content-Type': 'application/json',

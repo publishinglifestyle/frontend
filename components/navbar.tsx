@@ -1,7 +1,6 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from 'react';
-
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -17,112 +16,77 @@ import { Spacer } from "@nextui-org/spacer";
 import { Divider } from "@nextui-org/divider";
 import { Link } from "@nextui-org/link";
 import NextLink from "next/link";
-
 import { siteConfig } from "@/config/site";
-import {
-  Logo,
-} from "@/components/icons";
-
+import { Logo } from "@/components/icons";
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/app/auth-context';
 import { getUser, getProfilePic } from '@/managers/userManager';
 import { getTranslations } from '../managers/languageManager';
 import { Translations } from '../translations.d';
 
-const defaultPic = "./profile.png"
+const defaultPic = "./profile.png";
 
 export const Navbar = () => {
-  const router = useRouter()
-  const pathname = usePathname()
+  const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated: isAuthenticatedClient, logout } = useAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [currentPage, setCurrentPage] = useState('')
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [userRole, setUserRole] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [currentPage, setCurrentPage] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [profileImage, setProfileImage] = useState(defaultPic);
   const [language, setLanguage] = useState('');
   const [translations, setTranslations] = useState<Translations | null>(null);
 
   useEffect(() => {
     const detectLanguage = async () => {
-      // Detect browser language
-      const browserLanguage = navigator.language;
+      let browserLanguage = navigator.language;
+      browserLanguage = browserLanguage.slice(0, 2);
       setLanguage(browserLanguage);
-
-      // Get translations for the detected language
-      const translations = await getTranslations(browserLanguage);
-      setTranslations(translations);
+      const all_translations = await getTranslations(browserLanguage);
+      setTranslations(all_translations);
     };
 
     detectLanguage();
   }, []);
 
   useEffect(() => {
+    console.log("isAuthenticatedClient:", isAuthenticatedClient);
+    console.log("pathname:", pathname);
+
     switch (pathname) {
-      case '/': {
-        setShowMenu(false)
-      }
-        break;
-      case '/chat': {
-        setCurrentPage('chat')
-        setShowMenu(true)
-      }
-        break;
-      case '/agents': {
-        setCurrentPage('agents')
-        setShowMenu(true)
-      }
-        break;
-      case '/profile': {
-        setCurrentPage('profile')
-        setShowMenu(true)
-      }
-        break;
-      default: setShowMenu(false)
-        break
+      case '/': setShowMenu(false); break;
+      case '/chat': setCurrentPage('chat'); setShowMenu(true); break;
+      case '/agents': setCurrentPage('agents'); setShowMenu(true); break;
+      case '/profile': setCurrentPage('profile'); setShowMenu(true); break;
+      default: setShowMenu(false); break;
     }
 
     const fetchData = async () => {
-      const result = await getUser()
-
-      let full_name = ''
-      if (result.first_name) {
-        full_name += result.first_name + " "
-      }
-      if (result.last_name) {
-        full_name += result.last_name
-      }
-      setName(full_name)
-      setEmail(result.email)
-      setUserRole(result.role)
-
+      const result = await getUser();
+      setName(`${result.first_name || ''} ${result.last_name || ''}`.trim());
+      setEmail(result.email);
+      setUserRole(result.role);
       try {
-        const logo_img = await getProfilePic()
-        if (logo_img) {
-          setProfileImage(logo_img)
-        } else {
-          setProfileImage(defaultPic)
-        }
+        const logo_img = await getProfilePic();
+        setProfileImage(logo_img || defaultPic);
       } catch {
-        setProfileImage(defaultPic)
+        setProfileImage(defaultPic);
       }
-
     };
 
     if (isAuthenticatedClient) {
       setIsAuthenticated(true);
       fetchData();
     }
-
   }, [isAuthenticatedClient, pathname]);
 
   const logOut = async () => {
-    logout()
-    //setIsAuthenticated(false)
-    //window.location.href = '/'
+    logout();
+    // window.location.href = '/';
   }
 
   return (
@@ -135,60 +99,54 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) =>
-            isAuthenticated && (
-              (userRole === 'user' && item.allow_user) || userRole !== 'user' ? (
-                ((!item.language || item.language === language) &&
-                  <NavbarItem key={item.href}>
-                    <NextLink
-                      style={{
-                        color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
-                      }}
-                      href={item.href}
-                    >
-                      {item.label}
-                    </NextLink>
-                  </NavbarItem>
-                )
+          {siteConfig.navItems.map((item) => {
+            console.log("item.language:", item.language);
+            console.log("language:", language);
+            return isAuthenticated && (
+              (userRole == 'user' && item.allow_user) || userRole != 'user' ? (
+                (!item.language || item.language == language) &&
+                <NavbarItem key={item.href}>
+                  <NextLink
+                    style={{
+                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
+                    }}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </NextLink>
+                </NavbarItem>
               ) : null
             )
-          )}
+          })}
         </ul>
-
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
-        justify="end"
-      >
+      <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
         <NavbarItem className="hidden md:flex">
-          {
-            name &&
-            <>
-              <Dropdown placement="bottom-start" style={{ width: "10%" }}>
-                <DropdownTrigger>
-                  <User
-                    as="button"
-                    avatarProps={{
-                      isBordered: true,
-                      src: profileImage,
-                    }}
-                    className="transition-transform"
-                    description={<span style={{ color: "#9353D3" }}>{email}</span>}
-                    name={name}
-                  />
-                </DropdownTrigger>
-                <DropdownMenu aria-label="User Actions" variant="flat">
-                  <DropdownItem key="profile" onClick={() => router.push('/profile')}>
-                    {translations?.my_profile}
-                  </DropdownItem>
-                  <DropdownItem key="logout" color="danger" onClick={logOut}>
-                    Log Out
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            </>
-          }
+          {name && (
+            <Dropdown placement="bottom-start">
+              <DropdownTrigger>
+                <User
+                  as="button"
+                  avatarProps={{
+                    isBordered: true,
+                    src: profileImage,
+                  }}
+                  className="transition-transform"
+                  description={<span style={{ color: "#9353D3" }}>{email}</span>}
+                  name={name}
+                />
+              </DropdownTrigger>
+              <DropdownMenu aria-label="User Actions" variant="flat">
+                <DropdownItem key="profile" onClick={() => router.push('/profile')}>
+                  {translations?.my_profile}
+                </DropdownItem>
+                <DropdownItem key="logout" color="danger" onClick={logOut}>
+                  Log Out
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          )}
         </NavbarItem>
       </NavbarContent>
 
@@ -202,7 +160,7 @@ export const Navbar = () => {
             .filter(item => (userRole === 'user' && item.allow_user) || userRole !== 'user')
             .filter(item => !item.language || item.language === language)
             .map((item, index) => (
-              name ? (
+              name && (
                 <NavbarMenuItem key={`${item}-${index}`}>
                   <Link
                     style={{
@@ -214,9 +172,8 @@ export const Navbar = () => {
                     {item.label}
                   </Link>
                 </NavbarMenuItem>
-              ) : null
+              )
             ))}
-
           <Spacer y={4} />
           <Divider />
           <NavbarMenuItem key="profile">
@@ -224,7 +181,6 @@ export const Navbar = () => {
               href="/profile"
               color='foreground'
               onClick={() => setIsMenuOpen(false)}
-              key="profile"
               size="lg"
             >
               {translations?.my_profile}
@@ -233,12 +189,11 @@ export const Navbar = () => {
           <NavbarMenuItem key="logout">
             <Link
               href="#"
-              key="logout"
               size="lg"
               color="danger"
               onClick={() => {
-                logOut()
-                setIsMenuOpen(false)
+                logOut();
+                setIsMenuOpen(false);
               }}
             >
               Logout

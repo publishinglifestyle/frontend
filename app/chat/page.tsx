@@ -16,7 +16,7 @@ import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName, stopSequence } from '@/managers/conversationsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName } from '@/managers/conversationsManager';
 import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
@@ -224,7 +224,7 @@ export default function ChatPage() {
     useEffect(() => {
         if (isAuthenticatedClient && !socket) {
             console.log('Initializing socket connection...');
-            socket = io('https://18.185.31.235.nip.io', {
+            socket = io('https://3.79.166.136.nip.io', {
                 //socket = io('http://localhost:8090', {
                 query: { user_id: userId },
                 reconnection: false,
@@ -440,8 +440,8 @@ export default function ChatPage() {
     }
 
     return (
-        <div className='flex justify-between gap-2' style={{ height: '100vh' }}>
-            <div className='flex flex-col w-1/3'>
+        <div className='flex flex-col md:flex-row justify-between gap-2' style={{ height: '100vh' }}>
+            <div className='flex flex-col md:w-1/3'>
                 <Button
                     className='mb-4'
                     size='sm'
@@ -507,7 +507,7 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            <div className='w-2/3'>
+            <div className='md:w-2/3'>
                 <Card>
                     <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
                         <CardBody>
@@ -596,9 +596,8 @@ export default function ChatPage() {
                                     isDisabled={!isGeneratingResponse}
                                     size='sm'
                                     onClick={async () => {
-                                        //setIsGeneratingResponse(false);
-                                        //socket?.disconnect();
-                                        await stopSequence()
+                                        setIsGeneratingResponse(false);
+                                        socket?.disconnect();
                                     }}
                                 >
                                     <StopIcon />

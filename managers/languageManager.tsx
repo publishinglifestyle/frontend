@@ -8,8 +8,11 @@ import { Translations } from '../translations.d';
 export const getTranslations = async (detectedLanguage: string): Promise<Translations> => {
     const defaultLanguage = 'en';
 
+    // Extract the first two characters of the detected language
+    const languageCode = detectedLanguage.slice(0, 2);
+
     // Determine the language to use
-    const language = ['en', 'it'].includes(detectedLanguage) ? detectedLanguage : defaultLanguage;
+    const language = ['en', 'it'].includes(languageCode) ? languageCode : defaultLanguage;
 
     try {
         // Dynamically import the correct JSON file and cast to Translations
