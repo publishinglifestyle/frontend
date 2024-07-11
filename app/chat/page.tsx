@@ -39,6 +39,7 @@ interface Message {
     username: string;
     conversation_id: string;
     complete: boolean;
+    title: string;
 }
 
 interface Conversation {
@@ -91,6 +92,33 @@ export default function ChatPage() {
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [isReconnecting, setIsReconnecting] = useState(false);
 
+    /*const messageListener = (message: Message) => {
+        console.log("Received message:", message);
+
+        setMessages((prevMessages) => {
+            const existingMessageIndex = prevMessages.findIndex(
+                (m) => m.id === message.id
+            );
+
+            const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+            if (existingMessageIndex !== -1) {
+                updatedMessages[existingMessageIndex] = {
+                    ...updatedMessages[existingMessageIndex],
+                    text: updatedMessages[existingMessageIndex].text + message.text,
+                };
+
+                return updatedMessages;
+            } else {
+                return [...updatedMessages, message];
+            }
+        });
+
+        if (message.complete) {
+            setIsGeneratingResponse(false);
+        }
+    };*/
+
     const messageListener = (message: Message) => {
         console.log("Received message:", message);
 
@@ -116,7 +144,18 @@ export default function ChatPage() {
         if (message.complete) {
             setIsGeneratingResponse(false);
         }
+
+        if (message.title) {
+            setConversations(prevConversations =>
+                prevConversations.map(conversation =>
+                    conversation.id === message.conversation_id
+                        ? { ...conversation, name: message.title }
+                        : conversation
+                )
+            );
+        }
     };
+
 
     const sendChatMessage = useCallback(async (text = messageText, title: string) => {
         if (text.trim()) {
@@ -146,7 +185,8 @@ export default function ChatPage() {
                 username: fullName,
                 text: title,
                 conversation_id: currentConversation,
-                complete: true // Ensure user message has complete flag
+                complete: true,
+                title: ""
             };
 
             setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -157,7 +197,8 @@ export default function ChatPage() {
                 username: 'Riccardo AI',
                 text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
                 conversation_id: currentConversation,
-                complete: false // Ensure typing indicator has incomplete flag
+                complete: false,
+                title: ""
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
@@ -315,7 +356,8 @@ export default function ChatPage() {
                             text: textMessage,
                             username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
                             conversation_id: current_conversation.id,
-                            complete: false
+                            complete: false,
+                            title: ""
                         };
                         conversation_messages.push(conversation_message);
                     }
@@ -448,12 +490,35 @@ export default function ChatPage() {
                     color='secondary'
                     onClick={async () => {
                         setIsLoading(true);
-                        await createConversation();
-                        window.location.reload();
+                        const newConversation = await createConversation();
+                        console.log("New Conversation: ", newConversation);
+                        setConversations(prevConversations => [...prevConversations, newConversation]);
+                        setCurrentConversation(newConversation.id);
+
+                        // Fetch and display messages for the new conversation
+                        const conversation = await getConversation(newConversation.id);
+                        let conversation_messages = [];
+                        let messageId = 0;
+                        for (let i = 0; i < conversation.context.length; i++) {
+                            const textMessage = i === 0 ? GREETING_MESSAGE : conversation.context[i].content;
+                            const conversation_message: Message = {
+                                id: i.toString(),
+                                text: textMessage,
+                                username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
+                                conversation_id: newConversation.id,
+                                complete: false,
+                                title: ""
+                            };
+                            conversation_messages.push(conversation_message);
+                        }
+                        setMessages(conversation_messages.map((message) => ({ ...message })));
+                        setNextMessageId(messageId);
+                        setIsLoading(false);
                     }}
                 >
                     {translations?.new_conversation}
                 </Button>
+
                 <div style={{ height: '75%', overflowY: 'auto' }}>
                     <Table
                         aria-label={translations?.conversations || ""}
@@ -486,7 +551,8 @@ export default function ChatPage() {
                                                 text: textMessage,
                                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
                                                 conversation_id: item.id,
-                                                complete: false
+                                                complete: false,
+                                                title: ""
                                             };
                                             conversation_messages.push(conversation_message);
                                         }
