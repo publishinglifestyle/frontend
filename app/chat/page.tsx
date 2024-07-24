@@ -16,11 +16,12 @@ import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, changeName } from '@/managers/conversationsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName } from '@/managers/conversationsManager';
 import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 import ConversationNameModal from '../modals/conversationName';
+import { button, image } from '@nextui-org/theme';
 
 let GREETING_MESSAGE = "";
 
@@ -40,6 +41,8 @@ interface Message {
     conversation_id: string;
     complete: boolean;
     title: string;
+    buttons: string[];
+    messageId: string;
 }
 
 interface Conversation {
@@ -92,33 +95,6 @@ export default function ChatPage() {
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [isReconnecting, setIsReconnecting] = useState(false);
 
-    /*const messageListener = (message: Message) => {
-        console.log("Received message:", message);
-
-        setMessages((prevMessages) => {
-            const existingMessageIndex = prevMessages.findIndex(
-                (m) => m.id === message.id
-            );
-
-            const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
-
-            if (existingMessageIndex !== -1) {
-                updatedMessages[existingMessageIndex] = {
-                    ...updatedMessages[existingMessageIndex],
-                    text: updatedMessages[existingMessageIndex].text + message.text,
-                };
-
-                return updatedMessages;
-            } else {
-                return [...updatedMessages, message];
-            }
-        });
-
-        if (message.complete) {
-            setIsGeneratingResponse(false);
-        }
-    };*/
-
     const messageListener = (message: Message) => {
         console.log("Received message:", message);
 
@@ -156,8 +132,7 @@ export default function ChatPage() {
         }
     };
 
-
-    const sendChatMessage = useCallback(async (text = messageText, title: string) => {
+    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
 
@@ -183,10 +158,12 @@ export default function ChatPage() {
             const userMessage = {
                 id: userMessageId,
                 username: fullName,
-                text: title,
+                text: messageText,
                 conversation_id: currentConversation,
                 complete: true,
-                title: ""
+                title: "",
+                buttons: [],
+                messageId: ""
             };
 
             setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -198,7 +175,9 @@ export default function ChatPage() {
                 text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
                 conversation_id: currentConversation,
                 complete: false,
-                title: ""
+                title: "",
+                buttons: [],
+                messageId: ""
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
@@ -214,37 +193,59 @@ export default function ChatPage() {
                 console.log("Error getting agent: ", error);
             }
 
-            if (current_agent && current_agent.type === 'image') {
+            if ((current_agent && current_agent.type === 'image') || isButtonPressed) {
                 setIsGeneratingResponse(true);
-                const image_response = await generateImage(text, selectedAgentId, currentConversation);
+                let image_response: any = ""; // Use 'any' type for now to bypass TypeScript issues
+
+                if (isButtonPressed) {
+                    image_response = await pressButton(currentConversation, userMessageId, midjourneyMessageId, text);
+                    console.log("Button pressed response: ", image_response);
+                } else {
+                    image_response = await generateImage(text, selectedAgentId, currentConversation);
+                }
+
                 console.log("Image Response: ", image_response);
 
-                const message = { id: image_response.messageId, username: 'Riccardo AI', text: image_response.response, conversation_id: currentConversation, title: image_response.conversation_name, complete: true };
+                // Check if image_response is an object and has the required properties
+                if (image_response && image_response.image_ready) {
+                    const message = {
+                        id: image_response.messageId,
+                        username: 'Riccardo AI',
+                        text: image_response.response,
+                        conversation_id: currentConversation,
+                        title: image_response.conversation_name,
+                        complete: true,
+                        buttons: [],
+                        messageId: ""
+                    };
 
-                setMessages((prevMessages) => {
-                    const existingMessageIndex = prevMessages.findIndex(
-                        (m) => m.id === message.id
-                    );
+                    setMessages((prevMessages) => {
+                        const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
+                        const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
 
-                    const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+                        if (existingMessageIndex !== -1) {
+                            updatedMessages[existingMessageIndex] = {
+                                ...updatedMessages[existingMessageIndex],
+                                text: updatedMessages[existingMessageIndex].text + message.text,
+                                id: message.id
+                            };
 
-                    if (existingMessageIndex !== -1) {
-                        updatedMessages[existingMessageIndex] = {
-                            ...updatedMessages[existingMessageIndex],
-                            text: updatedMessages[existingMessageIndex].text + message.text,
-                            id: message.id
-                        };
+                            return updatedMessages;
+                        } else {
+                            return [...updatedMessages, message];
+                        }
+                    });
 
-                        return updatedMessages;
-                    } else {
-                        return [...updatedMessages, message];
+                    if (message.complete) {
+                        setIsGeneratingResponse(false);
                     }
-                });
-
-                if (message.complete) {
-                    setIsGeneratingResponse(false);
+                    setIsGeneratingResponse(false); // Stop the loading bubble
+                } else {
+                    const waiting_time = isButtonPressed ? 5000 : 60000;
+                    setTimeout(() => {
+                        checkImageStatusPeriodically(text, image_response.response.messageId);
+                    }, waiting_time);
                 }
-                setIsGeneratingResponse(false); // Stop the loading bubble
             } else {
                 console.log("Sending message to server:", {
                     senderId: userId,
@@ -259,8 +260,52 @@ export default function ChatPage() {
                     conversation_id: currentConversation
                 });
             }
+
         }
     }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
+
+    async function checkImageStatusPeriodically(prompt: string, messageId: string) {
+        // Check the status of the image
+        const image_status = await checkImageStatus(prompt, messageId, currentConversation);
+        console.log("Image Status: ", image_status);
+
+        if (image_status.status == "PROCESSING") {
+            console.log("Image still processing...");
+            // Wait for 30 seconds before checking again
+            setTimeout(() => {
+                checkImageStatusPeriodically(prompt, messageId);
+            }, 30000);
+        } else {
+            console.log("Image processing complete.");
+            console.log(image_status)
+            const message = { id: image_status.messageId, username: 'Riccardo AI', text: image_status.imageUrl, conversation_id: currentConversation, title: image_status.conversation_name, complete: true, buttons: image_status.buttons, messageId: image_status.messageId };
+
+            setMessages((prevMessages) => {
+                const existingMessageIndex = prevMessages.findIndex(
+                    (m) => m.id === message.id
+                );
+
+                const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+                if (existingMessageIndex !== -1) {
+                    updatedMessages[existingMessageIndex] = {
+                        ...updatedMessages[existingMessageIndex],
+                        text: updatedMessages[existingMessageIndex].text + message.text,
+                        id: message.id
+                    };
+
+                    return updatedMessages;
+                } else {
+                    return [...updatedMessages, message];
+                }
+            });
+
+            if (message.complete) {
+                setIsGeneratingResponse(false);
+            }
+            setIsGeneratingResponse(false); // Stop the loading bubble
+        }
+    }
 
     useEffect(() => {
         if (isAuthenticatedClient && !socket) {
@@ -339,6 +384,7 @@ export default function ChatPage() {
             setAgents(all_agents);
 
             const all_conversations = await getConversations();
+            console.log(all_conversations)
             setConversations(all_conversations);
 
             if (all_conversations.length > 0) {
@@ -357,7 +403,9 @@ export default function ChatPage() {
                             username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
                             conversation_id: current_conversation.id,
                             complete: false,
-                            title: ""
+                            title: "",
+                            buttons: current_conversation.context[i].buttons,
+                            messageId: current_conversation.context[i].messageId
                         };
                         conversation_messages.push(conversation_message);
                     }
@@ -483,7 +531,7 @@ export default function ChatPage() {
 
     return (
         <div className='flex flex-col md:flex-row justify-between gap-2' style={{ height: '100vh' }}>
-            <div className='flex flex-col md:w-1/3'>
+            <div className='flex flex-col md:w-1/4'>
                 <Button
                     className='mb-4'
                     size='sm'
@@ -507,7 +555,9 @@ export default function ChatPage() {
                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
                                 conversation_id: newConversation.id,
                                 complete: false,
-                                title: ""
+                                title: "",
+                                buttons: conversation.context[i].buttons,
+                                messageId: conversation.context[i].messageId
                             };
                             conversation_messages.push(conversation_message);
                         }
@@ -552,7 +602,9 @@ export default function ChatPage() {
                                                 username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
                                                 conversation_id: item.id,
                                                 complete: false,
-                                                title: ""
+                                                title: "",
+                                                buttons: conversation.context[i].buttons,
+                                                messageId: conversation.context[i].messageId
                                             };
                                             conversation_messages.push(conversation_message);
                                         }
@@ -573,7 +625,7 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            <div className='md:w-2/3'>
+            <div className='md:w-3/4'>
                 <Card>
                     <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
                         <CardBody>
@@ -595,10 +647,32 @@ export default function ChatPage() {
                                                 <p className="font-semibold">{fullName}</p>
                                             )}
                                             {message.text.startsWith("http") ? (
-                                                <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                                <>
+                                                    <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                                    {message.buttons?.length > 0 && (
+                                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
+                                                            {message.buttons.map((button, index) => (
+                                                                <Button
+                                                                    size="sm"
+                                                                    key={index}
+                                                                    color="secondary"
+                                                                    className="w-full"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        sendChatMessage(button, true, message.messageId);
+                                                                    }}
+                                                                >
+                                                                    {button}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </>
                                             ) : (
                                                 <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                                             )}
+
+
                                         </div>
                                     </div>
                                 </div>
@@ -621,7 +695,7 @@ export default function ChatPage() {
                                     onKeyDown={async e => {
                                         if (e.key === 'Enter' && !e.shiftKey && messageText) {
                                             e.preventDefault();
-                                            sendChatMessage(messageText, messageText);
+                                            sendChatMessage(messageText, false, '');
                                         }
                                     }}
                                 />
@@ -652,8 +726,9 @@ export default function ChatPage() {
                                     fullWidth
                                     color='secondary'
                                     style={{ color: "white" }}
-                                    onClick={async () => {
-                                        sendChatMessage(messageText, messageText);
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        sendChatMessage(messageText, false, '');
                                     }}
                                 >
                                     {translations?.send}

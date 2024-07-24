@@ -59,6 +59,26 @@ export async function generateImage(msg, agent_id, conversation_id) {
     }
 }
 
+export async function checkImageStatus(msg, messageId, conversation_id) {
+    let response = await axios.post(endpoint + "check_image_status",
+        { msg, messageId, conversation_id },
+        { headers: headers });
+
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function pressButton(conversation_id, messageId, midjourneyMessageId, button) {
+    let response = await axios.post(endpoint + "press_button",
+        { conversation_id, messageId, midjourneyMessageId, button },
+        { headers: headers });
+
+    if (response) {
+        return response.data;
+    }
+}
+
 export async function changeName(conversation_id, name) {
     let response = await axios.post(endpoint + "change_conversation_name",
         { conversation_id, name },

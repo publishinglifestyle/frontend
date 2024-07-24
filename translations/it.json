@@ -56,5 +56,7 @@
     "success": "Successo!",
     "my_profile": "Il mio profilo",
     "change_conversation_name": "Cambia nome della conversazione",
-    "new_name": "Nuovo nome"
+    "new_name": "Nuovo nome",
+    "model": "Modello",
+    "select_model": "Seleziona modello"
 }

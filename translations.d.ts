@@ -57,4 +57,6 @@ export interface Translations {
     my_profile: string;
     change_conversation_name: string;
     new_name: string;
+    model: string;
+    select_model: string;
 }

@@ -24,6 +24,7 @@ interface Agent {
     prompt: string;
     temperature: number;
     level: number;
+    model: string;
 }
 
 interface Column {
@@ -44,6 +45,17 @@ const agent_types = [
     {
         value: 'image',
         label: 'Image'
+    }
+]
+
+const agent_models = [
+    {
+        value: 'dall-e',
+        label: 'Dall-E'
+    },
+    {
+        value: 'midjourney',
+        label: 'Midjourney'
     }
 ]
 
@@ -78,6 +90,7 @@ export default function AgentsPage() {
     const [agentType, setAgentType] = useState("");
     const [agentPrompt, setAgentPrompt] = useState("");
     const [agentTemperature, setAgentTemperature] = useState(0);
+    const [agentModel, setAgentModel] = useState("");
     const [agentLevel, setAgentLevel] = useState(1);
 
     useEffect(() => {
@@ -155,6 +168,7 @@ export default function AgentsPage() {
             setAgentLevel(current_agent.level);
             setAgentPrompt(current_agent.prompt);
             setAgentTemperature(current_agent.temperature);
+            setAgentModel(current_agent.model);
             setAgentType(current_agent.type);
         } catch (error) {
             console.error("Failed to load agent:", error);
@@ -244,23 +258,45 @@ export default function AgentsPage() {
                                     ))}
                                 </Select>
 
-                                <Input
-                                    value={agentTemperature?.toString()}
-                                    onChange={e => {
-                                        const newValue = parseFloat(e.target.value);
-                                        if (!isNaN(newValue)) {
-                                            setAgentTemperature(newValue);
-                                        } else {
-                                            setAgentTemperature(0);
-                                        }
-                                    }}
-                                    fullWidth
-                                    label={translations?.temperature}
-                                    type="number"
-                                    size='sm'
-                                    radius='lg'
-                                    variant="bordered"
-                                />
+                                {
+                                    agentType == "image" ?
+                                        <Select
+                                            isRequired
+                                            size="sm"
+                                            label={translations?.model}
+                                            placeholder={translations?.select_model}
+                                            defaultSelectedKeys={[agentModel]}
+                                            onChange={(e) => {
+                                                console.log(e.target.value)
+                                                setAgentModel(e.target.value)
+                                            }}
+                                        >
+                                            {agent_models.map((agent_model) => (
+                                                <SelectItem key={agent_model.value} value={agent_model.value}>
+                                                    {agent_model.label}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                        :
+                                        <Input
+                                            value={agentTemperature?.toString()}
+                                            onChange={e => {
+                                                const newValue = parseFloat(e.target.value);
+                                                if (!isNaN(newValue)) {
+                                                    setAgentTemperature(newValue);
+                                                } else {
+                                                    setAgentTemperature(0);
+                                                }
+                                            }}
+                                            fullWidth
+                                            label={translations?.temperature}
+                                            type="number"
+                                            size='sm'
+                                            radius='lg'
+                                            variant="bordered"
+                                        />
+                                }
+
                             </div>
                             <Spacer y={8} />
                             <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-4">
@@ -300,9 +336,9 @@ export default function AgentsPage() {
                                         setIsLoading(true)
                                         if (selectedAgentId == "new") {
                                             console.log(agentName, agentType, agentPrompt, agentTemperature, agentLevel)
-                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel)
+                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel)
                                         } else {
-                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt)
+                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel)
                                         }
                                         const all_agents = await getAllAgents()
                                         setAgents(all_agents)
