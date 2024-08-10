@@ -8,7 +8,7 @@
     "re_enter_password": "Reinserisci la tua password",
     "password_missmatch": "Le password non corrispondono",
     "forgot_password": "Password dimenticata",
-    "password_invalid_format": "La password deve essere lunga almeno 8 caratteri e contenere almeno una lettera e un numero",
+    "password_invalid_format": "La password deve essere lunga almeno 8 caratteri e contenere almeno una lettera, un numero e un carattere speciale",
     "next": "Avanti",
     "enter_first_name": "Inserisci il tuo nome",
     "enter_last_name": "Inserisci il tuo cognome",
@@ -18,7 +18,7 @@
     "reset_password": "Reimposta la password",
     "remember_your_password": "Ricordi la tua password?",
     "password_reset_link": "Link per il reset della password inviato alla tua email",
-    "new_conversation": "Nuova Conversione",
+    "new_conversation": "Nuova Conversazione",
     "send": "Invia",
     "subscription_is_active": "La tua sottoscrizione è ora attiva!",
     "conversations": "Conversazioni",
@@ -58,5 +58,6 @@
     "change_conversation_name": "Cambia nome della conversazione",
     "new_name": "Nuovo nome",
     "model": "Modello",
-    "select_model": "Seleziona modello"
+    "select_model": "Seleziona modello",
+    "already_have_an_account": "Hai già un account?"
 }

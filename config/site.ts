@@ -1,8 +1,8 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Riccardo Mazza",
-  description: "AI Chatbot",
+  name: "Low Content AI",
+  description: "AI per i tuoi contenuti",
   navItems: [
     {
       'value': 'Chat',
@@ -30,6 +30,20 @@ export const siteConfig = {
       'label': 'Agenti',
       'href': '/agents',
       'allow_user': false,
+      'language': 'it'
+    },
+    {
+      'value': 'feedback',
+      'label': 'Feedback',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'feedback',
+      'label': 'Feedback',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
+      'allow_user': true,
       'language': 'it'
     },
   ],
@@ -60,6 +74,20 @@ export const siteConfig = {
       'label': 'Agenti',
       'href': '/agents',
       'allow_user': false,
+      'language': 'it'
+    },
+    {
+      'value': 'feedback',
+      'label': 'Feedback',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'feedback',
+      'label': 'Feedback',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
+      'allow_user': true,
       'language': 'it'
     },
   ]

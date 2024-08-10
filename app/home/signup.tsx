@@ -250,14 +250,17 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                         >
                                             <CardHeader className="flex flex-col items-center justify-center" style={{ height: '100%' }}>
                                                 <h2 className="text-3xl">{sub.name}</h2>
-                                                {
-                                                    isAnnual ? (
-                                                        <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.yearly}</p>
-                                                    ) : (
-                                                        <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.monthly}</p>
-                                                    )
-                                                }
+                                                {isAnnual ? (
+                                                    <p style={{ color: "#9353D3" }}>
+                                                        <del>€ {sub.price}</del> € 292.50 / {translations?.yearly}
+                                                    </p>
+                                                ) : (
+                                                    <p style={{ color: "#9353D3" }}>
+                                                        <del>€ {sub.price}</del> € 29.25 / {translations?.monthly}
+                                                    </p>
+                                                )}
                                             </CardHeader>
+
                                         </Card>
                                     ))}
                                 </div>

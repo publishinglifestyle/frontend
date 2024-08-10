@@ -47,7 +47,7 @@ export default function RootLayout({
         }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
+          <div className="relative flex flex-col ">
             <Navbar />
             <main className="w-full max-w-screen-4xl mx-auto pt-16 px-6 flex-grow">
               {children}
@@ -56,11 +56,11 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="https://nextui-docs-v2.vercel.app?utm_source=next-app-template"
-                title="nextui.org homepage"
+                href="#"
+                title="homepage"
               >
-                <span className="text-default-600">Copywright @</span>
-                <p className="text-secondary">Low Content Academy</p>
+                <span className="text-default-600">Copyright @</span>
+                <p className="text-secondary">Low Content AI</p>
               </Link>
             </footer>
           </div>

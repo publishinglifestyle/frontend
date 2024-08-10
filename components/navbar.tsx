@@ -81,6 +81,8 @@ export const Navbar = () => {
     if (isAuthenticatedClient) {
       setIsAuthenticated(true);
       fetchData();
+    } else {
+      setShowMenu(false)
     }
   }, [isAuthenticatedClient, pathname]);
 
@@ -111,6 +113,7 @@ export const Navbar = () => {
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
+                    target={item.value === 'feedback' ? '_blank' : ''}
                   >
                     {item.label}
                   </NextLink>
@@ -151,7 +154,9 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <NavbarMenuToggle />
+        {
+          showMenu && <NavbarMenuToggle />
+        }
       </NavbarContent>
 
       <NavbarMenu>
@@ -167,6 +172,7 @@ export const Navbar = () => {
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
                     }}
                     href={item.href}
+                    target={item.value === 'feedback' ? '_blank' : ''}
                     size="lg"
                   >
                     {item.label}

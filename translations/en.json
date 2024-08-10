@@ -8,7 +8,7 @@
     "re_enter_password": "Re-enter your password",
     "password_missmatch": "Passwords do not match",
     "forgot_password": "Forgot password",
-    "password_invalid_format": "Password must be at least 8 characters long and contain at least one letter and one number",
+    "password_invalid_format": "Password must be at least 8 characters long and contain at least one letter, one number, and one special character",
     "next": "Next",
     "enter_first_name": "Enter your first name",
     "enter_last_name": "Enter your last name",
@@ -18,7 +18,7 @@
     "reset_password": "Reset password",
     "remember_your_password": "Remember your password?",
     "password_reset_link": "Password reset link sent to your email",
-    "new_conversation": "New Conversion",
+    "new_conversation": "New Conversation",
     "send": "Send",
     "subscription_is_active": "Your subscription is now active!",
     "conversations": "Conversations",
@@ -58,5 +58,6 @@
     "change_conversation_name": "Change Conversation Name",
     "new_name": "New Name",
     "model": "Model",
-    "select_model": "Select Model"
+    "select_model": "Select Model",
+    "already_have_an_account": "Already have an account?"
 }

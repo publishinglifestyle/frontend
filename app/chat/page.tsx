@@ -171,7 +171,7 @@ export default function ChatPage() {
             const typingMessageId = `typing-${Date.now()}`;
             const typingMessage = {
                 id: typingMessageId,
-                username: 'Riccardo AI',
+                username: 'LowContent AI',
                 text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
                 conversation_id: currentConversation,
                 complete: false,
@@ -210,7 +210,7 @@ export default function ChatPage() {
                 if (image_response && image_response.image_ready) {
                     const message = {
                         id: image_response.messageId,
-                        username: 'Riccardo AI',
+                        username: 'LowContent AI',
                         text: image_response.response,
                         conversation_id: currentConversation,
                         title: image_response.conversation_name,
@@ -278,7 +278,7 @@ export default function ChatPage() {
         } else {
             console.log("Image processing complete.");
             console.log(image_status)
-            const message = { id: image_status.messageId, username: 'Riccardo AI', text: image_status.imageUrl, conversation_id: currentConversation, title: image_status.conversation_name, complete: true, buttons: image_status.buttons, messageId: image_status.messageId };
+            const message = { id: image_status.messageId, username: 'LowContent AI', text: image_status.imageUrl, conversation_id: currentConversation, title: image_status.conversation_name, complete: true, buttons: image_status.buttons, messageId: image_status.messageId };
 
             setMessages((prevMessages) => {
                 const existingMessageIndex = prevMessages.findIndex(
@@ -400,7 +400,7 @@ export default function ChatPage() {
                         const conversation_message: Message = {
                             id: uuidv4(), // Use uuid for unique keys
                             text: textMessage,
-                            username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'Riccardo AI',
+                            username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'LowContent AI',
                             conversation_id: current_conversation.id,
                             complete: false,
                             title: "",
@@ -530,7 +530,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className='flex flex-col md:flex-row justify-between gap-2' style={{ height: '100vh' }}>
+        <div className='flex flex-col md:flex-row justify-between gap-2'>
             <div className='flex flex-col md:w-1/4'>
                 <Button
                     className='mb-4'
@@ -552,7 +552,7 @@ export default function ChatPage() {
                             const conversation_message: Message = {
                                 id: i.toString(),
                                 text: textMessage,
-                                username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
+                                username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
                                 conversation_id: newConversation.id,
                                 complete: false,
                                 title: "",
@@ -599,7 +599,7 @@ export default function ChatPage() {
                                             const conversation_message: Message = {
                                                 id: i.toString(),
                                                 text: textMessage,
-                                                username: conversation.context[i].role === 'user' ? fullName : 'Riccardo AI',
+                                                username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
                                                 conversation_id: item.id,
                                                 complete: false,
                                                 title: "",
@@ -641,7 +641,7 @@ export default function ChatPage() {
                                         )}
                                         <div className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`} style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}>
                                             {message.username !== Cookies.get('user_name') && (
-                                                <p className="font-semibold">Riccardo AI</p>
+                                                <p className="font-semibold">LowContent AI</p>
                                             )}
                                             {message.username === Cookies.get('user_name') && (
                                                 <p className="font-semibold">{fullName}</p>
@@ -683,7 +683,7 @@ export default function ChatPage() {
 
                     <CardFooter>
                         <div className='flex flex-col w-full'>
-                            <div className='flex gap-4'>
+                            <div className='flex gap-4 md:flex-row flex-col'>
                                 <Textarea
                                     isDisabled={conversations.length === 0 || isGeneratingResponse}
                                     fullWidth
@@ -701,7 +701,7 @@ export default function ChatPage() {
                                 />
                                 <Select
                                     isDisabled={conversations.length === 0}
-                                    className='w-1/3'
+                                    className='md:w-1/3 '
                                     size="sm"
                                     label={translations?.type}
                                     placeholder={translations?.select_agent || ""}
