@@ -25,6 +25,7 @@ import { getTranslations } from '../managers/languageManager';
 import { Translations } from '../translations.d';
 
 const defaultPic = "./profile.png";
+const logo = "./logo.jpg";
 
 export const Navbar = () => {
   const router = useRouter();
@@ -96,7 +97,8 @@ export const Navbar = () => {
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
+            {/*<Logo />*/}
+            <img src={logo} alt="logo" width="50" height="50" />
             <p className="font-bold text-inherit" style={{ fontSize: "25px" }}>Low Content AI</p>
           </NextLink>
         </NavbarBrand>
