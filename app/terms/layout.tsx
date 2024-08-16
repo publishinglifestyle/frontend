@@ -1,4 +1,4 @@
-export default function ChatLayout({
+export default function TermsLayout({
     children,
 }: {
     children: React.ReactNode;

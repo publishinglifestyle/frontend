@@ -1,4 +1,4 @@
-export default function ChatLayout({
+export default function PrivacyLayout({
     children,
 }: {
     children: React.ReactNode;

@@ -56,8 +56,8 @@ export default function RootLayout({
               <Link
                 isExternal
                 className="flex items-center gap-1 text-current"
-                href="#"
-                title="homepage"
+                href="/terms"
+                title="Terms of Service"
               >
                 <span className="text-default-600">Copyright @</span>
                 <p className="text-secondary">Low Content AI</p>

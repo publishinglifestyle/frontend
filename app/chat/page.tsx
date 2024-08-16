@@ -8,12 +8,13 @@ import { io, Socket } from 'socket.io-client';
 import { Spacer } from "@nextui-org/spacer";
 import { Button } from "@nextui-org/button";
 import { Spinner } from "@nextui-org/spinner";
-import { Textarea, Input } from "@nextui-org/input";
+import { Textarea } from "@nextui-org/input";
 import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import SuccessModal from '../modals/successModal';
+import ErrorModal from '../modals/errorModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
 import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName } from '@/managers/conversationsManager';
@@ -21,7 +22,6 @@ import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outli
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 import ConversationNameModal from '../modals/conversationName';
-import { button, image } from '@nextui-org/theme';
 
 let GREETING_MESSAGE = "";
 
@@ -32,6 +32,14 @@ interface Agent {
     prompt: string;
     temperature: number;
     level: number;
+    n_buttons: number;
+    buttons: Button[];
+}
+
+interface Button {
+    id: string;
+    name: string;
+    prompt: string;
 }
 
 interface Message {
@@ -71,6 +79,7 @@ const aiPic = "./ai.png";
 let pageLoaded = false;
 
 export default function ChatPage() {
+    const pageLoadedRef = useRef(false);
     const [language, setLanguage] = useState('');
     const [translations, setTranslations] = useState<Translations | null>(null);
 
@@ -80,6 +89,8 @@ export default function ChatPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [messageText, setMessageText] = useState<string>('');
     const [userId, setUserId] = useState('');
@@ -87,6 +98,7 @@ export default function ChatPage() {
     const [fullName, setFullName] = useState('Guest');
     const [agents, setAgents] = useState<Agent[]>([]);
     const [selectedAgentId, setSelectedAgentId] = useState<string>('');
+    const [selectedAgent, setSelectedAgent] = useState<Agent>();
     const [currentConversation, setCurrentConversation] = useState<string>('');
     const [conversations, setConversations] = useState<Array<Conversation>>([]);
     const [nextMessageId, setNextMessageId] = useState(0);
@@ -132,7 +144,7 @@ export default function ChatPage() {
         }
     };
 
-    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string) => {
+    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
 
@@ -201,13 +213,10 @@ export default function ChatPage() {
                     image_response = await pressButton(currentConversation, userMessageId, midjourneyMessageId, text);
                     console.log("Button pressed response: ", image_response);
                 } else {
-                    image_response = await generateImage(text, selectedAgentId, currentConversation);
+                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt);
                 }
 
-                console.log("Image Response: ", image_response);
-
-                // Check if image_response is an object and has the required properties
-                if (image_response && image_response.image_ready) {
+                if (image_response.error || (image_response && image_response.image_ready)) {
                     const message = {
                         id: image_response.messageId,
                         username: 'LowContent AI',
@@ -236,16 +245,20 @@ export default function ChatPage() {
                         }
                     });
 
-                    if (message.complete) {
-                        setIsGeneratingResponse(false);
-                    }
-                    setIsGeneratingResponse(false); // Stop the loading bubble
-                } else {
+                    setIsGeneratingResponse(false);
+                }
+
+                if (image_response.error) {
+                    setErrorMessage(image_response.error);
+                    setIsErrorModalOpen(true);
+
+                } else if (!image_response || !image_response.image_ready) {
                     const waiting_time = isButtonPressed ? 5000 : 60000;
                     setTimeout(() => {
-                        checkImageStatusPeriodically(text, image_response.response.messageId);
+                        checkImageStatusPeriodically(text, image_response.response.messageId, save_user_prompt);
                     }, waiting_time);
                 }
+
             } else {
                 console.log("Sending message to server:", {
                     senderId: userId,
@@ -264,17 +277,17 @@ export default function ChatPage() {
         }
     }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
 
-    async function checkImageStatusPeriodically(prompt: string, messageId: string) {
+    async function checkImageStatusPeriodically(prompt: string, messageId: string, save_user_prompt: boolean) {
         // Check the status of the image
-        const image_status = await checkImageStatus(prompt, messageId, currentConversation);
+        const image_status = await checkImageStatus(prompt, messageId, currentConversation, save_user_prompt);
         console.log("Image Status: ", image_status);
 
-        if (image_status.status == "PROCESSING") {
+        if (image_status.status == "PROCESSING" || image_status.status == "QUEUED") {
             console.log("Image still processing...");
             // Wait for 30 seconds before checking again
             setTimeout(() => {
-                checkImageStatusPeriodically(prompt, messageId);
-            }, 30000);
+                checkImageStatusPeriodically(prompt, messageId, save_user_prompt);
+            }, 10000);
         } else {
             console.log("Image processing complete.");
             console.log(image_status)
@@ -384,7 +397,7 @@ export default function ChatPage() {
             setAgents(all_agents);
 
             const all_conversations = await getConversations();
-            console.log(all_conversations)
+            console.log(all_conversations);
             setConversations(all_conversations);
 
             if (all_conversations.length > 0) {
@@ -398,7 +411,7 @@ export default function ChatPage() {
                     const textMessage = i === 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
                     if (textMessage && textMessage !== "NaN") {
                         const conversation_message: Message = {
-                            id: uuidv4(), // Use uuid for unique keys
+                            id: uuidv4(),
                             text: textMessage,
                             username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'LowContent AI',
                             conversation_id: current_conversation.id,
@@ -432,8 +445,8 @@ export default function ChatPage() {
         if (!isAuthenticatedClient) {
             window.location.href = '/';
         } else {
-            if (!pageLoaded) {
-                pageLoaded = true
+            if (!pageLoadedRef.current) {
+                pageLoadedRef.current = true; // Mark the ref as loaded
                 fetchData();
             }
 
@@ -442,7 +455,8 @@ export default function ChatPage() {
                 setIsSuccessModalOpen(true);
             }
         }
-    }, []);
+    }, [isAuthenticatedClient]);
+
 
     useEffect(() => {
         const chatContainer = chatContainerRef.current;
@@ -589,6 +603,8 @@ export default function ChatPage() {
                                     onClick={async () => {
                                         setIsLoading(true);
                                         setCurrentConversation(item.id);
+                                        setSelectedAgentId('');
+                                        setSelectedAgent(undefined);
 
                                         const conversation = await getConversation(item.id);
 
@@ -659,7 +675,7 @@ export default function ChatPage() {
                                                                     className="w-full"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
-                                                                        sendChatMessage(button, true, message.messageId);
+                                                                        sendChatMessage(button, true, message.messageId, true);
                                                                     }}
                                                                 >
                                                                     {button}
@@ -683,9 +699,31 @@ export default function ChatPage() {
 
                     <CardFooter>
                         <div className='flex flex-col w-full'>
+                            <div className='flex gap-2'>
+                                {selectedAgent?.buttons?.map((agent_button) => (
+                                    <Button
+                                        key={agent_button.id}
+                                        variant='ghost'
+                                        size="sm"
+                                        color="secondary"
+                                        className='mb-8'
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            sendChatMessage(agent_button.prompt, false, '', false);
+                                        }}
+                                    >
+                                        {agent_button.name}
+                                    </Button>
+                                ))}
+                            </div>
+
                             <div className='flex gap-4 md:flex-row flex-col'>
                                 <Textarea
-                                    isDisabled={conversations.length === 0 || isGeneratingResponse}
+                                    isDisabled={
+                                        (conversations.length === 0 || isGeneratingResponse)
+                                        ||
+                                        (selectedAgent?.buttons && selectedAgent?.buttons?.length > 0)
+                                    }
                                     fullWidth
                                     type='text'
                                     size='sm'
@@ -695,7 +733,7 @@ export default function ChatPage() {
                                     onKeyDown={async e => {
                                         if (e.key === 'Enter' && !e.shiftKey && messageText) {
                                             e.preventDefault();
-                                            sendChatMessage(messageText, false, '');
+                                            sendChatMessage(messageText, false, '', true);
                                         }
                                     }}
                                 />
@@ -708,6 +746,8 @@ export default function ChatPage() {
                                     onChange={(e) => {
                                         console.log(e.target.value);
                                         setSelectedAgentId(e.target.value);
+                                        const s_agent = agents.find(agent => agent.id === e.target.value);
+                                        setSelectedAgent(s_agent);
                                     }}
                                 >
                                     {agents.map((agent) => (
@@ -728,7 +768,7 @@ export default function ChatPage() {
                                     style={{ color: "white" }}
                                     onClick={async (e) => {
                                         e.preventDefault();
-                                        sendChatMessage(messageText, false, '');
+                                        sendChatMessage(messageText, false, '', true);
                                     }}
                                 >
                                     {translations?.send}
@@ -758,6 +798,12 @@ export default function ChatPage() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }}
                 message={translations?.subscription_is_active || ""}
+            />
+
+            <ErrorModal
+                isOpen={isErrorModalOpen}
+                onClose={() => setIsErrorModalOpen(false)}
+                message={errorMessage}
             />
 
             <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {

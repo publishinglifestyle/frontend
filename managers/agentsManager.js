@@ -8,9 +8,9 @@ const headers = {
     'Authorization': Cookie.get('authToken')
 }
 
-export async function createAgent(name, type, prompt, temperature, level, model) {
+export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons) {
     let response = await axios.post(endpoint + "create_agent",
-        { name, temperature, type, level, prompt, model }, {
+        { name, temperature, type, level, prompt, model, n_buttons, buttons }, {
         headers: headers
     });
 
@@ -19,9 +19,10 @@ export async function createAgent(name, type, prompt, temperature, level, model)
     }
 }
 
-export async function updateAgent(agent_id, name, temperature, type, level, prompt, model) {
+export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons) {
+    console.log(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons)
     let response = await axios.post(endpoint + "update_agent",
-        { agent_id, name, temperature, type, level, prompt, model }, {
+        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons }, {
         headers: headers
     });
 

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react";
-import { Card, CardBody, CardFooter } from "@nextui-org/card";
+import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { Spinner } from '@nextui-org/spinner';
 import { Spacer } from '@nextui-org/spacer';
 import { Button } from '@nextui-org/button';
@@ -25,6 +25,14 @@ interface Agent {
     temperature: number;
     level: number;
     model: string;
+    n_buttons: number;
+    buttons: Button[];
+}
+
+interface Button {
+    id: string;
+    name: string;
+    prompt: string;
 }
 
 interface Column {
@@ -36,6 +44,8 @@ let columns: Column[] = [
     { key: "name", name: "NAME" },
     { key: "actions", name: "" }
 ];
+
+const n_buttons = [0, 1, 2, 3, 4]
 
 const agent_types = [
     {
@@ -92,6 +102,8 @@ export default function AgentsPage() {
     const [agentTemperature, setAgentTemperature] = useState(0);
     const [agentModel, setAgentModel] = useState("");
     const [agentLevel, setAgentLevel] = useState(1);
+    const [agentNButtons, setAgentNButtons] = useState(0);
+    const [agentButtons, setAgentButtons] = useState<Button[]>([]);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -170,6 +182,8 @@ export default function AgentsPage() {
             setAgentTemperature(current_agent.temperature);
             setAgentModel(current_agent.model);
             setAgentType(current_agent.type);
+            setAgentNButtons(current_agent.n_buttons);
+            setAgentButtons(current_agent.buttons || []);
         } catch (error) {
             console.error("Failed to load agent:", error);
         } finally {
@@ -310,6 +324,67 @@ export default function AgentsPage() {
                                 />
                             </div>
                             <Spacer y={8} />
+                            <div className="flex flex-col md:flex-row md:space-x-4 mb-8">
+                                {n_buttons.map(btn => (
+                                    <Card
+                                        key={btn}
+                                        isPressable
+                                        isHoverable
+                                        onPress={() => setAgentNButtons(btn)}
+                                        className={`w-full md:w-1/3 mb-4 md:mb-0 ${agentNButtons === btn ? 'border-4 border-purple-500 shadow-lg shadow-purple-500/50' : ''}`}
+                                        style={{ height: '100px' }}
+                                    >
+                                        <CardHeader className="flex flex-col items-center justify-center" style={{ height: '100%' }}>
+                                            <h2 className="text-3xl">{btn}</h2>
+                                            <p style={{ color: "#9353D3" }}>
+                                                Buttons
+                                            </p>
+                                        </CardHeader>
+                                    </Card>
+                                ))}
+                            </div>
+                            <Spacer y={8} />
+                            <div className="flex flex-col gap-4">
+                                {Array.from({ length: agentNButtons }).map((_, index) => (
+                                    <div key={index} className="flex w-full flex-wrap md:flex-nowrap gap-4">
+                                        <Input
+                                            isRequired
+                                            value={agentButtons[index]?.name || ""}
+                                            onChange={(e) => {
+                                                const newButtons = [...agentButtons];
+                                                if (!newButtons[index]) newButtons[index] = { id: `${index}`, name: "", prompt: "" };
+                                                newButtons[index].name = e.target.value;
+                                                setAgentButtons(newButtons);
+                                            }}
+                                            fullWidth
+                                            label={`Button ${index + 1} Name`}
+                                            type="text"
+                                            size='sm'
+                                            radius='lg'
+                                            variant="bordered"
+                                        />
+                                        <Input
+                                            isRequired
+                                            value={agentButtons[index]?.prompt || ""}
+                                            onChange={(e) => {
+                                                const newButtons = [...agentButtons];
+                                                if (!newButtons[index]) newButtons[index] = { id: `${index}`, name: "", prompt: "" };
+                                                newButtons[index].prompt = e.target.value;
+                                                setAgentButtons(newButtons);
+                                            }}
+                                            fullWidth
+                                            label={`Button ${index + 1} Prompt`}
+                                            type="text"
+                                            size='sm'
+                                            radius='lg'
+                                            variant="bordered"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <Spacer y={8} />
+
+
                         </CardBody>
                         <CardFooter className="flex gap-4">
                             <Button
@@ -334,11 +409,15 @@ export default function AgentsPage() {
                                 onClick={async () => {
                                     try {
                                         setIsLoading(true)
+
+                                        while (agentButtons.length != agentNButtons) {
+                                            agentButtons.pop()
+                                        }
+
                                         if (selectedAgentId == "new") {
-                                            console.log(agentName, agentType, agentPrompt, agentTemperature, agentLevel)
-                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel)
+                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel, agentNButtons, agentButtons)
                                         } else {
-                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel)
+                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel, agentNButtons, agentButtons)
                                         }
                                         const all_agents = await getAllAgents()
                                         setAgents(all_agents)
