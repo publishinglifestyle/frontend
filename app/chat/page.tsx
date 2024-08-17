@@ -13,8 +13,6 @@ import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from 
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
-import SuccessModal from '../modals/successModal';
-import ErrorModal from '../modals/errorModal';
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
 import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName } from '@/managers/conversationsManager';
@@ -22,6 +20,9 @@ import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outli
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 import ConversationNameModal from '../modals/conversationName';
+import SuccessModal from '../modals/successModal';
+import ErrorModal from '../modals/errorModal';
+import CommandsModal from '../modals/commandsModal';
 
 let GREETING_MESSAGE = "";
 
@@ -34,6 +35,7 @@ interface Agent {
     level: number;
     n_buttons: number;
     buttons: Button[];
+    model: string;
 }
 
 interface Button {
@@ -69,6 +71,11 @@ interface Column {
     name: string;
 }
 
+interface Command {
+    command: string;
+    value: string;
+}
+
 let columns: Column[] = [
     { key: "id", name: "Conversations" }
 ];
@@ -90,6 +97,7 @@ export default function ChatPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [isCommandsModalOpen, setIsCommandsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [messageText, setMessageText] = useState<string>('');
@@ -106,6 +114,7 @@ export default function ChatPage() {
     const [isConversationNameModalOpen, setIsConversationNameModalOpen] = useState(false);
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [isReconnecting, setIsReconnecting] = useState(false);
+    const [promptCommands, setPromptCommands] = useState<Command[]>([]);
 
     const messageListener = (message: Message) => {
         console.log("Received message:", message);
@@ -213,7 +222,7 @@ export default function ChatPage() {
                     image_response = await pressButton(currentConversation, userMessageId, midjourneyMessageId, text);
                     console.log("Button pressed response: ", image_response);
                 } else {
-                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt);
+                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, promptCommands);
                 }
 
                 if (image_response.error || (image_response && image_response.image_ready)) {
@@ -737,25 +746,40 @@ export default function ChatPage() {
                                         }
                                     }}
                                 />
-                                <Select
-                                    isDisabled={conversations.length === 0}
-                                    className='md:w-1/3 '
-                                    size="sm"
-                                    label={translations?.type}
-                                    placeholder={translations?.select_agent || ""}
-                                    onChange={(e) => {
-                                        console.log(e.target.value);
-                                        setSelectedAgentId(e.target.value);
-                                        const s_agent = agents.find(agent => agent.id === e.target.value);
-                                        setSelectedAgent(s_agent);
-                                    }}
-                                >
-                                    {agents.map((agent) => (
-                                        <SelectItem key={agent.id} value={agent.id}>
-                                            {agent.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
+                                <div className='flex flex-col md:w-1/3'>
+                                    <Select
+                                        isDisabled={conversations.length === 0}
+                                        //className='md:w-1/3 '
+                                        size="sm"
+                                        label={translations?.type}
+                                        placeholder={translations?.select_agent || ""}
+                                        onChange={(e) => {
+                                            console.log(e.target.value);
+                                            setSelectedAgentId(e.target.value);
+                                            const s_agent = agents.find(agent => agent.id === e.target.value);
+                                            setSelectedAgent(s_agent);
+                                        }}
+                                    >
+                                        {agents.map((agent) => (
+                                            <SelectItem key={agent.id} value={agent.id}>
+                                                {agent.name}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                    {
+                                        selectedAgent?.model == 'midjourney' &&
+                                        <Button
+                                            variant={promptCommands.length > 0 ? 'ghost' : 'flat'}
+                                            color={promptCommands.length > 0 ? 'secondary' : 'default'}
+                                            className='mt-2'
+                                            onClick={() => setIsCommandsModalOpen(true)}
+                                        >
+                                            {translations?.commands}
+                                        </Button>
+                                    }
+
+                                </div>
+
                             </div>
 
                             <Spacer y={4} />
@@ -798,6 +822,15 @@ export default function ChatPage() {
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }}
                 message={translations?.subscription_is_active || ""}
+            />
+
+            <CommandsModal
+                isOpen={isCommandsModalOpen}
+                onClose={() => setIsCommandsModalOpen(false)}
+                onSuccess={(selected_commands) => {
+                    setPromptCommands(selected_commands);
+                    setIsCommandsModalOpen(false);
+                }}
             />
 
             <ErrorModal

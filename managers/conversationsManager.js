@@ -48,9 +48,9 @@ export async function deleteConversation(conversation_id) {
     }
 }
 
-export async function generateImage(msg, agent_id, conversation_id, save_user_prompt) {
+export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands) {
     let response = await axios.post(endpoint + "generate_image",
-        { msg, agent_id, conversation_id, save_user_prompt },
+        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands },
         { headers: headers });
 
     if (response) {

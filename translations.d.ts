@@ -59,4 +59,5 @@ export interface Translations {
     new_name: string;
     model: string;
     select_model: string;
+    commands: string;
 }

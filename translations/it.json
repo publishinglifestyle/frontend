@@ -59,5 +59,6 @@
     "new_name": "Nuovo nome",
     "model": "Modello",
     "select_model": "Seleziona modello",
-    "already_have_an_account": "Hai già un account?"
+    "already_have_an_account": "Hai già un account?",
+    "commands": "Comandi"
 }
