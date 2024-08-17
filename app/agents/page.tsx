@@ -5,7 +5,6 @@ import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { Spinner } from '@nextui-org/spinner';
 import { Spacer } from '@nextui-org/spacer';
 import { Button } from '@nextui-org/button';
-import { Divider } from '@nextui-org/divider';
 import { Select, SelectItem } from '@nextui-org/select';
 import { Input, Textarea } from "@nextui-org/input";
 import { Table, TableBody, TableHeader, TableColumn, TableRow, TableCell } from "@nextui-org/table";
@@ -410,13 +409,16 @@ export default function AgentsPage() {
                                     try {
                                         setIsLoading(true)
 
-                                        while (agentButtons.length != agentNButtons) {
-                                            agentButtons.pop()
+                                        if (agentButtons.length > 0) {
+                                            while (agentButtons.length != agentNButtons) {
+                                                agentButtons.pop()
+                                            }
                                         }
 
                                         if (selectedAgentId == "new") {
                                             await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel, agentNButtons, agentButtons)
                                         } else {
+                                            console.log("update")
                                             await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel, agentNButtons, agentButtons)
                                         }
                                         const all_agents = await getAllAgents()

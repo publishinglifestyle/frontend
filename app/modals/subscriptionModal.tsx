@@ -105,7 +105,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose }
                                         isPressable
                                         isHoverable
                                         onPress={() => setSelectedSubscription(sub)}
-                                        className={`w-full md:w-1/3 mb-4 md:mb-0 ${selectedSubscription === sub ? 'border-4 border-purple-500 shadow-lg shadow-purple-500/50' : ''}`}
+                                        className={`w-full mb-4 md:mb-0 ${selectedSubscription === sub ? 'border-4 border-purple-500 shadow-lg shadow-purple-500/50' : ''}`}
                                         style={{ height: '200px' }}
                                     >
                                         <CardHeader className="flex flex-col items-center justify-center" style={{ height: '100%' }}>

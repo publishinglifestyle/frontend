@@ -171,7 +171,7 @@ export const Navbar = () => {
                 <NavbarMenuItem key={`${item}-${index}`}>
                   <Link
                     style={{
-                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'initial'
+                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
                     target={item.value === 'feedback' ? '_blank' : ''}

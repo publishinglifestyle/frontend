@@ -87,3 +87,31 @@ export async function changeName(conversation_id, name) {
         return response.data;
     }
 }
+
+export async function uploadImage(file) {
+    const reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+        reader.onloadend = async () => {
+            const base64String = reader.result.split(',')[1];
+
+            try {
+                const response = await axios.post(endpoint + "upload_image", { base64String }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': Cookie.get('authToken')
+                    }
+                });
+                resolve(response.data.url);
+            } catch (error) {
+                reject(error);
+            }
+        };
+
+        reader.onerror = () => {
+            reject('Error reading file');
+        };
+
+        reader.readAsDataURL(file);
+    });
+}

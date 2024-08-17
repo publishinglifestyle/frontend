@@ -60,5 +60,6 @@
     "model": "Model",
     "select_model": "Select Model",
     "already_have_an_account": "Already have an account?",
-    "commands": "Commands"
+    "commands": "Commands",
+    "copy": "Copy"
 }

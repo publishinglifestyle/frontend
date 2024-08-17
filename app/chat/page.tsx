@@ -15,11 +15,12 @@ import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName } from '@/managers/conversationsManager';
-import { TrashIcon, StopIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName, uploadImage } from '@/managers/conversationsManager';
+import { TrashIcon, StopIcon, PencilSquareIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 import ConversationNameModal from '../modals/conversationName';
+import ImageModal from '../modals/imageModal';
 import SuccessModal from '../modals/successModal';
 import ErrorModal from '../modals/errorModal';
 import CommandsModal from '../modals/commandsModal';
@@ -98,6 +99,7 @@ export default function ChatPage() {
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
     const [isCommandsModalOpen, setIsCommandsModalOpen] = useState(false);
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [messages, setMessages] = useState<Array<Message>>([]);
     const [messageText, setMessageText] = useState<string>('');
@@ -115,6 +117,37 @@ export default function ChatPage() {
     const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [isReconnecting, setIsReconnecting] = useState(false);
     const [promptCommands, setPromptCommands] = useState<Command[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+
+    const handleIconClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+
+                try {
+                    setIsLoading(true);
+                    const imageUrl = await uploadImage(file);
+                    setUploadedImageUrl(imageUrl);
+                    setIsLoading(false);
+                    setIsImageModalOpen(true);
+                } catch (error) {
+                    setIsLoading(false);
+                    const err = error as any;
+                    if (err.response) {
+                        setErrorMessage(err.response.data);
+                        setIsErrorModalOpen(true);
+                    }
+                }
+            }
+        }
+    };
 
     const messageListener = (message: Message) => {
         console.log("Received message:", message);
@@ -153,7 +186,7 @@ export default function ChatPage() {
         }
     };
 
-    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean) => {
+    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean, commands = promptCommands) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
 
@@ -222,7 +255,7 @@ export default function ChatPage() {
                     image_response = await pressButton(currentConversation, userMessageId, midjourneyMessageId, text);
                     console.log("Button pressed response: ", image_response);
                 } else {
-                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, promptCommands);
+                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands);
                 }
 
                 if (image_response.error || (image_response && image_response.image_ready)) {
@@ -403,52 +436,55 @@ export default function ChatPage() {
             setFullName(`${first_name} ${last_name}`);
 
             const all_agents = await getAgentsPerLevel();
-            setAgents(all_agents);
+            if (all_agents) {
+                setAgents(all_agents);
 
-            const all_conversations = await getConversations();
-            console.log(all_conversations);
-            setConversations(all_conversations);
+                const all_conversations = await getConversations();
+                console.log(all_conversations);
+                setConversations(all_conversations);
 
-            if (all_conversations.length > 0) {
-                const current_conversation = all_conversations[all_conversations.length - 1];
-                setCurrentConversation(current_conversation.id);
+                if (all_conversations.length > 0) {
+                    const current_conversation = all_conversations[all_conversations.length - 1];
+                    setCurrentConversation(current_conversation.id);
 
-                let conversation_messages = [];
-                let messageId = 0;
+                    let conversation_messages = [];
+                    let messageId = 0;
 
-                for (let i = 0; i < current_conversation.context.length; i++) {
-                    const textMessage = i === 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
-                    if (textMessage && textMessage !== "NaN") {
-                        const conversation_message: Message = {
-                            id: uuidv4(),
-                            text: textMessage,
-                            username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'LowContent AI',
-                            conversation_id: current_conversation.id,
-                            complete: false,
-                            title: "",
-                            buttons: current_conversation.context[i].buttons,
-                            messageId: current_conversation.context[i].messageId
-                        };
-                        conversation_messages.push(conversation_message);
+                    for (let i = 0; i < current_conversation.context.length; i++) {
+                        const textMessage = i === 0 ? GREETING_MESSAGE : current_conversation.context[i].content;
+                        if (textMessage && textMessage !== "NaN") {
+                            const conversation_message: Message = {
+                                id: uuidv4(),
+                                text: textMessage,
+                                username: current_conversation.context[i].role === 'user' ? `${first_name} ${last_name}` : 'LowContent AI',
+                                conversation_id: current_conversation.id,
+                                complete: false,
+                                title: "",
+                                buttons: current_conversation.context[i].buttons,
+                                messageId: current_conversation.context[i].messageId
+                            };
+                            conversation_messages.push(conversation_message);
+                        }
                     }
+
+                    setMessages(conversation_messages.map((message) => ({ ...message })));
+                    setNextMessageId(messageId);
                 }
 
-                setMessages(conversation_messages.map((message) => ({ ...message })));
-                setNextMessageId(messageId);
-            }
+                Cookies.set('user_name', `${first_name} ${last_name}`);
 
-            Cookies.set('user_name', `${first_name} ${last_name}`);
-
-            try {
-                const logo_img = await getProfilePic();
-                if (logo_img) {
-                    setProfileImage(logo_img);
-                } else {
+                try {
+                    const logo_img = await getProfilePic();
+                    if (logo_img) {
+                        setProfileImage(logo_img);
+                    } else {
+                        setProfileImage(defaultPic);
+                    }
+                } catch {
                     setProfileImage(defaultPic);
                 }
-            } catch {
-                setProfileImage(defaultPic);
             }
+
         }
 
         if (!isAuthenticatedClient) {
@@ -556,6 +592,7 @@ export default function ChatPage() {
         <div className='flex flex-col md:flex-row justify-between gap-2'>
             <div className='flex flex-col md:w-1/4'>
                 <Button
+                    isDisabled={!agents || agents.length === 0}
                     className='mb-4'
                     size='sm'
                     color='secondary'
@@ -684,7 +721,7 @@ export default function ChatPage() {
                                                                     className="w-full"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
-                                                                        sendChatMessage(button, true, message.messageId, true);
+                                                                        sendChatMessage(button, true, message.messageId, true, promptCommands);
                                                                     }}
                                                                 >
                                                                     {button}
@@ -718,7 +755,7 @@ export default function ChatPage() {
                                         className='mb-8'
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            sendChatMessage(agent_button.prompt, false, '', false);
+                                            sendChatMessage(agent_button.prompt, false, '', false, promptCommands);
                                         }}
                                     >
                                         {agent_button.name}
@@ -742,7 +779,7 @@ export default function ChatPage() {
                                     onKeyDown={async e => {
                                         if (e.key === 'Enter' && !e.shiftKey && messageText) {
                                             e.preventDefault();
-                                            sendChatMessage(messageText, false, '', true);
+                                            sendChatMessage(messageText, false, '', true, promptCommands);
                                         }
                                     }}
                                 />
@@ -792,11 +829,15 @@ export default function ChatPage() {
                                     style={{ color: "white" }}
                                     onClick={async (e) => {
                                         e.preventDefault();
-                                        sendChatMessage(messageText, false, '', true);
+                                        sendChatMessage(messageText, false, '', true, promptCommands);
                                     }}
                                 >
                                     {translations?.send}
                                 </Button>
+                                <Button size='sm' onClick={handleIconClick}>
+                                    <PaperClipIcon width={20} height={20} />
+                                </Button>
+                                <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageChange} />
                                 <Button
                                     isDisabled={!isGeneratingResponse}
                                     size='sm'
@@ -837,6 +878,12 @@ export default function ChatPage() {
                 isOpen={isErrorModalOpen}
                 onClose={() => setIsErrorModalOpen(false)}
                 message={errorMessage}
+            />
+
+            <ImageModal
+                imageUrl={uploadedImageUrl}
+                isOpen={isImageModalOpen}
+                onClose={() => setIsImageModalOpen(false)}
             />
 
             <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {

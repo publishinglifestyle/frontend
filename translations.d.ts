@@ -60,4 +60,5 @@ export interface Translations {
     model: string;
     select_model: string;
     commands: string;
+    copy: string;
 }

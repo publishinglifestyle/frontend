@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
@@ -43,7 +43,7 @@ const commands = [
     {
         value: '--no',
         description: 'Negative prompting',
-        has_parameter: false
+        has_parameter: true
     },
     {
         value: '--quality',
@@ -131,17 +131,17 @@ const CommandsModal: React.FC<CommandsModalProps> = ({ isOpen, onClose, onSucces
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            size="2xl" // Increase the modal size to 3xl
+            size="3xl" // Increase the modal size further to accommodate more commands
             isDismissable={false}
             isKeyboardDismissDisabled={true}
-            scrollBehavior="inside"
+            scrollBehavior="inside" // Allow scrolling within the modal
         >
             <ModalContent>
                 <ModalHeader className="modal-header justify-center">
                     <h1 style={{ fontSize: "26px" }}>{translations?.commands}</h1>
                 </ModalHeader>
-                <ModalBody style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: "center" }}>
-                    <div className="w-full" style={{ marginTop: "30%" }}>
+                <ModalBody style={{ maxHeight: '60vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="w-full">
                         {commands.map((command) => (
                             <div key={command.value} className="flex w-full gap-4 mb-4">
                                 <Checkbox
@@ -188,6 +188,6 @@ const CommandsModal: React.FC<CommandsModalProps> = ({ isOpen, onClose, onSucces
             </ModalContent>
         </Modal>
     );
-}
+};
 
 export default CommandsModal;
