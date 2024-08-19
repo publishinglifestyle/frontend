@@ -10,7 +10,7 @@ interface NurikabeProps {
 interface NurikabeResponse {
     grid_size: number;
     puzzle: (number | null)[][];
-    solution: string[][];
+    solution: (number | string | null)[][];
 }
 
 export default function Nurikabe({ size }: NurikabeProps) {
@@ -87,19 +87,23 @@ export default function Nurikabe({ size }: NurikabeProps) {
 
                 if (isSolution) {
                     if (value === '■') {
-                        // Draw the light gray blocks for the solution
-                        doc.setFillColor(200, 200, 200); // Light gray
+                        // Draw the gray blocks for the solution
+                        doc.setFillColor(200, 200, 200); // Gray
+                        doc.rect(x, y, cellSize, cellSize, 'F');
+                    } else if (value === '□') {
+                        // Draw the white blocks for the solution
+                        doc.setFillColor(255, 255, 255); // White
                         doc.rect(x, y, cellSize, cellSize, 'F');
                     }
-                }
-
-                // Draw the numbers
-                if (value !== null && value !== '■') {
-                    // Ensure that the value is a string
-                    doc.text(value.toString(), x + cellSize / 2, y + cellSize / 2 + 4, {
-                        align: 'center',
-                        baseline: 'middle'
-                    });
+                } else {
+                    // For the puzzle grid, we use white cells with the specified numbers
+                    if (value !== null && value !== '■' && value !== '□') {
+                        // Draw the numbers from the puzzle
+                        doc.text(value.toString(), x + cellSize / 2, y + cellSize / 2 + 4, {
+                            align: 'center',
+                            baseline: 'middle'
+                        });
+                    }
                 }
 
                 // Draw the grid lines on top of the blocks
@@ -108,7 +112,6 @@ export default function Nurikabe({ size }: NurikabeProps) {
             }
         }
     };
-
 
     return (
         <div style={{ textAlign: 'center' }}>
