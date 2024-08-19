@@ -1,125 +1,92 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import { generateSudoku } from '@/managers/gamesManager';
+import jsPDF from 'jspdf';
 
 interface SudokuProps {
     difficulty?: string;
 }
 
 export default function Sudoku({ difficulty }: SudokuProps) {
-    const [sudokuPuzzle, setSudokuPuzzle] = useState<string | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateSudoku = async () => {
+        setIsGenerating(true);
         const sudokuResponse = await generateSudoku(difficulty); // Pass difficulty to the generate function
-        setSudokuPuzzle(sudokuResponse.puzzle);
+
+        if (sudokuResponse) {
+            generatePDF(sudokuResponse);
+        }
+
+        setIsGenerating(false);
     };
 
-    useEffect(() => {
-        if (sudokuPuzzle && canvasRef.current) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const generatePDF = (sudokuData: any) => {
+        const { puzzle, solution, difficulty } = sudokuData;
 
-                // Define canvas size and grid parameters
-                const size = 360; // 40px * 9 = 360px
-                canvas.width = size;
-                canvas.height = size;
-                const cellSize = size / 9;
+        const doc = new jsPDF('p', 'mm', 'a4');
 
-                // Set background color to white
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        const cellSize = 15; // Set cell size for the grid
 
-                // Draw the grid
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
-                for (let i = 0; i <= 9; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * cellSize, 0);
-                    ctx.lineTo(i * cellSize, size);
-                    ctx.moveTo(0, i * cellSize);
-                    ctx.lineTo(size, i * cellSize);
-                    ctx.stroke();
-                }
+        const gridOffsetX = (pageWidth - 9 * cellSize) / 2;
+        const gridOffsetY = 40; // Start position below the title
 
-                // Draw thicker lines for 3x3 subgrids
-                ctx.lineWidth = 3;
-                for (let i = 0; i <= 9; i += 3) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * cellSize, 0);
-                    ctx.lineTo(i * cellSize, size);
-                    ctx.moveTo(0, i * cellSize);
-                    ctx.lineTo(size, i * cellSize);
-                    ctx.stroke();
-                }
+        // Page 1: Draw the Sudoku Puzzle
+        doc.setFont("times", "normal");
+        doc.setFontSize(16);
+        doc.text(`Sudoku Puzzle - Difficulty: ${difficulty}`, pageWidth / 2, 20, { align: 'center' });
 
-                // Draw the numbers
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'black';
+        drawSudokuGrid(doc, puzzle, gridOffsetX, gridOffsetY, cellSize);
 
-                for (let i = 0; i < 81; i++) {
-                    const row = Math.floor(i / 9);
-                    const col = i % 9;
-                    const value = sudokuPuzzle[i];
+        // Page 2: Draw the Sudoku Solution
+        doc.addPage();
+        doc.text('Sudoku Solution', pageWidth / 2, 20, { align: 'center' });
 
-                    if (value !== '-') {
-                        ctx.fillText(
-                            value,
-                            col * cellSize + cellSize / 2,
-                            row * cellSize + cellSize / 2
-                        );
-                    }
-                }
-            }
+        drawSudokuGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize);
+
+        const pdfDataUrl = doc.output('bloburl');
+        window.open(pdfDataUrl, '_blank');
+    };
+
+    const drawSudokuGrid = (doc: jsPDF, gridData: string, offsetX: number, offsetY: number, cellSize: number) => {
+        // Draw the grid lines
+        doc.setLineWidth(0.5);
+        for (let i = 0; i <= 9; i++) {
+            const lineWidth = i % 3 === 0 ? 1 : 0.5;
+            doc.setLineWidth(lineWidth);
+
+            // Vertical lines
+            doc.line(offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + 9 * cellSize);
+            // Horizontal lines
+            doc.line(offsetX, offsetY + i * cellSize, offsetX + 9 * cellSize, offsetY + i * cellSize);
         }
-    }, [sudokuPuzzle]);
 
-    const handleSaveAsImage = () => {
-        if (canvasRef.current) {
-            const link = document.createElement('a');
-            link.download = 'sudoku.png';
-            link.href = canvasRef.current.toDataURL('image/png');
-            link.click();
+        // Draw the numbers
+        doc.setFontSize(12);
+        for (let i = 0; i < 81; i++) {
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+            const value = gridData[i];
+
+            if (value !== '-') {
+                doc.text(value, offsetX + col * cellSize + cellSize / 2, offsetY + row * cellSize + cellSize / 2 + 3, {
+                    align: 'center'
+                });
+            }
         }
     };
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {sudokuPuzzle && (
-                <canvas
-                    ref={canvasRef}
-                    style={{
-                        border: '1px solid black',
-                        backgroundColor: 'white', // Ensure background is white
-                        display: 'block',
-                        margin: '0 auto' // Center the canvas on the screen
-                    }}
-                ></canvas>
-            )}
-            <div style={{ marginTop: sudokuPuzzle ? '20px' : '0' }}>
-                <Button
-                    isDisabled={!difficulty}
-                    color="secondary"
-                    onClick={handleGenerateSudoku}
-                    style={{ marginRight: '10px' }}
-                >
-                    Generate Sudoku
-                </Button>
-                {sudokuPuzzle && (
-                    <Button
-                        color="secondary"
-                        variant="ghost"
-                        onClick={handleSaveAsImage}
-                    >
-                        Save as Image
-                    </Button>
-                )}
-            </div>
+            <Button
+                isDisabled={!difficulty || isGenerating}
+                color="secondary"
+                onClick={handleGenerateSudoku}
+            >
+                {isGenerating ? "Generating..." : "Generate Sudoku PDF"}
+            </Button>
         </div>
     );
 }

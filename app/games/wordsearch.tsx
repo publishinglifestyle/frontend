@@ -1,114 +1,125 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import { generateWordSearch } from '@/managers/gamesManager';
+import jsPDF from 'jspdf';
 
 interface WordSearchProps {
     words?: string[];
 }
 
 export default function WordSearch({ words }: WordSearchProps) {
-    const [wordSearchPuzzle, setWordSearchPuzzle] = useState<string | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateWordSearch = async () => {
-        const wordSearchResponse = await generateWordSearch(words); // Pass words to the generate function
-        setWordSearchPuzzle(wordSearchResponse);
+        setIsGenerating(true);
+        const wordSearchResponse = await generateWordSearch(words);
+
+        if (wordSearchResponse) {
+            generatePDF(wordSearchResponse);
+        }
+
+        setIsGenerating(false);
     };
 
-    useEffect(() => {
-        if (wordSearchPuzzle && canvasRef.current) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                // Split the word search puzzle string into rows
-                const rows = wordSearchPuzzle.split('\n');
-                const size = 360; // You can adjust this size
-                const gridSize = rows.length;
-                const cellSize = size / gridSize;
+    const generatePDF = (wordSearchData: any) => {
+        const { puzzle, grid, words } = wordSearchData;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const cellSize = 7; // Size of each cell
+        const gridSize = grid.length;
+        const gridWidth = gridSize * cellSize;
 
-                canvas.width = size;
-                canvas.height = size;
+        // Define the type for word object
+        interface Word {
+            clean: string;
+            path: { x: number; y: number }[];
+        }
 
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Centering the grid on the page
+        const offsetX = (pageWidth - gridWidth) / 2;
+        const offsetY = 40; // Start position below the title
 
-                // Set background color to white
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Page 1: Draw the Word Search Puzzle
+        doc.setFont("times", "normal");
+        doc.setFontSize(16);
+        doc.text('Word Search Puzzle', pageWidth / 2, 20, { align: 'center' });
 
-                // Draw the grid
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
-                for (let i = 0; i <= gridSize; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * cellSize, 0);
-                    ctx.lineTo(i * cellSize, size);
-                    ctx.moveTo(0, i * cellSize);
-                    ctx.lineTo(size, i * cellSize);
-                    ctx.stroke();
+        // Draw the puzzle grid
+        doc.setFontSize(8); // Smaller font size for letters inside the grid
+        for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+                const letter = grid[r][c];
+
+                if (typeof letter === 'string' && letter.trim() !== '') {
+                    const x = offsetX + c * cellSize;
+                    const y = offsetY + r * cellSize + 3; // Adjusted position to ensure correct alignment
+                    doc.text(letter, x + 2, y);
                 }
-
-                // Draw the letters in the grid
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'black';
-
-                rows.forEach((row, rowIndex) => {
-                    const letters = row.split(' ');
-                    letters.forEach((letter, colIndex) => {
-                        ctx.fillText(
-                            letter,
-                            colIndex * cellSize + cellSize / 2,
-                            rowIndex * cellSize + cellSize / 2
-                        );
-                    });
-                });
             }
         }
-    }, [wordSearchPuzzle]);
 
-    const handleSaveAsImage = () => {
-        if (canvasRef.current) {
-            const link = document.createElement('a');
-            link.download = 'wordsearch.png';
-            link.href = canvasRef.current.toDataURL('image/png');
-            link.click();
+        // Draw the words to find in capital letters below the grid
+        const wordsStartY = offsetY + gridSize * cellSize + 20;
+        doc.setFontSize(12);
+        const wordsPerLine = 3;
+        const wordLines = Math.ceil(words.length / wordsPerLine);
+        for (let i = 0; i < wordLines; i++) {
+            const wordLine = words.slice(i * wordsPerLine, (i + 1) * wordsPerLine).map((word: Word) => word.clean).join(', ').toUpperCase();
+            doc.text(wordLine, offsetX, wordsStartY + 10 + i * 7);
         }
+
+        // Page 2: Draw the Word Search Solution
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text('Word Search Solution', pageWidth / 2, 20, { align: 'center' });
+
+        // Draw the solution grid, highlighting only the correct words and bolding the letters
+        doc.setFontSize(8); // Smaller font size for letters inside the grid
+        for (let r = 0; r < gridSize; r++) {
+            for (let c = 0; c < gridSize; c++) {
+                const letter = grid[r][c];
+
+                if (typeof letter === 'string' && letter.trim() !== '') {
+                    const x = offsetX + c * cellSize;
+                    const y = offsetY + r * cellSize + 3; // Adjusted position to ensure correct alignment
+
+                    const isPartOfWord = words.some((word: Word) =>
+                        word.path.some(coord => coord.x === c && coord.y === r)
+                    );
+
+                    if (isPartOfWord) {
+                        doc.setFont("times", "bold");
+                        doc.setLineWidth(0.5);
+                        doc.rect(x - 1, y - 5, cellSize, cellSize); // Draw the border
+                    } else {
+                        doc.setFont("times", "normal");
+                    }
+                    doc.text(letter, x + 2, y);
+                }
+            }
+        }
+
+        // Draw the words below the solution grid
+        const solutionWordsStartY = offsetY + gridSize * cellSize + 20;
+        doc.setFontSize(12);
+        for (let i = 0; i < wordLines; i++) {
+            const wordLine = words.slice(i * wordsPerLine, (i + 1) * wordsPerLine).map((word: Word) => word.clean).join(', ').toUpperCase();
+            doc.text(wordLine, offsetX, solutionWordsStartY + 10 + i * 7);
+        }
+
+        const pdfDataUrl = doc.output('bloburl');
+        window.open(pdfDataUrl, '_blank');
     };
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {wordSearchPuzzle && (
-                <canvas
-                    ref={canvasRef}
-                    style={{
-                        border: '1px solid black',
-                        backgroundColor: 'white', // Ensure background is white
-                        display: 'block',
-                        margin: '0 auto' // Center the canvas on the screen
-                    }}
-                ></canvas>
-            )}
-            <div style={{ marginTop: wordSearchPuzzle ? '20px' : '0' }}>
-                <Button
-                    isDisabled={!words || words.length === 0}
-                    color="secondary"
-                    onClick={handleGenerateWordSearch}
-                    style={{ marginRight: '10px' }}
-                >
-                    Generate Word Search
-                </Button>
-                {wordSearchPuzzle && (
-                    <Button
-                        color="secondary"
-                        variant="ghost"
-                        onClick={handleSaveAsImage}
-                    >
-                        Save as Image
-                    </Button>
-                )}
-            </div>
+            <Button
+                isDisabled={!words || words.length === 0 || isGenerating}
+                color="secondary"
+                onClick={handleGenerateWordSearch}
+            >
+                {isGenerating ? "Generating..." : "Generate Word Search PDF"}
+            </Button>
         </div>
     );
 }

@@ -6,12 +6,13 @@ import { Select, SelectItem } from '@nextui-org/select';
 import { Input } from "@nextui-org/input";
 import dynamic from 'next/dynamic';
 
-// Dynamically import the Sudoku, Crossword, Nurikabe, WordSearch, and Hangman components
+// Dynamically import the Sudoku, Crossword, Nurikabe, WordSearch, Hangman, and ScrambleWords components
 const Sudoku = dynamic(() => import('./sudoku'));
 const Crossword = dynamic(() => import('./crossword'));
 const Nurikabe = dynamic(() => import('./nurikabe'));
 const WordSearch = dynamic(() => import('./wordsearch'));
-const Hangman = dynamic(() => import('./hangman')); // Import Hangman dynamically
+const Hangman = dynamic(() => import('./hangman'));
+const ScrambleWords = dynamic(() => import('./wordscrumble')); // Import ScrambleWords dynamically
 
 const games = [
     {
@@ -38,6 +39,11 @@ const games = [
         id: '5',
         name: 'Hangman',
         component: Hangman
+    },
+    {
+        id: '6',
+        name: 'Scramble Words',
+        component: ScrambleWords
     }
 ];
 
@@ -50,6 +56,7 @@ export default function GamesPage() {
     const [selectedSize, setSelectedSize] = useState<number>(5); // Default size for Nurikabe
     const [wordSearchWords, setWordSearchWords] = useState<string>(''); // State for Word Search words
     const [hangmanWord, setHangmanWord] = useState<string>(''); // State for Hangman word
+    const [scrambleWordsInput, setScrambleWordsInput] = useState<string>(''); // State for Scramble Words input
 
     const renderSelectedGame = () => {
         const game = games.find(game => game.id === selectedGame);
@@ -59,13 +66,15 @@ export default function GamesPage() {
             if (selectedGame === '1') {
                 return <GameComponent difficulty={selectedDifficulty} />;
             } else if (selectedGame === '2') {
-                return <GameComponent cross_words={crosswordWords} />;
+                return <GameComponent cross_words={crosswordWords.split(',')} />;
             } else if (selectedGame === '3') {
                 return <GameComponent size={selectedSize} />;
             } else if (selectedGame === '4') {
                 return <GameComponent words={wordSearchWords.split(',')} />;
             } else if (selectedGame === '5') {
-                return <GameComponent word={hangmanWord} />;
+                return <GameComponent hangman_words={hangmanWord.split(',')} />;
+            } else if (selectedGame === '6') {
+                return <GameComponent words={scrambleWordsInput.split(',')} />;
             } else {
                 return <GameComponent />;
             }
@@ -97,6 +106,7 @@ export default function GamesPage() {
                                 if (e.target.value !== '3') setSelectedSize(5);
                                 if (e.target.value !== '4') setWordSearchWords('');
                                 if (e.target.value !== '5') setHangmanWord('');
+                                if (e.target.value !== '6') setScrambleWordsInput('');
                             }}
                         >
                             {games.map((game) => (
@@ -178,6 +188,18 @@ export default function GamesPage() {
                                 placeholder="Enter the word"
                                 onChange={(e) => setHangmanWord(e.target.value)}
                                 value={hangmanWord}
+                            />
+                        )}
+
+                        {/* Conditionally render the text input for Scramble Words */}
+                        {selectedGame === '6' && (
+                            <Input
+                                isRequired={true}
+                                size="sm"
+                                label="Enter words"
+                                placeholder="Enter words separated by commas"
+                                onChange={(e) => setScrambleWordsInput(e.target.value)}
+                                value={scrambleWordsInput}
                             />
                         )}
                     </div>

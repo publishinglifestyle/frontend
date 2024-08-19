@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@nextui-org/button';
 import { generateNurikabe } from '@/managers/gamesManager';
+import jsPDF from 'jspdf';
 
 interface NurikabeProps {
     size?: number;
@@ -13,113 +14,111 @@ interface NurikabeResponse {
 }
 
 export default function Nurikabe({ size }: NurikabeProps) {
-    const [nurikabePuzzle, setNurikabePuzzle] = useState<NurikabeResponse | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateNurikabe = async () => {
+        setIsGenerating(true);
         const nurikabeResponse = await generateNurikabe(size); // Pass size to the generateNurikabe function
-        setNurikabePuzzle(nurikabeResponse);
+
+        if (nurikabeResponse) {
+            generatePDF(nurikabeResponse);
+        }
+
+        setIsGenerating(false);
     };
 
-    useEffect(() => {
-        if (nurikabePuzzle && canvasRef.current) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                const canvasSize = 300; // Adjust the size of the canvas
-                const cellSize = canvasSize / nurikabePuzzle.grid_size;
-                canvas.width = canvasSize;
-                canvas.height = canvasSize;
+    const generatePDF = (nurikabeData: NurikabeResponse) => {
+        const { grid_size, puzzle, solution } = nurikabeData;
+        const doc = new jsPDF('p', 'mm', 'a4');
 
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const cellSize = Math.min((pageWidth - margin * 2) / grid_size, 20); // Max cell size is 20mm
 
-                // Set background color to white
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const gridOffsetX = (pageWidth - grid_size * cellSize) / 2;
+        const gridOffsetY = 40; // Start position below the title
 
-                // Draw the grid with lighter lines
-                ctx.strokeStyle = '#CCCCCC'; // Light gray for grid lines
-                ctx.lineWidth = 1;
-                for (let i = 0; i <= nurikabePuzzle.grid_size; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(i * cellSize, 0);
-                    ctx.lineTo(i * cellSize, canvasSize);
-                    ctx.moveTo(0, i * cellSize);
-                    ctx.lineTo(canvasSize, i * cellSize);
-                    ctx.stroke();
-                }
+        // Page 1: Draw the Nurikabe Puzzle
+        doc.setFont("times", "normal");
+        doc.setFontSize(16);
+        doc.text(`Nurikabe Puzzle - Size: ${grid_size}x${grid_size}`, pageWidth / 2, 20, { align: 'center' });
 
-                // Draw the puzzle numbers and solution markers with softer colors
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+        drawNurikabeGrid(doc, puzzle, gridOffsetX, gridOffsetY, cellSize, grid_size, false);
 
-                for (let row = 0; row < nurikabePuzzle.grid_size; row++) {
-                    for (let col = 0; col < nurikabePuzzle.grid_size; col++) {
-                        const value = nurikabePuzzle.puzzle[row][col];
-                        const solution = nurikabePuzzle.solution[row][col];
+        // Page 2: Draw the Nurikabe Solution
+        doc.addPage();
+        doc.text('Nurikabe Solution', pageWidth / 2, 20, { align: 'center' });
 
-                        if (value !== null) {
-                            ctx.fillStyle = '#333333'; // Dark gray for numbers
-                            ctx.fillText(
-                                value.toString(),
-                                col * cellSize + cellSize / 2,
-                                row * cellSize + cellSize / 2
-                            );
-                        }
+        drawNurikabeGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize, grid_size, true);
 
-                        if (solution === '■') {
-                            ctx.fillStyle = '#555555'; // Medium gray for blocks
-                            ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
-                        }
+        const pdfDataUrl = doc.output('bloburl');
+        window.open(pdfDataUrl, '_blank');
+    };
+
+    const drawNurikabeGrid = (
+        doc: jsPDF,
+        gridData: (number | string | null)[][],
+        offsetX: number,
+        offsetY: number,
+        cellSize: number,
+        gridSize: number,
+        isSolution: boolean
+    ) => {
+        // Draw the grid lines
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(0);
+        for (let i = 0; i <= gridSize; i++) {
+            // Vertical lines
+            doc.line(offsetX + i * cellSize, offsetY, offsetX + i * cellSize, offsetY + gridSize * cellSize);
+            // Horizontal lines
+            doc.line(offsetX, offsetY + i * cellSize, offsetX + gridSize * cellSize, offsetY + i * cellSize);
+        }
+
+        // Draw the numbers and blocks
+        doc.setFontSize(12);
+        doc.setTextColor(0); // Black for text
+
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+                const value = gridData[row][col];
+                const x = offsetX + col * cellSize;
+                const y = offsetY + row * cellSize;
+
+                if (isSolution) {
+                    if (value === '■') {
+                        // Draw the light gray blocks for the solution
+                        doc.setFillColor(200, 200, 200); // Light gray
+                        doc.rect(x, y, cellSize, cellSize, 'F');
                     }
                 }
+
+                // Draw the numbers
+                if (value !== null && value !== '■') {
+                    // Ensure that the value is a string
+                    doc.text(value.toString(), x + cellSize / 2, y + cellSize / 2 + 4, {
+                        align: 'center',
+                        baseline: 'middle'
+                    });
+                }
+
+                // Draw the grid lines on top of the blocks
+                doc.setDrawColor(0); // Black for grid lines
+                doc.rect(x, y, cellSize, cellSize); // Draw cell border
             }
         }
-    }, [nurikabePuzzle]);
-
-    const handleSaveAsImage = () => {
-        if (canvasRef.current) {
-            const link = document.createElement('a');
-            link.download = 'nurikabe.png';
-            link.href = canvasRef.current.toDataURL('image/png');
-            link.click();
-        }
     };
+
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {nurikabePuzzle && (
-                <canvas
-                    ref={canvasRef}
-                    style={{
-                        border: '1px solid #CCCCCC',
-                        backgroundColor: 'white',
-                        display: 'block',
-                        margin: '0 auto'
-                    }}
-                ></canvas>
-            )}
-            <div style={{ marginTop: nurikabePuzzle ? '20px' : '0' }}>
-                <Button
-                    isDisabled={!size}
-                    color="secondary"
-                    onClick={handleGenerateNurikabe}
-                    style={{ marginRight: '10px' }}
-                >
-                    Generate Nurikabe
-                </Button>
-                {nurikabePuzzle && (
-                    <Button
-                        color="secondary"
-                        variant="ghost"
-                        onClick={handleSaveAsImage}
-                    >
-                        Save as Image
-                    </Button>
-                )}
-            </div>
+            <Button
+                isDisabled={!size || isGenerating}
+                color="secondary"
+                onClick={handleGenerateNurikabe}
+            >
+                {isGenerating ? "Generating..." : "Generate Nurikabe PDF"}
+            </Button>
         </div>
     );
 }

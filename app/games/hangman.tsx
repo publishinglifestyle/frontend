@@ -1,174 +1,132 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
+import jsPDF from 'jspdf';
 import { generateHangman } from '@/managers/gamesManager';
 
 interface HangmanProps {
-    word?: string;
+    hangman_words?: string[];
 }
 
-interface HangmanResponse {
-    word: string;
-    maskedWord: string;
-    instructions: string;
-}
-
-export default function Hangman({ word }: HangmanProps) {
-    const [hangmanGame, setHangmanGame] = useState<HangmanResponse | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+export default function Hangman({ hangman_words }: HangmanProps) {
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateHangman = async () => {
-        const hangmanResponse = await generateHangman(word);
-        setHangmanGame(hangmanResponse);
+        setIsGenerating(true);
+        const hangmanResponse = await generateHangman(hangman_words); // Assuming it returns an array of Hangman games
+
+        if (hangmanResponse?.response) {
+            const base64Image = await getBase64Image('/hangman.png');
+            generatePDF(hangmanResponse.response, base64Image);
+        }
+
+        setIsGenerating(false);
     };
 
-    const drawHangmanStructure = (ctx: CanvasRenderingContext2D) => {
-        ctx.fillStyle = 'black';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 1;
-
-        // Base
-        ctx.beginPath();
-        ctx.moveTo(50, 300);
-        ctx.lineTo(150, 300);
-        ctx.stroke();
-
-        // Vertical pole
-        ctx.beginPath();
-        ctx.moveTo(100, 300);
-        ctx.lineTo(100, 50);
-        ctx.stroke();
-
-        // Top bar
-        ctx.beginPath();
-        ctx.moveTo(100, 50);
-        ctx.lineTo(200, 50);
-        ctx.stroke();
-
-        // Rope
-        ctx.beginPath();
-        ctx.moveTo(200, 50);
-        ctx.lineTo(200, 100);
-        ctx.stroke();
+    // Convert the image to Base64 Data URL
+    const getBase64Image = (imgUrl: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = imgUrl;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0);
+                const dataURL = canvas.toDataURL('image/png');
+                resolve(dataURL);
+            };
+            img.onerror = (error) => {
+                reject(error);
+            };
+        });
     };
 
-    const drawHangmanMan = (ctx: CanvasRenderingContext2D) => {
-        ctx.fillStyle = 'black';
+    const generatePDF = (hangmanGames: any[], base64Image: string) => {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const marginX = 10;
+        const hangmanWidth = 30; // Width for the hangman structure
+        const hangmanHeight = 40; // Height for the hangman structure
+        const spacingX = 20; // Spacing between the hangman images and words
+        const spacingY = 60; // Vertical spacing between rows
+        const wordsPerRow = 2;
 
-        // Draw head
-        for (let i = 0; i < 360; i += 20) {
-            const angle = i * (Math.PI / 180);
-            const x = 200 + 20 * Math.cos(angle);
-            const y = 120 + 20 * Math.sin(angle);
-            ctx.fillRect(x, y, 2, 2);
-        }
+        // Page 1: Draw the Hangman Games
+        doc.setFont("times", "normal");
+        doc.setFontSize(16);
+        doc.text('Hangman Games', pageWidth / 2, 20, { align: 'center' });
 
-        // Draw body
-        for (let i = 0; i <= 50; i += 5) {
-            ctx.fillRect(200, 140 + i, 2, 2);
-        }
+        let xPos = marginX; // X position for hangman images
+        let yPos = 30; // Initial Y position
 
-        // Draw left arm
-        for (let i = 0; i <= 20; i += 5) {
-            ctx.fillRect(200 - i, 150 + i, 2, 2);
-        }
-
-        // Draw right arm
-        for (let i = 0; i <= 20; i += 5) {
-            ctx.fillRect(200 + i, 150 + i, 2, 2);
-        }
-
-        // Draw left leg
-        for (let i = 0; i <= 20; i += 5) {
-            ctx.fillRect(200 - i, 190 + i, 2, 2);
-        }
-
-        // Draw right leg
-        for (let i = 0; i <= 20; i += 5) {
-            ctx.fillRect(200 + i, 190 + i, 2, 2);
-        }
-    };
-
-    useEffect(() => {
-        if (hangmanGame && canvasRef.current) {
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                // Clear the canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // Set canvas size
-                canvas.width = 300;
-                canvas.height = 400;
-
-                // Set background color to white
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Draw the hangman structure
-                drawHangmanStructure(ctx);
-
-                // Draw the hangman made of dots
-                drawHangmanMan(ctx);
-
-                // Draw the masked word with the first letter revealed
-                ctx.strokeStyle = 'black';
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'black';
-
-                hangmanGame.maskedWord.split(' ').forEach((letter, index) => {
-                    ctx.fillText(
-                        letter,
-                        50 + index * 30, // Adjust spacing
-                        canvas.height - 50
-                    );
-                });
+        hangmanGames.forEach((game, index) => {
+            if (index > 0 && index % wordsPerRow === 0) { // Limit to wordsPerRow per row
+                xPos = marginX;
+                yPos += hangmanHeight + spacingY; // Move to the next row after wordsPerRow images
             }
-        }
-    }, [hangmanGame]);
 
-    const handleSaveAsImage = () => {
-        if (canvasRef.current) {
-            const link = document.createElement('a');
-            link.download = 'hangman.png';
-            link.href = canvasRef.current.toDataURL('image/png');
-            link.click();
-        }
+            // Add the hangman image
+            doc.addImage(base64Image, 'PNG', xPos, yPos, hangmanWidth, hangmanHeight);
+
+            // Draw the dashes (matching the number of letters in the word)
+            if (typeof game.word === 'string') {
+                doc.setFontSize(14);
+                const wordLength = game.word.length;
+                const dashStartX = xPos + hangmanWidth + spacingX / 2;
+                for (let i = 0; i < wordLength; i++) {
+                    const dashX = dashStartX + (i * 8);
+                    const dashY = yPos + hangmanHeight / 2 - 5; // Position for the dash
+
+                    // Draw the dash
+                    doc.text('_', dashX, dashY);
+                }
+
+                // Draw the boxes (always 6, aligned below the dashes)
+                for (let i = 0; i < 6; i++) {
+                    const boxX = dashStartX + (i * 8);
+                    const boxY = yPos + hangmanHeight / 2;
+
+                    // Draw the box under the dash
+                    doc.setLineWidth(0.5); // Bold line for the box
+                    doc.rect(boxX - 3, boxY + 2, 5, 10); // Rectangular box (10mm wide, 20mm tall)
+                }
+            } else {
+                console.error(`Invalid word for game: ${game}`);
+            }
+
+            xPos += pageWidth / wordsPerRow - marginX; // Move X position for the next hangman
+        });
+
+        // Page 2: Draw the Hangman Solutions
+        doc.addPage();
+        doc.setFontSize(16);
+        doc.text('Hangman Solutions', pageWidth / 2, 20, { align: 'center' });
+
+        let solutionYPos = 40;
+        hangmanGames.forEach((game, index) => {
+            if (game.word) {
+                doc.text(`${index + 1}. ${game.word.toUpperCase()}`, marginX, solutionYPos);
+                solutionYPos += 10;
+            } else {
+                console.error(`Invalid word for game: ${game}`);
+            }
+        });
+
+        const pdfDataUrl = doc.output('bloburl');
+        window.open(pdfDataUrl, '_blank');
     };
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {hangmanGame && (
-                <canvas
-                    ref={canvasRef}
-                    style={{
-                        border: '1px solid black',
-                        backgroundColor: 'white',
-                        display: 'block',
-                        margin: '0 auto'
-                    }}
-                ></canvas>
-            )}
-            <div style={{ marginTop: hangmanGame ? '20px' : '0' }}>
-                <Button
-                    isDisabled={!word}
-                    color="secondary"
-                    onClick={handleGenerateHangman}
-                    style={{ marginRight: '10px' }}
-                >
-                    Generate Hangman
-                </Button>
-                {hangmanGame && (
-                    <Button
-                        color="secondary"
-                        variant="ghost"
-                        onClick={handleSaveAsImage}
-                    >
-                        Save as Image
-                    </Button>
-                )}
-            </div>
+            <Button
+                isDisabled={!hangman_words || hangman_words.length === 0 || isGenerating}
+                color="secondary"
+                onClick={handleGenerateHangman}
+            >
+                {isGenerating ? "Generating..." : "Generate Hangman PDF"}
+            </Button>
         </div>
     );
 }

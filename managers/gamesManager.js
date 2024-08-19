@@ -52,9 +52,20 @@ export async function generateWordSearch(words) {
     }
 }
 
-export async function generateHangman(word) {
+export async function generateHangman(words) {
     let response = await axios.post(endpoint + "generate_hangman",
-        { word }, {
+        { words }, {
+        headers: headers
+    });
+
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function scrambleWords(words) {
+    let response = await axios.post(endpoint + "scramble_word",
+        { words }, {
         headers: headers
     });
 

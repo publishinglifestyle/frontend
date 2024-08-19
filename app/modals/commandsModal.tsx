@@ -66,6 +66,11 @@ const commands = [
         has_parameter: true
     },
     {
+        value: '--style',
+        description: 'Switch between versions of the Midjourney and Niji.',
+        has_parameter: true
+    },
+    {
         value: '--stylize',
         description: 'Influence how strongly aesthetic style is applied to Jobs.',
         has_parameter: true
