@@ -114,7 +114,7 @@ export default function WordSearch({ words }: WordSearchProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!words || words.length === 0 || isGenerating}
+                isDisabled={!words || words[0] == '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateWordSearch}
             >

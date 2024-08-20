@@ -141,7 +141,7 @@ export default function Crossword({ cross_words }: CrosswordProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!cross_words || isGenerating}
+                isDisabled={!cross_words || cross_words[0] == '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateCrossword}
             >

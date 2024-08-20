@@ -81,7 +81,7 @@ export default function Sudoku({ difficulty }: SudokuProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!difficulty || isGenerating}
+                isDisabled={difficulty == '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateSudoku}
             >

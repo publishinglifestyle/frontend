@@ -73,3 +73,47 @@ export async function scrambleWords(words) {
         return response.data.response;
     }
 }
+
+export async function generateCryptogram(phrases) {
+    let response = await axios.post(endpoint + "generate_cryptogram",
+        { phrases }, {
+        headers: headers
+    });
+
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function generateMazeBase64(width, height, cell_size) {
+    let response = await axios.post(endpoint + "generate_maze",
+        { width, height, cell_size }, {
+        headers: headers
+    });
+
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function generateMinesweeper(width, height, mines) {
+    let response = await axios.post(endpoint + "generate_minesweeper",
+        { width, height, mines }, {
+        headers: headers
+    });
+
+    if (response) {
+        return response.data;
+    }
+}
+
+export async function generateKakuro(size) {
+    let response = await axios.post(endpoint + "generate_kakuro",
+        { size }, {
+        headers: headers
+    });
+
+    if (response) {
+        return response.data;
+    }
+}

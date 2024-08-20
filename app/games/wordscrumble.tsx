@@ -120,7 +120,7 @@ export default function ScrambleWords({ words }: ScrambleWordsProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!words || isGenerating}
+                isDisabled={!words || words[0] == '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateScrambledWords}
             >

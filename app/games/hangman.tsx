@@ -121,7 +121,7 @@ export default function Hangman({ hangman_words }: HangmanProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!hangman_words || hangman_words.length === 0 || isGenerating}
+                isDisabled={!hangman_words || hangman_words[0] == '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateHangman}
             >
