@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import jsPDF from 'jspdf';
@@ -7,9 +9,10 @@ interface MazeProps {
     width?: number;
     height?: number;
     cellSize?: number;
+    font?: string;
 }
 
-export default function Maze({ width, height, cellSize = 10 }: MazeProps) {
+export default function Maze({ width, height, cellSize = 10, font }: MazeProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateMaze = async () => {
@@ -35,7 +38,7 @@ export default function Maze({ width, height, cellSize = 10 }: MazeProps) {
         const offsetX = (pageWidth - imgWidth) / 2;
 
         // Add maze image to PDF
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Maze Puzzle', pageWidth / 2, 10, { align: 'center' });
 

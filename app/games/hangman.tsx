@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import jsPDF from 'jspdf';
@@ -5,9 +7,10 @@ import { generateHangman } from '@/managers/gamesManager';
 
 interface HangmanProps {
     hangman_words?: string[];
+    font?: string;
 }
 
-export default function Hangman({ hangman_words }: HangmanProps) {
+export default function Hangman({ hangman_words, font }: HangmanProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateHangman = async () => {
@@ -54,7 +57,7 @@ export default function Hangman({ hangman_words }: HangmanProps) {
         const wordsPerRow = 2;
 
         // Page 1: Draw the Hangman Games
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Hangman Games', pageWidth / 2, 20, { align: 'center' });
 
@@ -72,6 +75,7 @@ export default function Hangman({ hangman_words }: HangmanProps) {
 
             // Draw the dashes (matching the number of letters in the word)
             if (typeof game.word === 'string') {
+                doc.setFont(font || "times", "normal");
                 doc.setFontSize(14);
                 const wordLength = game.word.length;
                 const dashStartX = xPos + hangmanWidth + spacingX / 2;
@@ -101,6 +105,7 @@ export default function Hangman({ hangman_words }: HangmanProps) {
 
         // Page 2: Draw the Hangman Solutions
         doc.addPage();
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Hangman Solutions', pageWidth / 2, 20, { align: 'center' });
 

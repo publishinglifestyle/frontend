@@ -103,7 +103,7 @@ export async function generateMinesweeper(width, height, mines) {
     });
 
     if (response) {
-        return response.data;
+        return response.data.response;
     }
 }
 

@@ -5,14 +5,15 @@ import jsPDF from 'jspdf';
 
 interface SudokuProps {
     difficulty?: string;
+    font?: string;
 }
 
-export default function Sudoku({ difficulty }: SudokuProps) {
+export default function Sudoku({ difficulty, font }: SudokuProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateSudoku = async () => {
         setIsGenerating(true);
-        const sudokuResponse = await generateSudoku(difficulty); // Pass difficulty to the generate function
+        const sudokuResponse = await generateSudoku(difficulty);
 
         if (sudokuResponse) {
             generatePDF(sudokuResponse);
@@ -28,13 +29,13 @@ export default function Sudoku({ difficulty }: SudokuProps) {
 
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 20;
-        const cellSize = 15; // Set cell size for the grid
+        const cellSize = 15;
 
         const gridOffsetX = (pageWidth - 9 * cellSize) / 2;
-        const gridOffsetY = 40; // Start position below the title
+        const gridOffsetY = 40;
 
         // Page 1: Draw the Sudoku Puzzle
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal"); // Use the selected font or default to "times"
         doc.setFontSize(16);
         doc.text(`Sudoku Puzzle - Difficulty: ${difficulty}`, pageWidth / 2, 20, { align: 'center' });
 
@@ -51,7 +52,6 @@ export default function Sudoku({ difficulty }: SudokuProps) {
     };
 
     const drawSudokuGrid = (doc: jsPDF, gridData: string, offsetX: number, offsetY: number, cellSize: number) => {
-        // Draw the grid lines
         doc.setLineWidth(0.5);
         for (let i = 0; i <= 9; i++) {
             const lineWidth = i % 3 === 0 ? 1 : 0.5;

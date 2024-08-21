@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import jsPDF from 'jspdf';
@@ -5,14 +7,15 @@ import { generateCryptogram } from '@/managers/gamesManager'; // Assuming you ha
 
 interface CryptogramProps {
     phrases?: string[];
+    font?: string;
 }
 
-export default function Cryptogram({ phrases }: CryptogramProps) {
+export default function Cryptogram({ phrases, font }: CryptogramProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateCryptogram = async () => {
         setIsGenerating(true);
-        const cryptogramResponse = await generateCryptogram(phrases || []); // Pass the clue count as 3
+        const cryptogramResponse = await generateCryptogram(phrases || []);
 
         if (cryptogramResponse) {
             generatePDF(cryptogramResponse);
@@ -36,13 +39,13 @@ export default function Cryptogram({ phrases }: CryptogramProps) {
             yPos = margin + index * 60;
 
             // Add the cryptogram in bold
-            doc.setFont("times", "bold");
+            doc.setFont(font || "times", "bold");
             doc.setFontSize(18);
             const cryptogramLines = doc.splitTextToSize(cryptogram, maxWidth);
             doc.text(cryptogramLines, margin, yPos);
 
             // Add the partially solved phrase (puzzle format with clues) below the cryptogram in italic
-            doc.setFont("times", "italic");
+            doc.setFont(font || "times", "italic");
             doc.setFontSize(16);
             const puzzleLines = doc.splitTextToSize(partiallySolvedPhrase, maxWidth);
             doc.text(puzzleLines, margin, yPos + 20);
@@ -63,13 +66,13 @@ export default function Cryptogram({ phrases }: CryptogramProps) {
             yPos = margin + index * 60;
 
             // Add the cryptogram in bold
-            doc.setFont("times", "bold");
+            doc.setFont(font || "times", "bold");
             doc.setFontSize(18);
             const cryptogramLines = doc.splitTextToSize(cryptogram, maxWidth);
             doc.text(cryptogramLines, margin, yPos);
 
             // Add the original phrase below the cryptogram in italic
-            doc.setFont("times", "italic");
+            doc.setFont(font || "times", "italic");
             doc.setFontSize(16);
             const originalLines = doc.splitTextToSize(originalPhrase, maxWidth);
             doc.text(originalLines, margin, yPos + 20);

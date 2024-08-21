@@ -16,7 +16,7 @@ const ScrambleWords = dynamic(() => import('./wordscrumble'));
 const Cryptogram = dynamic(() => import('./cryptogram'));
 const Maze = dynamic(() => import('./maze'));
 const MineFinder = dynamic(() => import('./mineFinder'));
-const DotsToDots = dynamic(() => import('./dots')); // Import the DotsToDots component
+const DotsToDots = dynamic(() => import('./dots'));
 
 const games = [
     { id: '1', name: 'Sudoku', component: Sudoku },
@@ -28,16 +28,18 @@ const games = [
     { id: '7', name: 'Cryptogram', component: Cryptogram },
     { id: '8', name: 'Maze', component: Maze },
     { id: '9', name: 'Mine Finder', component: MineFinder },
-    { id: '10', name: 'Dots to Dots', component: DotsToDots }, // Add DotsToDots to the games array
+    { id: '10', name: 'Dots to Dots', component: DotsToDots },
 ];
 
+const fonts = ["times", "courier", "helvetica", "symbol", "zapfdingbats"];
 const sudoku_difficulty = ["easy", "medium", "hard", "expert"];
 
 export default function GamesPage() {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
+    const [selectedFont, setSelectedFont] = useState<string>('times');
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
     const [crosswordWords, setCrosswordWords] = useState<string>('');
-    const [selectedSize, setSelectedSize] = useState<number>(5); // Default size for Nurikabe
+    const [selectedSize, setSelectedSize] = useState<number>(5);
     const [wordSearchWords, setWordSearchWords] = useState<string>('');
     const [hangmanWord, setHangmanWord] = useState<string>('');
     const [scrambleWordsInput, setScrambleWordsInput] = useState<string>('');
@@ -54,25 +56,25 @@ export default function GamesPage() {
             const GameComponent = game.component;
 
             if (selectedGame === '1') {
-                return <GameComponent difficulty={selectedDifficulty} />;
+                return <GameComponent difficulty={selectedDifficulty} font={selectedFont} />;
             } else if (selectedGame === '2') {
-                return <GameComponent cross_words={crosswordWords.split(',')} />;
+                return <GameComponent cross_words={crosswordWords.split(',')} font={selectedFont} />;
             } else if (selectedGame === '3') {
-                return <GameComponent size={selectedSize} />;
+                return <GameComponent size={selectedSize} font={selectedFont} />;
             } else if (selectedGame === '4') {
-                return <GameComponent words={wordSearchWords.split(',')} />;
+                return <GameComponent words={wordSearchWords.split(',')} font={selectedFont} />;
             } else if (selectedGame === '5') {
-                return <GameComponent hangman_words={hangmanWord.split(',')} />;
+                return <GameComponent hangman_words={hangmanWord.split(',')} font={selectedFont} />;
             } else if (selectedGame === '6') {
-                return <GameComponent words={scrambleWordsInput.split(',')} />;
+                return <GameComponent words={scrambleWordsInput.split(',')} font={selectedFont} />;
             } else if (selectedGame === '7') {
-                return <GameComponent phrases={cryptogramPhrases.split(',')} />;
+                return <GameComponent phrases={cryptogramPhrases.split(',')} font={selectedFont} />;
             } else if (selectedGame === '8') {
-                return <GameComponent width={mazeWidth} height={mazeHeight} />;
+                return <GameComponent width={mazeWidth} height={mazeHeight} font={selectedFont} />;
             } else if (selectedGame === '9') {
-                return <GameComponent width={mineFinderWidth} height={mineFinderHeight} mines={mineCount} />;
+                return <GameComponent width={mineFinderWidth} height={mineFinderHeight} mines={mineCount} font={selectedFont} />;
             } else if (selectedGame === '10') {
-                return <GameComponent />; // Render DotsToDots component
+                return <GameComponent />;
             } else {
                 return <GameComponent />;
             }
@@ -290,6 +292,21 @@ export default function GamesPage() {
                                 />
                             </>
                         )}
+
+                        <Select
+                            isRequired
+                            size="sm"
+                            label="Select Font"
+                            placeholder="Select font"
+                            onChange={(e) => setSelectedFont(e.target.value)}
+                            value={selectedFont}
+                        >
+                            {fonts.map((font) => (
+                                <SelectItem key={font} value={font}>
+                                    {font}
+                                </SelectItem>
+                            ))}
+                        </Select>
                     </div>
                 </CardFooter>
             </Card>

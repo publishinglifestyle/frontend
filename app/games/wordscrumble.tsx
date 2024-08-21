@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import { scrambleWords } from '@/managers/gamesManager';
@@ -5,6 +7,7 @@ import jsPDF from 'jspdf';
 
 interface ScrambleWordsProps {
     words?: string[];
+    font?: string;
 }
 
 interface ScrambledWord {
@@ -13,7 +16,7 @@ interface ScrambledWord {
 }
 
 
-export default function ScrambleWords({ words }: ScrambleWordsProps) {
+export default function ScrambleWords({ words, font }: ScrambleWordsProps) {
     const [scrambledWords, setScrambledWords] = useState<ScrambledWord[] | null>(null);
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -60,9 +63,9 @@ export default function ScrambleWords({ words }: ScrambleWordsProps) {
             if (isSolution) {
                 doc.text(originalWord, blankX, y);
             } else {
-                doc.setFont("courier", "normal");
+                doc.setFont(font || "courier", "normal");
                 doc.text('_ _ _ _ _ _ _ _', blankX, y);
-                doc.setFont("times", "italic");
+                doc.setFont(font || "times", "italic");
             }
 
             y += lineHeight;
@@ -86,13 +89,13 @@ export default function ScrambleWords({ words }: ScrambleWordsProps) {
 
     const generatePDF = (scrambledWords: ScrambledWord[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
-        doc.setFont("times", "italic");
+        doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Scrambled Words Game', 105, 20, { align: 'center' });
-        doc.setFont("times", "italic");
+        doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
         const startY = 40;
@@ -105,10 +108,10 @@ export default function ScrambleWords({ words }: ScrambleWordsProps) {
         addContentToPDF(doc, gameContent, startY);
 
         doc.addPage();
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Scrambled Words Solutions', 105, 20, { align: 'center' });
-        doc.setFont("times", "italic");
+        doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
         addContentToPDF(doc, gameContent, startY, true);

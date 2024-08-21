@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useRef, useState, ChangeEvent, MouseEvent } from 'react';
 import { Button } from '@nextui-org/button';
 import { Spacer } from '@nextui-org/spacer';

@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import { generateWordSearch } from '@/managers/gamesManager';
@@ -5,9 +7,10 @@ import jsPDF from 'jspdf';
 
 interface WordSearchProps {
     words?: string[];
+    font?: string;
 }
 
-export default function WordSearch({ words }: WordSearchProps) {
+export default function WordSearch({ words, font }: WordSearchProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateWordSearch = async () => {
@@ -40,7 +43,7 @@ export default function WordSearch({ words }: WordSearchProps) {
         const offsetY = 40; // Start position below the title
 
         // Page 1: Draw the Word Search Puzzle
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text('Word Search Puzzle', pageWidth / 2, 20, { align: 'center' });
 
@@ -88,11 +91,11 @@ export default function WordSearch({ words }: WordSearchProps) {
                     );
 
                     if (isPartOfWord) {
-                        doc.setFont("times", "bold");
+                        doc.setFont(font || "times", "bold");
                         doc.setLineWidth(0.5);
                         doc.rect(x - 1, y - 5, cellSize, cellSize); // Draw the border
                     } else {
-                        doc.setFont("times", "normal");
+                        doc.setFont(font || "times", "normal");
                     }
                     doc.text(letter, x + 2, y);
                 }

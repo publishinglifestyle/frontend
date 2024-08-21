@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState } from 'react';
 import { Button } from '@nextui-org/button';
 import { generateNurikabe } from '@/managers/gamesManager';
@@ -5,6 +7,7 @@ import jsPDF from 'jspdf';
 
 interface NurikabeProps {
     size?: number;
+    font?: string;
 }
 
 interface NurikabeResponse {
@@ -13,7 +16,7 @@ interface NurikabeResponse {
     solution: (number | string | null)[][];
 }
 
-export default function Nurikabe({ size }: NurikabeProps) {
+export default function Nurikabe({ size, font }: NurikabeProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateNurikabe = async () => {
@@ -40,7 +43,7 @@ export default function Nurikabe({ size }: NurikabeProps) {
         const gridOffsetY = 40; // Start position below the title
 
         // Page 1: Draw the Nurikabe Puzzle
-        doc.setFont("times", "normal");
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
         doc.text(`Nurikabe Puzzle - Size: ${grid_size}x${grid_size}`, pageWidth / 2, 20, { align: 'center' });
 
@@ -48,6 +51,8 @@ export default function Nurikabe({ size }: NurikabeProps) {
 
         // Page 2: Draw the Nurikabe Solution
         doc.addPage();
+        doc.setFont(font || "times", "normal");
+        doc.setFontSize(16);
         doc.text('Nurikabe Solution', pageWidth / 2, 20, { align: 'center' });
 
         drawNurikabeGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize, grid_size, true);
@@ -76,6 +81,7 @@ export default function Nurikabe({ size }: NurikabeProps) {
         }
 
         // Draw the numbers and blocks
+        doc.setFont(font || "times", "normal");
         doc.setFontSize(12);
         doc.setTextColor(0); // Black for text
 
