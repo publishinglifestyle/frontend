@@ -9,6 +9,7 @@
     "password_missmatch": "Le password non corrispondono",
     "forgot_password": "Password dimenticata",
     "password_invalid_format": "La password deve essere lunga almeno 8 caratteri e contenere almeno una lettera, un numero e un carattere speciale",
+    "password_invalid_format_2": "La password deve essere lunga almeno 8 caratteri",
     "next": "Avanti",
     "enter_first_name": "Inserisci il tuo nome",
     "enter_last_name": "Inserisci il tuo cognome",

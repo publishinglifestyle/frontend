@@ -9,6 +9,7 @@ export interface Translations {
     password_mismatch: string;
     forgot_password: string;
     password_invalid_format: string;
+    password_invalid_format_2: string;
     next: string;
     enter_first_name: string;
     enter_last_name: string;

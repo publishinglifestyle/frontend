@@ -43,9 +43,15 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     const [step, setStep] = useState(1);
 
     const validateEmail = (email: string): boolean => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email);
-    const validatePassword = (password: string): boolean => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
-
     const isInvalidEmail = useMemo(() => email === "" ? null : !validateEmail(email), [email]);
+
+    //const validatePassword = (password: string): boolean => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+
+    const validatePassword = (password: string): boolean => {
+        // You can add specific criteria here, for now, we're just checking length
+        return password.length >= 8;
+    };
+
     const isInvalidPassword = useMemo(() => password === "" ? null : !validatePassword(password), [password]);
     const isInvalidPassword_2 = useMemo(() => {
         if (password_2 === "") return null;
@@ -150,7 +156,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     variant="bordered"
                                     className='mt-4'
                                     isInvalid={isInvalidPassword == null ? undefined : isInvalidPassword}
-                                    errorMessage={isInvalidPassword && translations?.password_invalid_format}
+                                    errorMessage={isInvalidPassword && translations?.password_invalid_format_2}
                                     color={isInvalidPassword == null ? undefined : (isInvalidPassword ? "danger" : "success")}
                                 />
                                 <Input
