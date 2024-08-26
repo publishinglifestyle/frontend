@@ -218,6 +218,24 @@ export default function GamesPage() {
                             </>
                         )}
 
+                        {/* Sudoku and Wordsearch Specific Input */}
+                        {selectedGame === '1' || selectedGame === '3' || selectedGame === '8' && (
+                            <>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Number of Puzzles to Generate"
+                                    placeholder="Enter number of puzzles"
+                                    onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                                    value={numPuzzles.toString()}
+                                />
+                            </>
+                        )}
+
                         {/* Sudoku Specific Input */}
                         {selectedGame === '1' && (
                             <>
@@ -235,18 +253,6 @@ export default function GamesPage() {
                                         </SelectItem>
                                     ))}
                                 </Select>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    max={10}
-                                    step={1}
-                                    isRequired={true}
-                                    size="sm"
-                                    label="Number of Puzzles to Generate"
-                                    placeholder="Enter number of puzzles"
-                                    onChange={(e) => setNumPuzzles(Number(e.target.value))}
-                                    value={numPuzzles.toString()}
-                                />
                             </>
                         )}
 

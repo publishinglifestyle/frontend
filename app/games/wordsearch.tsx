@@ -13,12 +13,15 @@ interface Word {
 interface WordSearchProps {
     words?: string[];
     font?: string;
+    is_sequential?: boolean;
     num_puzzles?: number;
     solutions_per_page?: number;
     invert_words?: number;
+    custom_name?: string;
+    custom_solution_name?: string;
 }
 
-export default function WordSearch({ words, font, num_puzzles = 1, solutions_per_page = 1, invert_words }: WordSearchProps) {
+export default function WordSearch({ words, font, is_sequential, num_puzzles = 1, solutions_per_page = 1, invert_words, custom_name, custom_solution_name }: WordSearchProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
     const margin = 20; // Margin for the page
     const baseCellSize = 6; // Base cell size for the letters inside the puzzle
@@ -37,10 +40,9 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
     const generatePDF = (wordSearchData: any[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
 
         wordSearchData.forEach((wordSearch, index) => {
-            const { puzzle, grid, words } = wordSearch;
+            const { grid, words } = wordSearch;
             const gridSize = grid.length;
             const maxGridWidth = pageWidth - 2 * margin;
             const adjustedCellSize = Math.min(baseCellSize, maxGridWidth / gridSize); // Adjust cell size to fit within the margins
@@ -50,11 +52,15 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
             const offsetX = (pageWidth - gridWidth) / 2;
             const offsetY = margin + 20;
 
+            // Determine titles based on the naming convention
+            const puzzleTitle = is_sequential ? `Puzzle ${index + 1}` : custom_name || `Word Search Puzzle ${index + 1}`;
+            const solutionTitle = is_sequential ? `Solution ${index + 1}` : custom_solution_name || `Word Search Solution ${index + 1}`;
+
             // Page for each Word Search Puzzle (puzzle view without highlighted words)
             if (index > 0) doc.addPage();
             doc.setFont(font || "times", "normal");
-            doc.setFontSize(16);
-            doc.text(`Word Search Puzzle ${index + 1}`, pageWidth / 2, margin + 10, { align: 'center' });
+            doc.setFontSize(20);
+            doc.text(puzzleTitle, pageWidth / 2, margin + 10, { align: 'center' });
 
             // Draw the puzzle grid
             drawWordSearchGrid(doc, grid, offsetX, offsetY, adjustedCellSize, false);
@@ -78,8 +84,8 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
             if (num_puzzles === 1 || solutions_per_page === 1) {
                 // Single puzzle and solution per page
                 doc.addPage();
-                doc.setFontSize(16);
-                doc.text(`Word Search Solution ${index + 1}`, pageWidth / 2, margin + 10, { align: 'center' });
+                doc.setFontSize(20);
+                doc.text(solutionTitle, pageWidth / 2, margin + 10, { align: 'center' });
 
                 // Draw the solution grid, highlighting the correct words
                 drawWordSearchGrid(doc, grid, offsetX, offsetY, adjustedCellSize, true, words);
@@ -93,7 +99,14 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
                 doc.addPage();
                 doc.setFont(font || "times", "normal");
                 doc.setFontSize(16);
-                doc.text(`Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`, pageWidth / 2, margin + 10, { align: 'center' });
+                doc.text(
+                    is_sequential
+                        ? `Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`
+                        : custom_solution_name || "Solutions",
+                    pageWidth / 2,
+                    margin + 10,
+                    { align: 'center' }
+                );
 
                 const solutionsToShow = wordSearchData.slice(page * solutions_per_page, (page + 1) * solutions_per_page);
                 const gridPerRow = 2; // 2 grids per row for layout
@@ -114,11 +127,6 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
     };
 
     const drawWordSearchGrid = (doc: jsPDF, grid: string[][], offsetX: number, offsetY: number, cellSize: number, showWords: boolean, words?: Word[]) => {
-        words?.forEach((word: Word) => {
-            console.log(`Word: ${word.clean}, Path: ${JSON.stringify(word.path)}`);
-        });
-
-
         const gridSize = grid.length;
         for (let r = 0; r < gridSize; r++) {
             for (let c = 0; c < gridSize; c++) {
@@ -129,7 +137,6 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
                     const y = offsetY + r * cellSize + cellSize * 0.75; // Adjusted position to ensure correct alignment
 
                     if (showWords) {
-                        // Ensure we correctly determine if the letter is part of any word's path
                         const isPartOfWord = words?.some((word: Word) =>
                             word.path.some((coord: { x: number; y: number }) => coord.x === c && coord.y === r)
                         );
@@ -154,8 +161,6 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
         }
     };
 
-
-
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
@@ -168,3 +173,4 @@ export default function WordSearch({ words, font, num_puzzles = 1, solutions_per
         </div>
     );
 }
+

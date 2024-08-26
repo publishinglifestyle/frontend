@@ -143,10 +143,10 @@ export default function Hangman({ hangman_words, font, is_sequential, custom_nam
         doc.addPage();
         doc.setFontSize(20);
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.text('Solutions', pageWidth / 2, 20, { align: 'center' });
+        doc.text(custom_solution_name || 'Solutions', pageWidth / 2, 20, { align: 'center' });
 
         hangmanGames.forEach((game, index) => {
-            const solutionText = `${is_sequential ? `Solution ${index + 1}` : custom_solution_name || ''}: ${game.word.toUpperCase()}`;
+            const solutionText = `${index + 1}. ${game.word.trim().toUpperCase()}`;
             doc.text(solutionText, 20, 30 + index * 10);
         });
     };

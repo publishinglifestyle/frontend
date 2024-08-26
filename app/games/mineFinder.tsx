@@ -11,9 +11,11 @@ interface MineFinderProps {
     font?: string;
     num_puzzles?: number;
     solutions_per_page?: number;
+    custom_name?: string;
+    custom_solution_name?: string;
 }
 
-export default function MineFinder({ width, height, mines, font, num_puzzles = 1, solutions_per_page = 1 }: MineFinderProps) {
+export default function MineFinder({ width, height, mines, font, num_puzzles = 1, solutions_per_page = 1, custom_name, custom_solution_name }: MineFinderProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateMineFinder = async () => {
@@ -44,8 +46,8 @@ export default function MineFinder({ width, height, mines, font, num_puzzles = 1
             // Page for each Minesweeper Puzzle (puzzle view without bombs)
             if (index > 0) doc.addPage();
             doc.setFont(font || "times", "normal");
-            doc.setFontSize(16);
-            doc.text(`Minesweeper Puzzle ${index + 1}`, pageWidth / 2, margin - 10, { align: 'center' });
+            doc.setFontSize(20);
+            doc.text(custom_name || `Minesweeper Puzzle ${index + 1}`, pageWidth / 2, margin - 10, { align: 'center' });
 
             // Centering the puzzle grid
             const offsetX = (pageWidth - gridWidth) / 2;
@@ -67,8 +69,8 @@ export default function MineFinder({ width, height, mines, font, num_puzzles = 1
             for (let page = 0; page < solutionsPages; page++) {
                 doc.addPage();
                 doc.setFont(font || "times", "normal");
-                doc.setFontSize(16);
-                doc.text(`Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`, pageWidth / 2, margin - 10, { align: 'center' });
+                doc.setFontSize(20);
+                doc.text(custom_solution_name || `Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`, pageWidth / 2, margin - 10, { align: 'center' });
 
                 const solutionsToShow = minefields.slice(page * solutions_per_page, (page + 1) * solutions_per_page);
                 const gridPerRow = 2; // 2 grids per row for layout

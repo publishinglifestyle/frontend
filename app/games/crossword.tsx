@@ -8,9 +8,11 @@ import jsPDF from 'jspdf';
 interface CrosswordProps {
     cross_words?: string[];
     font?: string;
+    custom_name?: string;
+    custom_solution_name?: string;
 }
 
-export default function Crossword({ cross_words, font }: CrosswordProps) {
+export default function Crossword({ cross_words, font, custom_name, custom_solution_name }: CrosswordProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateCrossword = async () => {
@@ -75,8 +77,8 @@ export default function Crossword({ cross_words, font }: CrosswordProps) {
         const gridOffsetX = margin + (availableWidth - cellSize * relevantCols) / 2;
         const gridOffsetY = margin + 20;
 
-        const numberFontSize = cellSize * 0.4;
-        const letterFontSize = cellSize * 0.7;
+        const numberFontSize = cellSize * 0.7;
+        const letterFontSize = cellSize * 1.1;
 
         const getNumberForCell = (colIndex: number, rowIndex: number) => {
             for (let i = 0; i < placedWords.length; i++) {
@@ -128,8 +130,8 @@ export default function Crossword({ cross_words, font }: CrosswordProps) {
 
         // Page 1: Draw the crossword puzzle (unsolved)
         doc.setFont(font || "times", "normal");
-        doc.setFontSize(16);
-        doc.text('Crossword Puzzle', pageWidth / 2, margin + 10, { align: 'center' });
+        doc.setFontSize(20);
+        doc.text(custom_name || 'Crossword Puzzle', pageWidth / 2, margin + 10, { align: 'center' });
         drawGrid(false);
 
         // Add clues below the grid
@@ -168,8 +170,8 @@ export default function Crossword({ cross_words, font }: CrosswordProps) {
 
         // Page 2: Draw the crossword solution
         doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Solutions', pageWidth / 2, margin + 10, { align: 'center' });
+        doc.setFontSize(20);
+        doc.text(custom_solution_name || 'Solutions', pageWidth / 2, margin + 10, { align: 'center' });
         drawGrid(true);
 
         const pdfDataUrl = doc.output('bloburl');

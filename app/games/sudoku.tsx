@@ -30,7 +30,6 @@ export default function Sudoku({ difficulty, font, is_sequential, custom_name, c
     const generatePDF = (sudokuData: any[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 20;
         const cellSize = 10;
 
@@ -68,7 +67,7 @@ export default function Sudoku({ difficulty, font, is_sequential, custom_name, c
                 doc.addPage();
                 doc.setFont(font || "times", "normal");
                 doc.setFontSize(20);
-                doc.text(`Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`, pageWidth / 2, margin, { align: 'center' });
+                doc.text(is_sequential ? `Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}` : custom_solution_name || "Solution", pageWidth / 2, margin, { align: 'center' });
 
                 const solutionsToShow = sudokuData.slice(page * solutions_per_page, (page + 1) * solutions_per_page);
                 const gridPerRow = 2; // Always 2 grids per row for solutions layout
