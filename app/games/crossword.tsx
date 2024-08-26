@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
-import { generateCrossword } from '@/managers/gamesManager';
+import { generateCrossword } from '@/managers/gamesManager'; // Assuming this is how you import your backend function
 import jsPDF from 'jspdf';
 
 interface CrosswordProps {
@@ -15,10 +15,17 @@ export default function Crossword({ cross_words, font }: CrosswordProps) {
 
     const handleGenerateCrossword = async () => {
         setIsGenerating(true);
-        const crosswordResponse = await generateCrossword(cross_words);
 
-        if (crosswordResponse) {
-            generatePDF(crosswordResponse);
+        try {
+            // Generate crossword using the backend function
+            const crosswordResponse = await generateCrossword(cross_words);
+            console.log("Crossword response:", crosswordResponse); // Log the full response for debugging
+
+            if (crosswordResponse) {
+                generatePDF(crosswordResponse);
+            }
+        } catch (error) {
+            console.error("Error generating crossword:", error);
         }
 
         setIsGenerating(false);
@@ -26,128 +33,153 @@ export default function Crossword({ cross_words, font }: CrosswordProps) {
 
     const generatePDF = (crosswordLayout: any) => {
         const doc = new jsPDF('p', 'mm', 'a4');
-
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 10; // Set a margin for the page
+        const margin = 20;
 
-        // Determine the maximum grid size based on available space
-        const availableWidth = pageWidth - margin * 2;
-        const availableHeight = (pageHeight / 2) - margin * 2; // Adjust height to leave space for clues
+        const { table: grid, outputJson: placedWords } = crosswordLayout.response;
 
-        const rows = crosswordLayout.rows;
-        const cols = crosswordLayout.cols;
+        if (!grid || !placedWords) {
+            console.error("Grid or placedWords are undefined!");
+            return;
+        }
 
-        // Calculate the cell size to fit the grid within the available space
-        const cellSize = Math.min(availableWidth / cols, availableHeight / rows);
+        const rows = grid.length;
+        const cols = grid[0].length;
 
-        const gridOffsetX = (pageWidth - cellSize * cols) / 2; // Center horizontally based on grid size
-        const gridOffsetY = margin + 20; // Start position below title
+        if (rows === 0 || cols === 0) {
+            console.error("Grid is empty!");
+            return;
+        }
 
-        // Page 1: Draw the crossword game (unsolved puzzle)
-        doc.setFont(font || "times", "normal");
-        doc.setFontSize(16);
-        doc.text('Crossword Puzzle', margin, 10); // Title remains left-aligned
-
-        crosswordLayout.outputJson.forEach((wordInfo: any) => {
-            const startX = gridOffsetX + (wordInfo.startx - 1) * cellSize;
-            const startY = gridOffsetY + (wordInfo.starty - 1) * cellSize;
-
-            for (let i = 0; i < wordInfo.answer.length; i++) {
-                const x = wordInfo.orientation === 'across' ? startX + i * cellSize : startX;
-                const y = wordInfo.orientation === 'down' ? startY + i * cellSize : startY;
-
-                // Draw the cell border only for the cells that are part of a word
-                doc.rect(x, y, cellSize, cellSize);
-
-                // Draw numbers for the starting cells of the words
-                if (i === 0 && wordInfo.position !== undefined) {
-                    doc.setFontSize(cellSize * 0.5);
-                    doc.text(wordInfo.position.toString(), x + 2, y + cellSize * 0.3); // Top-left corner inside the cell
-                    doc.setFontSize(cellSize * 1.5); // Reset for other text
+        // Calculate boundaries of the crossword to only show relevant cells
+        let minRow = rows, maxRow = 0, minCol = cols, maxCol = 0;
+        grid.forEach((row: string[], rowIndex: number) => {
+            row.forEach((cell: string, colIndex: number) => {
+                if (cell !== '-' && cell !== ' ') {
+                    if (rowIndex < minRow) minRow = rowIndex;
+                    if (rowIndex > maxRow) maxRow = rowIndex;
+                    if (colIndex < minCol) minCol = colIndex;
+                    if (colIndex > maxCol) maxCol = colIndex;
                 }
-            }
+            });
         });
 
-        // Adjust the width for clue columns
-        const clueColumnWidth = (pageWidth - margin * 2) / 2 - 10;
-        const leftColumnX = margin; // Left margin
-        const rightColumnX = margin + clueColumnWidth + 20; // Positioned properly within page
+        const relevantRows = maxRow - minRow + 1;
+        const relevantCols = maxCol - minCol + 1;
+
+        const availableWidth = pageWidth - margin * 2;
+        const availableHeight = (pageHeight / 2) - margin * 2;
+        const cellSize = Math.min(availableWidth / relevantCols, availableHeight / relevantRows);
+
+        const gridOffsetX = margin + (availableWidth - cellSize * relevantCols) / 2;
+        const gridOffsetY = margin + 20;
+
+        const numberFontSize = cellSize * 0.4;
+        const letterFontSize = cellSize * 0.7;
+
+        const getNumberForCell = (colIndex: number, rowIndex: number) => {
+            for (let i = 0; i < placedWords.length; i++) {
+                const word = placedWords[i];
+                const wordStartX = word.startx;
+                const wordStartY = word.starty;
+
+                if (wordStartX === colIndex && wordStartY === rowIndex) {
+                    return word.position.toString(); // Return the position as a string for the start cell
+                }
+            }
+            return '';
+        };
+
+        const drawGrid = (isSolution = false) => {
+            for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+                for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+                    const cell = grid[rowIndex][colIndex];
+                    const x = gridOffsetX + (colIndex - minCol) * cellSize;
+                    const y = gridOffsetY + (rowIndex - minRow) * cellSize;
+
+                    // Draw cell border
+                    doc.rect(x, y, cellSize, cellSize);
+
+                    // Determine the offset for number placement based on cell size
+                    const numberOffsetX = cellSize > 15 ? 2 : 1;
+                    const numberOffsetY = cellSize > 15 ? 4 : 1;
+
+                    // Draw the starting position number if applicable
+                    const number = getNumberForCell(colIndex, rowIndex);
+                    if (number) {
+                        doc.setFontSize(numberFontSize);
+                        doc.setFont(font || "times", "normal");
+                        doc.text(number, x + numberOffsetX, y + numberOffsetY);
+                    }
+
+                    if (isSolution && cell !== '-' && cell !== ' ') {
+                        // Draw the letter in the solution grid, centered
+                        doc.setFontSize(letterFontSize);
+                        doc.setFont(font || "times", "normal");
+                        const textWidth = doc.getTextWidth(cell.toUpperCase());
+                        const textX = x + (cellSize - textWidth) / 2;
+                        const textY = y + (cellSize + letterFontSize * 0.3) / 2; // Adjust for better vertical centering
+                        doc.text(cell.toUpperCase(), textX, textY);
+                    }
+                }
+            }
+        };
+
+        // Page 1: Draw the crossword puzzle (unsolved)
+        doc.setFont(font || "times", "normal");
+        doc.setFontSize(16);
+        doc.text('Crossword Puzzle', pageWidth / 2, margin + 10, { align: 'center' });
+        drawGrid(false);
 
         // Add clues below the grid
-        let currentY = gridOffsetY + rows * cellSize + 20;
+        const clueColumnWidth = (availableWidth - margin * 2) / 2 - 10;
+        const leftColumnX = margin;
+        const rightColumnX = margin + clueColumnWidth + 20;
+        let currentY = gridOffsetY + relevantRows * cellSize + 20;
 
         doc.setFontSize(12);
         doc.setFont(font || "times", "italic");
-        doc.text('Across', leftColumnX, currentY); // Clues titles left-aligned
+        doc.text('Across', leftColumnX, currentY);
         doc.text('Down', rightColumnX, currentY);
 
         currentY += 10;
 
-        const acrossClues = crosswordLayout.outputJson.filter((wordInfo: any) => wordInfo.orientation === 'across');
-        const downClues = crosswordLayout.outputJson.filter((wordInfo: any) => wordInfo.orientation === 'down');
+        const acrossClues = placedWords.filter((wordInfo: any) => wordInfo.orientation === 'across');
+        const downClues = placedWords.filter((wordInfo: any) => wordInfo.orientation === 'down');
 
-        let clueLineHeight = 7; // Line height for each clue
+        const clueLineHeight = 7;
         let acrossY = currentY;
         let downY = currentY;
 
         acrossClues.forEach((wordInfo: any) => {
             const clueText = `${wordInfo.position}. ${wordInfo.clue}`;
-            const splitText = doc.splitTextToSize(clueText, clueColumnWidth); // Wrap text to fit within column width
-            doc.text(splitText, leftColumnX, acrossY); // Left-aligned clues
+            const splitText = doc.splitTextToSize(clueText, clueColumnWidth);
+            doc.text(splitText, leftColumnX, acrossY);
             acrossY += splitText.length * clueLineHeight;
         });
 
         downClues.forEach((wordInfo: any) => {
             const clueText = `${wordInfo.position}. ${wordInfo.clue}`;
-            const splitText = doc.splitTextToSize(clueText, clueColumnWidth); // Wrap text to fit within column width
-            doc.text(splitText, rightColumnX, downY); // Left-aligned clues in the right column
+            const splitText = doc.splitTextToSize(clueText, clueColumnWidth);
+            doc.text(splitText, rightColumnX, downY);
             downY += splitText.length * clueLineHeight;
         });
 
         // Page 2: Draw the crossword solution
         doc.addPage();
-
         doc.setFontSize(16);
-        doc.text('Solutions', margin, 10); // Title left-aligned
-
-        crosswordLayout.outputJson.forEach((wordInfo: any) => {
-            const startX = gridOffsetX + (wordInfo.startx - 1) * cellSize;
-            const startY = gridOffsetY + (wordInfo.starty - 1) * cellSize;
-
-            for (let i = 0; i < wordInfo.answer.length; i++) {
-                const x = wordInfo.orientation === 'across' ? startX + i * cellSize : startX;
-                const y = wordInfo.orientation === 'down' ? startY + i * cellSize : startY;
-
-                // Draw the cell border only for the cells that are part of a word
-                doc.rect(x, y, cellSize, cellSize);
-
-                // Draw the letters in the cells
-                const letter = wordInfo.answer[i];
-                doc.setFontSize(12);
-                doc.setFont(font || "times", "normal");
-                doc.text(letter.toUpperCase(), x + cellSize / 2, y + cellSize / 2 + 3, {
-                    align: 'center'
-                });
-
-                // Draw numbers for the starting cells of the words in the solution as well
-                if (i === 0 && wordInfo.position !== undefined) {
-                    doc.setFontSize(cellSize * 0.5);
-                    doc.text(wordInfo.position.toString(), x + 2, y + cellSize * 0.3); // Top-left corner inside the cell
-                    doc.setFontSize(cellSize * 1.5); // Reset for other text
-                }
-            }
-        });
+        doc.text('Solutions', pageWidth / 2, margin + 10, { align: 'center' });
+        drawGrid(true);
 
         const pdfDataUrl = doc.output('bloburl');
         window.open(pdfDataUrl, '_blank');
     };
 
-
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={!cross_words || cross_words[0] == '' || isGenerating}
+                isDisabled={!cross_words || cross_words[0] === '' || isGenerating}
                 color="secondary"
                 onClick={handleGenerateCrossword}
             >

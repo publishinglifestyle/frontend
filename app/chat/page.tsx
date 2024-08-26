@@ -590,7 +590,7 @@ export default function ChatPage() {
 
     return (
         <div className='flex flex-col md:flex-row justify-between gap-2'>
-            <div className='flex flex-col md:w-1/4'>
+            <div className='flex flex-col md:w-1/4' style={{ height: '750px' }}>
                 <Button
                     isDisabled={!agents || agents.length === 0}
                     className='mb-4'
@@ -629,7 +629,8 @@ export default function ChatPage() {
                     {translations?.new_conversation}
                 </Button>
 
-                <div style={{ height: '75%', overflowY: 'auto' }}>
+                {/* Updated container to handle scrolling */}
+                <div style={{ flex: 1, overflowY: 'auto' }}>
                     <Table
                         aria-label={translations?.conversations || ""}
                         selectionMode="single"
@@ -682,10 +683,10 @@ export default function ChatPage() {
                                 </TableRow>
                             )}
                         </TableBody>
-
                     </Table>
                 </div>
             </div>
+
 
             <div className='md:w-3/4'>
                 <Card>

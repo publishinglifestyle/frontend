@@ -62,4 +62,5 @@ export interface Translations {
     select_model: string;
     commands: string;
     copy: string;
+    start_free_trial: string;
 }

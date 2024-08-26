@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import jsPDF from 'jspdf';
-import { generateMazeBase64 } from '@/managers/gamesManager'; // Assume this is the function you call to get the base64 maze
+import { generateMazeBase64 } from '@/managers/gamesManager'; // Assume this is the function you call to get the base64 maze and solution
 
 interface MazeProps {
     width?: number;
@@ -17,32 +17,44 @@ export default function Maze({ width, height, cellSize = 10, font }: MazeProps) 
 
     const handleGenerateMaze = async () => {
         setIsGenerating(true);
-        const mazeBase64 = await generateMazeBase64(width, height, cellSize);
 
-        if (mazeBase64) {
-            generatePDF(mazeBase64);
+        try {
+            const { maze, solution } = await generateMazeBase64(width, height, cellSize);
+
+            if (maze && solution) {
+                generatePDF(maze, solution);
+            }
+        } catch (error) {
+            console.error("Error generating maze:", error);
         }
 
         setIsGenerating(false);
     };
 
-    const generatePDF = (mazeBase64: string) => {
+    const generatePDF = (mazeBase64: string, solutionBase64: string) => {
         const doc = new jsPDF('p', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 10; // Set a margin for the page
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40; // Set a margin for the page
 
         const imgWidth = pageWidth - margin * 2; // Image width based on page width minus margins
         const imgHeight = imgWidth; // Keeping the image square
 
-        // Center the image horizontally on the page
-        const offsetX = (pageWidth - imgWidth) / 2;
+        // Center the images horizontally and vertically on the page
+        const offsetX = margin;
+        const offsetY = (pageHeight - imgHeight * 2) / 3;
 
         // Add maze image to PDF
         doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
-        doc.text('Maze Puzzle', pageWidth / 2, 10, { align: 'center' });
+        doc.text('Maze Puzzle', pageWidth / 2, margin - 10, { align: 'center' });
 
-        doc.addImage(`data:image/png;base64,${mazeBase64}`, 'PNG', offsetX, 20, imgWidth, imgHeight);
+        doc.addImage(`data:image/png;base64,${mazeBase64}`, 'PNG', offsetX, offsetY, imgWidth, imgHeight);
+
+        // Add solution image to PDF
+        doc.addPage();
+        doc.text('Maze Solution', pageWidth / 2, margin - 10, { align: 'center' });
+        doc.addImage(`data:image/png;base64,${solutionBase64}`, 'PNG', offsetX, offsetY, imgWidth, imgHeight);
 
         // Save the PDF or open in a new window
         const pdfDataUrl = doc.output('bloburl');

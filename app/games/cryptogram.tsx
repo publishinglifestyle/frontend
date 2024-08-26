@@ -27,7 +27,7 @@ export default function Cryptogram({ phrases, font }: CryptogramProps) {
     const generatePDF = (cryptogramData: any[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 20; // Set a margin for the page
+        const margin = 40; // Set a margin for the page
         const maxWidth = pageWidth - 2 * margin; // Maximum width for text
         let yPos;
 

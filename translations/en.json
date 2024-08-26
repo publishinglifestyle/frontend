@@ -62,5 +62,6 @@
     "select_model": "Select Model",
     "already_have_an_account": "Already have an account?",
     "commands": "Commands",
-    "copy": "Copy"
+    "copy": "Copy",
+    "start_free_trial": "Start Free Trial"
 }

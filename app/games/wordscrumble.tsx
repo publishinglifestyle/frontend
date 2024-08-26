@@ -15,7 +15,6 @@ interface ScrambledWord {
     originalWord: string;
 }
 
-
 export default function ScrambleWords({ words, font }: ScrambleWordsProps) {
     const [scrambledWords, setScrambledWords] = useState<ScrambledWord[] | null>(null);
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -37,13 +36,13 @@ export default function ScrambleWords({ words, font }: ScrambleWordsProps) {
     };
 
     const addContentToPDF = (doc: jsPDF, content: ScrambledWord[], startY: number, isSolution: boolean = false) => {
-        const margin = 15;
+        const margin = 40; // Set margin to 40mm
         const columnWidth = 25;
         const equalSignWidth = 12;
         const blankLineWidth = 40;
         const lineHeight = 10;
         const pageHeight = doc.internal.pageSize.getHeight();
-        const maxLinesPerColumn = Math.floor((pageHeight - startY) / lineHeight);
+        const maxLinesPerColumn = Math.floor((pageHeight - startY - margin) / lineHeight);
 
         let x = margin;
         let y = startY;
@@ -89,16 +88,17 @@ export default function ScrambleWords({ words, font }: ScrambleWordsProps) {
 
     const generatePDF = (scrambledWords: ScrambledWord[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
+        const margin = 40; // Set margin to 40mm
         doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
         doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
-        doc.text('Scrambled Words Game', 105, 20, { align: 'center' });
+        doc.text('Scrambled Words Game', 105, margin - 20, { align: 'center' });
         doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
-        const startY = 40;
+        const startY = margin;
 
         const gameContent = scrambledWords.map(wordInfo => ({
             scrambledWord: wordInfo.scrambledWord,
@@ -110,7 +110,7 @@ export default function ScrambleWords({ words, font }: ScrambleWordsProps) {
         doc.addPage();
         doc.setFont(font || "times", "normal");
         doc.setFontSize(16);
-        doc.text('Scrambled Words Solutions', 105, 20, { align: 'center' });
+        doc.text('Scrambled Words Solutions', 105, margin - 20, { align: 'center' });
         doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 

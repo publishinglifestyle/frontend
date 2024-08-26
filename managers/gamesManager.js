@@ -8,9 +8,9 @@ const headers = {
     'Authorization': Cookie.get('authToken')
 }
 
-export async function generateSudoku(difficulty) {
+export async function generateSudoku(difficulty, num_puzzles) {
     let response = await axios.post(endpoint + "generate_sudoku",
-        { difficulty }, {
+        { difficulty, num_puzzles }, {
         headers: headers
     });
 
@@ -26,7 +26,7 @@ export async function generateCrossword(words) {
     });
 
     if (response) {
-        return response.data.response;
+        return response.data;
     }
 }
 
@@ -41,9 +41,10 @@ export async function generateNurikabe(size) {
     }
 }
 
-export async function generateWordSearch(words) {
+export async function generateWordSearch(words, num_puzzles, backwards_probability) {
+    console.log(words, num_puzzles, backwards_probability)
     let response = await axios.post(endpoint + "generate_wordsearch",
-        { words }, {
+        { words, num_puzzles, backwards_probability }, {
         headers: headers
     });
 
@@ -96,14 +97,14 @@ export async function generateMazeBase64(width, height, cell_size) {
     }
 }
 
-export async function generateMinesweeper(width, height, mines) {
+export async function generateMinesweeper(width, height, mines, num_puzzles) {
     let response = await axios.post(endpoint + "generate_minesweeper",
-        { width, height, mines }, {
+        { width, height, mines, num_puzzles }, {
         headers: headers
     });
 
     if (response) {
-        return response.data.response;
+        return response.data;
     }
 }
 

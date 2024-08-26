@@ -1,11 +1,17 @@
 "use client"
 
-import React, { useRef, useState, ChangeEvent, MouseEvent } from 'react';
+import React, { useRef, useState, useEffect, ChangeEvent } from 'react';
 import { Button } from '@nextui-org/button';
 import { Spacer } from '@nextui-org/spacer';
 import jsPDF from 'jspdf';
 
-const DotsToDots: React.FC = () => {
+interface DotsToDotsProps {
+    is_sequential: boolean;
+    custom_name: string;
+    font: string;
+}
+
+const DotsToDots: React.FC<DotsToDotsProps> = ({ is_sequential, custom_name, font }) => {
     const [image, setImage] = useState<string | ArrayBuffer | null>(null);
     const [dots, setDots] = useState<{ x: number; y: number }[]>([]);
     const [draggingDotIndex, setDraggingDotIndex] = useState<number | null>(null);
@@ -49,12 +55,18 @@ const DotsToDots: React.FC = () => {
         // Draw the image centered
         ctx.drawImage(img, x, y, img.width, img.height);
 
-        // Draw the dots
+        // Draw the dots with numbers
         ctx.fillStyle = 'red';
-        dots.forEach(dot => {
+        ctx.font = `12px ${font}`; // Use the selected font
+
+        dots.forEach((dot, index) => {
             ctx.beginPath();
             ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
             ctx.fill();
+
+            // Draw the sequential number next to each dot
+            const label = (index + 1).toString();
+            ctx.fillText(label, dot.x + 7, dot.y - 7);
         });
     };
 
@@ -111,6 +123,11 @@ const DotsToDots: React.FC = () => {
         const pageWidth = doc.internal.pageSize.getWidth();
         const margin = 10;
 
+        // Add custom name as the title of the page
+        doc.setFont(font);
+        doc.setFontSize(16);
+        doc.text(custom_name, pageWidth / 2, margin + 10, { align: 'center' });
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -120,19 +137,26 @@ const DotsToDots: React.FC = () => {
         dotsCanvas.height = canvas.height;
         const dotsCtx = dotsCanvas.getContext('2d');
         if (dotsCtx) {
-            // Draw only dots on the new canvas
-            dotsCtx.fillStyle = 'red';
-            dots.forEach(dot => {
+            // Resize dots and change their color to black for the PDF
+            const dotRadius = 2; // Smaller dot size for PDF
+            dotsCtx.fillStyle = 'black'; // Set dot color to black
+            dotsCtx.font = `8px ${font}`; // Use the selected font for PDF
+
+            dots.forEach((dot, index) => {
                 dotsCtx.beginPath();
-                dotsCtx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
+                dotsCtx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
                 dotsCtx.fill();
+
+                // Draw the sequential number next to each dot
+                const label = (index + 1).toString();
+                dotsCtx.fillText(label, dot.x + 3, dot.y - 3); // Adjusted for smaller size
             });
 
             const dotsImgData = dotsCanvas.toDataURL('image/png');
             const imgWidth = pageWidth - margin * 2;
             const imgHeight = imgWidth * (dotsCanvas.height / dotsCanvas.width);
             const offsetX = margin;
-            const offsetY = (doc.internal.pageSize.getHeight() - imgHeight) / 2;
+            const offsetY = (doc.internal.pageSize.getHeight() - imgHeight) / 2 + 20; // Adjust for title space
 
             doc.addImage(dotsImgData, 'PNG', offsetX, offsetY, imgWidth, imgHeight);
 
@@ -144,7 +168,7 @@ const DotsToDots: React.FC = () => {
     };
 
     // Redraw the canvas when the image or dots change
-    React.useEffect(() => {
+    useEffect(() => {
         if (image) {
             const img = new Image();
             img.src = image as string;
@@ -153,7 +177,7 @@ const DotsToDots: React.FC = () => {
                 drawCanvas();
             };
         }
-    }, [image, dots]);
+    }, [image, dots, font, is_sequential, custom_name]);
 
     return (
         <div style={{ textAlign: 'center' }}>

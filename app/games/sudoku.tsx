@@ -6,46 +6,81 @@ import jsPDF from 'jspdf';
 interface SudokuProps {
     difficulty?: string;
     font?: string;
+    is_sequential?: boolean;
+    custom_name?: string;
+    custom_solution_name?: string;
+    num_puzzles?: number;
+    solutions_per_page?: number;
 }
 
-export default function Sudoku({ difficulty, font }: SudokuProps) {
+export default function Sudoku({ difficulty, font, is_sequential, custom_name, custom_solution_name, num_puzzles = 1, solutions_per_page = 1 }: SudokuProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     const handleGenerateSudoku = async () => {
         setIsGenerating(true);
-        const sudokuResponse = await generateSudoku(difficulty);
+        const sudokuResponses = await generateSudoku(difficulty, num_puzzles);
 
-        if (sudokuResponse) {
-            generatePDF(sudokuResponse);
+        if (sudokuResponses) {
+            generatePDF(sudokuResponses);
         }
 
         setIsGenerating(false);
     };
 
-    const generatePDF = (sudokuData: any) => {
-        const { puzzle, solution, difficulty } = sudokuData;
-
+    const generatePDF = (sudokuData: any[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
-
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 20;
-        const cellSize = 15;
+        const cellSize = 10;
 
-        const gridOffsetX = (pageWidth - 9 * cellSize) / 2;
-        const gridOffsetY = 40;
+        sudokuData.forEach((sudoku, index) => {
+            const { puzzle, solution } = sudoku;
 
-        // Page 1: Draw the Sudoku Puzzle
-        doc.setFont(font || "times", "normal"); // Use the selected font or default to "times"
-        doc.setFontSize(16);
-        doc.text(`Sudoku Puzzle - Difficulty: ${difficulty}`, pageWidth / 2, 20, { align: 'center' });
+            // Determine titles based on the naming convention
+            const puzzleTitle = is_sequential ? `Puzzle ${index + 1}` : custom_name || `Custom Puzzle ${index + 1}`;
+            const solutionTitle = is_sequential ? `Solution ${index + 1}` : custom_solution_name || `Custom Solution ${index + 1}`;
 
-        drawSudokuGrid(doc, puzzle, gridOffsetX, gridOffsetY, cellSize);
+            // Page for each Sudoku Puzzle
+            if (index > 0) doc.addPage();
+            doc.setFont(font || "times", "normal");
+            doc.setFontSize(20);
+            doc.text(puzzleTitle, pageWidth / 2, margin, { align: 'center' });
 
-        // Page 2: Draw the Sudoku Solution
-        doc.addPage();
-        doc.text('Sudoku Solution', pageWidth / 2, 20, { align: 'center' });
+            // Centering the puzzle grid on the page
+            const gridOffsetX = (pageWidth - 9 * cellSize) / 2;
+            const gridOffsetY = margin + 20;
 
-        drawSudokuGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize);
+            drawSudokuGrid(doc, puzzle, gridOffsetX, gridOffsetY, cellSize);
+
+            if (num_puzzles === 1 || solutions_per_page === 1) {
+                // One puzzle and its solution per page or single solution view
+                doc.addPage();
+                doc.text(solutionTitle, pageWidth / 2, margin, { align: 'center' });
+                drawSudokuGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize);
+            }
+        });
+
+        if (num_puzzles > 1) {
+            // If more than one puzzle, print solutions in a compact layout
+            const solutionsPages = Math.ceil(num_puzzles / solutions_per_page);
+            for (let page = 0; page < solutionsPages; page++) {
+                doc.addPage();
+                doc.setFont(font || "times", "normal");
+                doc.setFontSize(20);
+                doc.text(`Solutions ${page * solutions_per_page + 1} - ${Math.min((page + 1) * solutions_per_page, num_puzzles)}`, pageWidth / 2, margin, { align: 'center' });
+
+                const solutionsToShow = sudokuData.slice(page * solutions_per_page, (page + 1) * solutions_per_page);
+                const gridPerRow = 2; // Always 2 grids per row for solutions layout
+                const gridSize = pageWidth / 2 - margin - 10; // Size to fit 2 grids per row with some margin
+
+                solutionsToShow.forEach((sudoku, index) => {
+                    const offsetX = (index % gridPerRow) * (gridSize + 20) + (pageWidth - gridPerRow * gridSize - (gridPerRow - 1) * 20) / 2;
+                    const offsetY = margin + 20 + Math.floor(index / gridPerRow) * (gridSize + 20);
+                    drawSudokuGrid(doc, sudoku.solution, offsetX, offsetY, gridSize / 9);
+                });
+            }
+        }
 
         const pdfDataUrl = doc.output('bloburl');
         window.open(pdfDataUrl, '_blank');
@@ -81,7 +116,7 @@ export default function Sudoku({ difficulty, font }: SudokuProps) {
     return (
         <div style={{ textAlign: 'center' }}>
             <Button
-                isDisabled={difficulty == '' || isGenerating}
+                isDisabled={!difficulty || isGenerating}
                 color="secondary"
                 onClick={handleGenerateSudoku}
             >

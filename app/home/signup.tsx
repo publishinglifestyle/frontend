@@ -281,7 +281,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                         className='mt-12 mb-6'
                                         onClick={async () => await handleSignUp(selectedSubscription.price_id)}
                                     >
-                                        {translations?.sign_up}
+                                        {translations?.start_free_trial}
                                     </Button>
                                 )}
                             </div>

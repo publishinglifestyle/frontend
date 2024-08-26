@@ -5,33 +5,38 @@ import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { Select, SelectItem } from '@nextui-org/select';
 import { Input } from "@nextui-org/input";
 import dynamic from 'next/dynamic';
+import jsPDF from 'jspdf';
+
 
 // Dynamically import the game components
 const Sudoku = dynamic(() => import('./sudoku'));
 const Crossword = dynamic(() => import('./crossword'));
-const Nurikabe = dynamic(() => import('./nurikabe'));
 const WordSearch = dynamic(() => import('./wordsearch'));
 const Hangman = dynamic(() => import('./hangman'));
 const ScrambleWords = dynamic(() => import('./wordscrumble'));
 const Cryptogram = dynamic(() => import('./cryptogram'));
-const Maze = dynamic(() => import('./maze'));
 const MineFinder = dynamic(() => import('./mineFinder'));
 const DotsToDots = dynamic(() => import('./dots'));
+
+// Custom Fonts
+import { dancingScriptFont } from './fonts/dancing_script'
+import { caveatVariableFont } from './fonts/caveat_variable'
+import { abrilFatfaceFont } from './fonts/abril_fatface'
+import { shadowsIntoLightFont } from './fonts/shadows_into_light'
 
 const games = [
     { id: '1', name: 'Sudoku', component: Sudoku },
     { id: '2', name: 'Crossword', component: Crossword },
-    { id: '3', name: 'Nurikabe', component: Nurikabe },
-    { id: '4', name: 'Word Search', component: WordSearch },
-    { id: '5', name: 'Hangman', component: Hangman },
-    { id: '6', name: 'Scramble Words', component: ScrambleWords },
-    { id: '7', name: 'Cryptogram', component: Cryptogram },
-    { id: '8', name: 'Maze', component: Maze },
-    { id: '9', name: 'Mine Finder', component: MineFinder },
-    { id: '10', name: 'Dots to Dots', component: DotsToDots },
+    { id: '3', name: 'Word Search', component: WordSearch },
+    { id: '4', name: 'Hangman', component: Hangman },
+    { id: '5', name: 'Scramble Words', component: ScrambleWords },
+    { id: '6', name: 'Cryptogram', component: Cryptogram },
+    { id: '7', name: 'Maze' },  // No component, will use iframe
+    { id: '8', name: 'Mine Finder', component: MineFinder },
+    { id: '9', name: 'Dots to Dots', component: DotsToDots },
 ];
 
-const fonts = ["times", "courier", "helvetica", "symbol", "zapfdingbats"];
+const fonts = ["times", "courier", "helvetica", "dancing", "caveat", "abril", "shadows"];
 const sudoku_difficulty = ["easy", "medium", "hard", "expert"];
 
 export default function GamesPage() {
@@ -49,34 +54,74 @@ export default function GamesPage() {
     const [mineFinderWidth, setMineFinderWidth] = useState<number>(9);
     const [mineFinderHeight, setMineFinderHeight] = useState<number>(9);
     const [mineCount, setMineCount] = useState<number>(10);
+    const [isSequential, setIsSequential] = useState<boolean>(true);
+    const [customName, setCustomName] = useState<string>('');
+    const [customSolutionName, setCustomSolutionName] = useState<string>('');
+    const [solutionsPerPage, setSolutionsPerPage] = useState<number>(1);
+    const [numPuzzles, setNumPuzzles] = useState<number>(1);
+    const [invertWords, setInvertWords] = useState<number>(0);
+
+    // Register the font with jsPDF
+    jsPDF.API.events.push(['addFonts', function (this: jsPDF) {
+        this.addFileToVFS('Dancing-Script.ttf', dancingScriptFont);
+        this.addFont('Dancing-Script.ttf', 'dancing', 'normal');
+
+        this.addFileToVFS('Caveat-Variable.ttf', caveatVariableFont);
+        this.addFont('Caveat-Variable.ttf', 'caveat', 'normal');
+
+        this.addFileToVFS('Abril-Fatface.ttf', abrilFatfaceFont);
+        this.addFont('Abril-Fatface.ttf', 'abril', 'normal');
+
+        this.addFileToVFS('Shadows-Into-Light.ttf', shadowsIntoLightFont);
+        this.addFont('Shadows-Into-Light.ttf', 'shadows', 'normal');
+    }]);
 
     const renderSelectedGame = () => {
+        if (selectedGame === '7') {
+            // Render an iframe for the Maze game
+            return (
+                <iframe
+                    src="https://maze-lowcontent-e5d92aeae259.herokuapp.com/"
+                    width="100%"
+                    height="600px"
+                    style={{ border: 'none' }}
+                    title="Maze Game"
+                ></iframe>
+            );
+        }
+
         const game = games.find(game => game.id === selectedGame);
         if (game && game.component) {
             const GameComponent = game.component;
 
+            const commonProps = {
+                font: selectedFont,
+                is_sequential: isSequential,
+                custom_name: customName,
+                custom_solution_name: customSolutionName,
+                solutions_per_page: solutionsPerPage,
+                num_puzzles: numPuzzles,
+                invert_words: invertWords,
+            };
+
             if (selectedGame === '1') {
-                return <GameComponent difficulty={selectedDifficulty} font={selectedFont} />;
+                return <GameComponent difficulty={selectedDifficulty} {...commonProps} />;
             } else if (selectedGame === '2') {
-                return <GameComponent cross_words={crosswordWords.split(',')} font={selectedFont} />;
+                return <GameComponent cross_words={crosswordWords.split(',')} {...commonProps} />;
             } else if (selectedGame === '3') {
-                return <GameComponent size={selectedSize} font={selectedFont} />;
+                return <GameComponent words={wordSearchWords.split(',')} {...commonProps} />;
             } else if (selectedGame === '4') {
-                return <GameComponent words={wordSearchWords.split(',')} font={selectedFont} />;
+                return <GameComponent hangman_words={hangmanWord.split(',')} {...commonProps} />;
             } else if (selectedGame === '5') {
-                return <GameComponent hangman_words={hangmanWord.split(',')} font={selectedFont} />;
+                return <GameComponent words={scrambleWordsInput.split(',')} {...commonProps} />;
             } else if (selectedGame === '6') {
-                return <GameComponent words={scrambleWordsInput.split(',')} font={selectedFont} />;
-            } else if (selectedGame === '7') {
-                return <GameComponent phrases={cryptogramPhrases.split(',')} font={selectedFont} />;
+                return <GameComponent phrases={cryptogramPhrases.split(',')} {...commonProps} />;
             } else if (selectedGame === '8') {
-                return <GameComponent width={mazeWidth} height={mazeHeight} font={selectedFont} />;
+                return <GameComponent width={mineFinderWidth} height={mineFinderHeight} mines={mineCount} {...commonProps} />;
             } else if (selectedGame === '9') {
-                return <GameComponent width={mineFinderWidth} height={mineFinderHeight} mines={mineCount} font={selectedFont} />;
-            } else if (selectedGame === '10') {
-                return <GameComponent />;
+                return <GameComponent {...commonProps} />;
             } else {
-                return <GameComponent />;
+                return <GameComponent {...commonProps} />;
             }
         }
         return null;
@@ -86,13 +131,14 @@ export default function GamesPage() {
         <>
             <Card>
                 <CardHeader>
-                    <h1 className="text-2xl">Games</h1>
+                    <h1 className="text-2xl text-center">Games</h1>
                 </CardHeader>
                 <CardBody>
                     {renderSelectedGame()}
                 </CardBody>
                 <CardFooter>
-                    <div className="flex gap-2 w-full">
+                    <div className="flex flex-col items-center gap-4 w-full">
+                        {/* Select Game */}
                         <Select
                             isRequired
                             size="sm"
@@ -117,7 +163,12 @@ export default function GamesPage() {
                                     setMineFinderHeight(9);
                                     setMineCount(10);
                                 }
-
+                                // Reset custom fields
+                                setCustomName('');
+                                setCustomSolutionName('');
+                                setSolutionsPerPage(1);
+                                setNumPuzzles(1);
+                                setInvertWords(0); // Reset inversion setting
                             }}
                         >
                             {games.map((game) => (
@@ -127,25 +178,122 @@ export default function GamesPage() {
                             ))}
                         </Select>
 
-                        {/* Conditionally render the difficulty select for Sudoku */}
-                        {selectedGame === '1' && (
+                        {/* Name Type */}
+                        {selectedGame !== '7' && (
                             <Select
                                 isRequired
                                 size="sm"
-                                label="Select Difficulty"
-                                placeholder="Select difficulty"
-                                onChange={(e) => setSelectedDifficulty(e.target.value)}
-                                value={selectedDifficulty}
+                                label="Name Type"
+                                placeholder="Select Name Type"
+                                onChange={(e) => setIsSequential(e.target.value === 'sequential')}
                             >
-                                {sudoku_difficulty.map((difficulty) => (
-                                    <SelectItem key={difficulty} value={difficulty}>
-                                        {difficulty}
+                                <SelectItem key="sequential" value="sequential">Sequential Name</SelectItem>
+                                <SelectItem key="custom" value="custom">Custom Name</SelectItem>
+                            </Select>
+                        )}
+
+                        {/* Custom Names */}
+                        {!isSequential && (
+                            <>
+                                <Input
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Custom Name"
+                                    placeholder="Enter a custom name"
+                                    onChange={(e) => setCustomName(e.target.value)}
+                                    value={customName}
+                                />
+                                {
+                                    selectedGame !== '9' &&
+                                    <Input
+                                        isRequired={true}
+                                        size="sm"
+                                        label="Custom Solution Name"
+                                        placeholder="Enter a custom solution name"
+                                        onChange={(e) => setCustomSolutionName(e.target.value)}
+                                        value={customSolutionName}
+                                    />
+                                }
+
+                            </>
+                        )}
+
+                        {/* Sudoku Specific Input */}
+                        {selectedGame === '1' && (
+                            <>
+                                <Select
+                                    isRequired
+                                    size="sm"
+                                    label="Select Difficulty"
+                                    placeholder="Select difficulty"
+                                    onChange={(e) => setSelectedDifficulty(e.target.value)}
+                                    value={selectedDifficulty}
+                                >
+                                    {sudoku_difficulty.map((difficulty) => (
+                                        <SelectItem key={difficulty} value={difficulty}>
+                                            {difficulty}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={10}
+                                    step={1}
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Number of Puzzles to Generate"
+                                    placeholder="Enter number of puzzles"
+                                    onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                                    value={numPuzzles.toString()}
+                                />
+                            </>
+                        )}
+
+                        {/* Solutions per Page */}
+                        {(selectedGame === '1' || selectedGame === '3' || selectedGame === '8') && numPuzzles > 1 && (
+                            <Select
+                                isRequired
+                                size="sm"
+                                label="Solutions per Page"
+                                placeholder="Select number of solutions per page"
+                                onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
+                                value={solutionsPerPage.toString()}
+                            >
+                                {[1, 2, 3, 4].map((option) => (
+                                    <SelectItem key={option} value={option.toString()}>
+                                        {option.toString()}
                                     </SelectItem>
                                 ))}
                             </Select>
                         )}
 
-                        {/* Conditionally render the text input for Crossword */}
+                        {/* Word Search Specific Inputs */}
+                        {selectedGame === '3' && (
+                            <>
+                                <Input
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Enter words"
+                                    placeholder="Enter words separated by commas"
+                                    onChange={(e) => setWordSearchWords(e.target.value)}
+                                    value={wordSearchWords}
+                                />
+                                {/* Inversion Option for Word Search */}
+                                <Select
+                                    isRequired
+                                    size="sm"
+                                    label="Invert Words"
+                                    placeholder="Select if words should be inverted"
+                                    onChange={(e) => setInvertWords(Number(e.target.value))}
+                                    value={invertWords.toString()}
+                                >
+                                    <SelectItem key="0" value="0">No</SelectItem>
+                                    <SelectItem key="0.5" value="0.5">Yes</SelectItem>
+                                </Select>
+                            </>
+                        )}
+
                         {selectedGame === '2' && (
                             <Input
                                 isRequired={true}
@@ -157,36 +305,7 @@ export default function GamesPage() {
                             />
                         )}
 
-                        {/* Conditionally render the number input for Nurikabe */}
-                        {selectedGame === '3' && (
-                            <Input
-                                type="number"
-                                isRequired={true}
-                                size="sm"
-                                label="Enter Grid Size"
-                                placeholder="Enter grid size"
-                                onChange={(e) => {
-                                    const value = Number(e.target.value);
-                                    setSelectedSize(value);
-                                }}
-                                value={selectedSize.toString()}
-                            />
-                        )}
-
-                        {/* Conditionally render the text input for Word Search */}
                         {selectedGame === '4' && (
-                            <Input
-                                isRequired={true}
-                                size="sm"
-                                label="Enter words"
-                                placeholder="Enter words separated by commas"
-                                onChange={(e) => setWordSearchWords(e.target.value)}
-                                value={wordSearchWords}
-                            />
-                        )}
-
-                        {/* Conditionally render the text input for Hangman */}
-                        {selectedGame === '5' && (
                             <Input
                                 isRequired={true}
                                 size="sm"
@@ -197,8 +316,7 @@ export default function GamesPage() {
                             />
                         )}
 
-                        {/* Conditionally render the text input for Scramble Words */}
-                        {selectedGame === '6' && (
+                        {selectedGame === '5' && (
                             <Input
                                 isRequired={true}
                                 size="sm"
@@ -209,8 +327,7 @@ export default function GamesPage() {
                             />
                         )}
 
-                        {/* Conditionally render the text input for Cryptogram */}
-                        {selectedGame === '7' && (
+                        {selectedGame === '6' && (
                             <Input
                                 isRequired={true}
                                 size="sm"
@@ -221,38 +338,8 @@ export default function GamesPage() {
                             />
                         )}
 
-                        {/* Conditionally render the inputs for Maze */}
+                        {/* Mine Finder Inputs */}
                         {selectedGame === '8' && (
-                            <>
-                                <Input
-                                    type="number"
-                                    min={3}
-                                    max={101}
-                                    step={2} // Ensure odd numbers
-                                    isRequired={true}
-                                    size="sm"
-                                    label="Enter Maze Width"
-                                    placeholder="Enter maze width"
-                                    onChange={(e) => setMazeWidth(Number(e.target.value))}
-                                    value={mazeWidth.toString()}
-                                />
-                                <Input
-                                    type="number"
-                                    min={3}
-                                    max={101}
-                                    step={2} // Ensure odd numbers
-                                    isRequired={true}
-                                    size="sm"
-                                    label="Enter Maze Height"
-                                    placeholder="Enter maze height"
-                                    onChange={(e) => setMazeHeight(Number(e.target.value))}
-                                    value={mazeHeight.toString()}
-                                />
-                            </>
-                        )}
-
-                        {/* Conditionally render the inputs for Mine Finder */}
-                        {selectedGame === '9' && (
                             <>
                                 <Input
                                     type="number"
@@ -293,20 +380,26 @@ export default function GamesPage() {
                             </>
                         )}
 
-                        <Select
-                            isRequired
-                            size="sm"
-                            label="Select Font"
-                            placeholder="Select font"
-                            onChange={(e) => setSelectedFont(e.target.value)}
-                            value={selectedFont}
-                        >
-                            {fonts.map((font) => (
-                                <SelectItem key={font} value={font}>
-                                    {font}
-                                </SelectItem>
-                            ))}
-                        </Select>
+                        {/* Font Selection */}
+                        {
+                            selectedGame !== '7' && (
+                                <Select
+                                    isRequired
+                                    size="sm"
+                                    label="Select Font"
+                                    placeholder="Select font"
+                                    onChange={(e) => setSelectedFont(e.target.value)}
+                                    value={selectedFont}
+                                >
+                                    {fonts.map((font) => (
+                                        <SelectItem key={font} value={font}>
+                                            {font}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                            )
+                        }
+
                     </div>
                 </CardFooter>
             </Card>
