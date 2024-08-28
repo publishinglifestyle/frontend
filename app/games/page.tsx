@@ -58,6 +58,7 @@ export default function GamesPage() {
     const [customName, setCustomName] = useState<string>('');
     const [customSolutionName, setCustomSolutionName] = useState<string>('');
     const [solutionsPerPage, setSolutionsPerPage] = useState<number>(1);
+    const [wordsPerPuzzle, setWordsPerPuzzle] = useState<number>(1);
     const [numPuzzles, setNumPuzzles] = useState<number>(1);
     const [invertWords, setInvertWords] = useState<number>(0);
 
@@ -107,7 +108,7 @@ export default function GamesPage() {
             if (selectedGame === '1') {
                 return <GameComponent difficulty={selectedDifficulty} {...commonProps} />;
             } else if (selectedGame === '2') {
-                return <GameComponent cross_words={crosswordWords.split(',')} {...commonProps} />;
+                return <GameComponent cross_words={crosswordWords.split(',')} wordsPerPuzzle={wordsPerPuzzle} {...commonProps} />;
             } else if (selectedGame === '3') {
                 return <GameComponent words={wordSearchWords.split(',')} {...commonProps} />;
             } else if (selectedGame === '4') {
@@ -219,7 +220,7 @@ export default function GamesPage() {
                         )}
 
                         {/* Sudoku and Wordsearch Specific Input */}
-                        {selectedGame === '1' || selectedGame === '3' || selectedGame === '8' && (
+                        {(selectedGame === '1' || selectedGame === '2' || selectedGame === '3' || selectedGame === '8') && (
                             <>
                                 <Input
                                     type="number"
@@ -234,6 +235,22 @@ export default function GamesPage() {
                                     value={numPuzzles.toString()}
                                 />
                             </>
+                        )}
+
+                        {/* Crossword specific input */}
+                        {selectedGame === '2' && numPuzzles > 1 && (
+                            <Input
+                                type="number"
+                                min={1}
+                                max={10}
+                                step={1}
+                                isRequired={true}
+                                size="sm"
+                                label="Words per Puzzle"
+                                placeholder="Enter number of words"
+                                onChange={(e) => setWordsPerPuzzle(Number(e.target.value))}
+                                value={wordsPerPuzzle.toString()}
+                            />
                         )}
 
                         {/* Sudoku Specific Input */}
@@ -257,7 +274,7 @@ export default function GamesPage() {
                         )}
 
                         {/* Solutions per Page */}
-                        {(selectedGame === '1' || selectedGame === '3' || selectedGame === '8') && numPuzzles > 1 && (
+                        {(selectedGame === '1' || selectedGame === '2' || selectedGame === '3' || selectedGame === '8') && numPuzzles > 1 && (
                             <Select
                                 isRequired
                                 size="sm"

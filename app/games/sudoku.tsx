@@ -55,6 +55,7 @@ export default function Sudoku({ difficulty, font, is_sequential, custom_name, c
             if (num_puzzles === 1 || solutions_per_page === 1) {
                 // One puzzle and its solution per page or single solution view
                 doc.addPage();
+                doc.setFontSize(20);
                 doc.text(solutionTitle, pageWidth / 2, margin, { align: 'center' });
                 drawSudokuGrid(doc, solution, gridOffsetX, gridOffsetY, cellSize);
             }

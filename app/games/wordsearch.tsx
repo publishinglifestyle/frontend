@@ -23,7 +23,7 @@ interface WordSearchProps {
 
 export default function WordSearch({ words, font, is_sequential, num_puzzles = 1, solutions_per_page = 1, invert_words, custom_name, custom_solution_name }: WordSearchProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
-    const margin = 20; // Margin for the page
+    const margin = 10; // Margin for the page
     const baseCellSize = 6; // Base cell size for the letters inside the puzzle
 
     const handleGenerateWordSearch = async () => {
@@ -65,9 +65,12 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
             // Draw the puzzle grid
             drawWordSearchGrid(doc, grid, offsetX, offsetY, adjustedCellSize, false);
 
-            // Draw the words to find below the grid
+
+            // Draw the words to find below the grid, aligned to the left of the centered grid
             const wordsStartY = offsetY + gridSize * adjustedCellSize + 10;
             doc.setFontSize(10);
+
+            const wordsX = offsetX;  // Align words to the left of the centered grid
             const maxColumns = 3;
             const wordsPerColumn = Math.ceil(words.length / maxColumns);
             const columnWidth = (pageWidth - 2 * margin) / maxColumns;
@@ -75,7 +78,7 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
             for (let i = 0; i < words.length; i++) {
                 const column = Math.floor(i / wordsPerColumn);
                 const row = i % wordsPerColumn;
-                const x = margin + column * columnWidth;
+                const x = wordsX + column * columnWidth;
                 const y = wordsStartY + row * 5;
 
                 doc.text(words[i].clean.toUpperCase(), x, y);
@@ -128,6 +131,9 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
 
     const drawWordSearchGrid = (doc: jsPDF, grid: string[][], offsetX: number, offsetY: number, cellSize: number, showWords: boolean, words?: Word[]) => {
         const gridSize = grid.length;
+        const lineThickness = 2; // Thickness of the highlight line
+        const cornerRadius = cellSize / 2; // Radius for the rounded ends
+
         for (let r = 0; r < gridSize; r++) {
             for (let c = 0; c < gridSize; c++) {
                 const letter = grid[r][c];
@@ -137,29 +143,63 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
                     const y = offsetY + r * cellSize + cellSize * 0.75; // Adjusted position to ensure correct alignment
 
                     if (showWords) {
-                        const isPartOfWord = words?.some((word: Word) =>
+                        const wordPath = words?.find((word: Word) =>
                             word.path.some((coord: { x: number; y: number }) => coord.x === c && coord.y === r)
                         );
 
-                        if (isPartOfWord) {
-                            doc.setFont(font || "times", "bold");
-                            doc.setFontSize(8 * (cellSize / baseCellSize)); // Adjust font size based on cell size
-                            doc.setLineWidth(0.2);
-                            doc.rect(x - 1, y - cellSize / 2, cellSize, cellSize); // Draw the border
-                        } else {
-                            doc.setFont(font || "times", "normal");
-                            doc.setFontSize(8 * (cellSize / baseCellSize)); // Ensure consistent font size for non-highlighted letters
-                        }
-                    } else {
-                        doc.setFont(font || "times", "normal");
-                        doc.setFontSize(8 * (cellSize / baseCellSize)); // Ensure font size for non-solution view
-                    }
+                        if (wordPath) {
+                            const startX = offsetX + wordPath.path[0].x * cellSize + cellSize / 2;
+                            const startY = offsetY + wordPath.path[0].y * cellSize + cellSize / 2;
+                            const endX = offsetX + wordPath.path[wordPath.path.length - 1].x * cellSize + cellSize / 2;
+                            const endY = offsetY + wordPath.path[wordPath.path.length - 1].y * cellSize + cellSize / 2;
 
-                    doc.text(letter, x + cellSize / 4, y);
+                            // Set the line color and width
+                            doc.setDrawColor(255, 0, 0); // Red color for the highlight
+                            doc.setLineWidth(lineThickness);
+
+                            // Draw the straight line connecting the start and end points
+                            doc.line(startX, startY, endX, endY);
+
+                            // Draw rounded ends using custom arcs
+                            drawRoundedEnd(doc, startX, startY, cornerRadius);
+                            drawRoundedEnd(doc, endX, endY, cornerRadius);
+                        }
+
+                        // Draw the letter inside the cell
+                        doc.setFont(font || "times", "bold");
+                        doc.setFontSize(8 * (cellSize / baseCellSize)); // Adjust font size based on cell size
+                        doc.text(letter, x + cellSize / 4, y);
+                    } else {
+                        // Draw the letter normally if not highlighting
+                        doc.setFont(font || "times", "normal");
+                        doc.setFontSize(8 * (cellSize / baseCellSize));
+                        doc.text(letter, x + cellSize / 4, y);
+                    }
                 }
             }
         }
     };
+
+    // Helper function to draw rounded ends using small line segments to simulate a curve
+    const drawRoundedEnd = (doc: jsPDF, centerX: number, centerY: number, radius: number) => {
+        const numSegments = 8; // Number of segments to approximate a circle
+        const angleStep = Math.PI / numSegments; // Angle step for each segment
+
+        for (let i = 0; i <= numSegments; i++) {
+            const angle = i * angleStep;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+
+            if (i === 0) {
+                doc.moveTo(x, y);
+            } else {
+                doc.lineTo(x, y);
+            }
+        }
+        doc.fill(); // Fill the rounded end with the current fill color
+    };
+
+
 
     return (
         <div style={{ textAlign: 'center' }}>

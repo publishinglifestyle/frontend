@@ -19,9 +19,9 @@ export async function generateSudoku(difficulty, num_puzzles) {
     }
 }
 
-export async function generateCrossword(words) {
+export async function generateCrossword(words, words_per_puzzle, num_puzzles) {
     let response = await axios.post(endpoint + "generate_crossword",
-        { words }, {
+        { words, words_per_puzzle, num_puzzles }, {
         headers: headers
     });
 

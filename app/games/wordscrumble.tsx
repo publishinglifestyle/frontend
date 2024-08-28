@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
@@ -38,17 +38,20 @@ export default function ScrambleWords({ words, font, custom_name, custom_solutio
     };
 
     const addContentToPDF = (doc: jsPDF, content: ScrambledWord[], startY: number, isSolution: boolean = false) => {
-        const margin = 40; // Set margin to 40mm
-        const columnWidth = 25;
-        const equalSignWidth = 12;
+        const margin = 20; // Margin for left and right
+        const columnWidth = 30; // Reduced width for each column
+        const equalSignWidth = 10;
         const blankLineWidth = 40;
-        const lineHeight = 10;
+        const lineHeight = 8;
         const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
         const maxLinesPerColumn = Math.floor((pageHeight - startY - margin) / lineHeight);
 
-        let x = margin;
+        let x = margin; // Start from the left margin
         let y = startY;
         let columnCount = 0;
+
+        doc.setFontSize(10);
 
         content.forEach((wordInfo, index) => {
             const scrambledWord = wordInfo.scrambledWord;
@@ -65,23 +68,21 @@ export default function ScrambleWords({ words, font, custom_name, custom_solutio
             if (isSolution) {
                 doc.text(originalWord, blankX, y);
             } else {
-                //doc.setFont(font || "courier", "normal");
                 doc.text('_ _ _ _ _ _ _ _', blankX, y);
-                doc.setFont(font || "times", "italic");
             }
 
             y += lineHeight;
 
             if ((index + 1) % maxLinesPerColumn === 0) {
                 columnCount += 1;
-                if (columnCount < 2) {
-                    x += columnWidth + equalSignWidth + blankLineWidth + margin;
+                if (columnCount < 2) { // Move to the second column if there's room
+                    x = margin + columnWidth + equalSignWidth + blankLineWidth + 10; // Ensure the second column starts within the page width
                     y = startY;
                 } else if (index + 1 < content.length) {
                     doc.addPage();
-                    x = margin;
-                    y = startY;
-                    columnCount = 0;
+                    x = margin; // Reset x position for the new page
+                    y = startY; // Reset y position for the new page
+                    columnCount = 0; // Reset column count for the new page
                 }
             }
         });
@@ -91,15 +92,15 @@ export default function ScrambleWords({ words, font, custom_name, custom_solutio
 
     const generatePDF = (scrambledWords: ScrambledWord[]) => {
         const doc = new jsPDF('p', 'mm', 'a4');
-        const margin = 40; // Set margin to 40mm
+        const margin = 20;
         doc.setFont(font || "times", "italic");
         doc.setFontSize(14);
 
         doc.setFont(font || "times", "normal");
-        doc.setFontSize(20);
-        doc.text(custom_name || 'Scrambled Words Game', 105, margin - 20, { align: 'center' });
+        doc.setFontSize(16);
+        doc.text(custom_name || 'Scrambled Words Game', 105, margin - 10, { align: 'center' });
         doc.setFont(font || "times", "italic");
-        doc.setFontSize(14);
+        doc.setFontSize(10);
 
         const startY = margin;
 
@@ -112,10 +113,10 @@ export default function ScrambleWords({ words, font, custom_name, custom_solutio
 
         doc.addPage();
         doc.setFont(font || "times", "normal");
-        doc.setFontSize(20);
-        doc.text(custom_solution_name || 'Scrambled Words Solutions', 105, margin - 20, { align: 'center' });
+        doc.setFontSize(16);
+        doc.text(custom_solution_name || 'Scrambled Words Solutions', 105, margin - 10, { align: 'center' });
         doc.setFont(font || "times", "italic");
-        doc.setFontSize(14);
+        doc.setFontSize(10);
 
         addContentToPDF(doc, gameContent, startY, true);
 

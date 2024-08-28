@@ -141,15 +141,49 @@ export default function Hangman({ hangman_words, font, is_sequential, custom_nam
 
     const addSolutionsPage = (doc: jsPDF, hangmanGames: any[], custom_solution_name: string) => {
         doc.addPage();
-        doc.setFontSize(20);
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.text(custom_solution_name || 'Solutions', pageWidth / 2, 20, { align: 'center' });
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const columnWidth = (pageWidth - 2 * margin) / 2; // Two columns per page
+        const lineHeight = 10;
+        const startY = margin + 30; // Start position after title
+        let currentY = startY;
+        let currentColumn = 0;
+
+        doc.setFontSize(20);
+        doc.text(custom_solution_name || 'Solutions', pageWidth / 2, margin, { align: 'center' });
+
+        doc.setFontSize(12);
 
         hangmanGames.forEach((game, index) => {
             const solutionText = `${index + 1}. ${game.word.trim().toUpperCase()}`;
-            doc.text(solutionText, 20, 30 + index * 10);
+
+            // Check if adding the text exceeds page height
+            if (currentY + lineHeight > pageHeight - margin) {
+                if (currentColumn === 0) {
+                    // Move to the second column on the same page
+                    currentColumn++;
+                    currentY = startY;
+                } else {
+                    // Add a new page and reset column and Y position
+                    doc.addPage();
+                    currentColumn = 0;
+                    currentY = startY;
+                    doc.setFontSize(20);
+                    doc.text(custom_solution_name || 'Solutions', pageWidth / 2, margin, { align: 'center' });
+                    doc.setFontSize(12);
+                }
+            }
+
+            // Calculate X position based on current column
+            const xPosition = margin + currentColumn * (columnWidth + margin);
+            doc.text(solutionText, xPosition, currentY);
+
+            // Increment Y position for next line
+            currentY += lineHeight;
         });
     };
+
 
     return (
         <div style={{ textAlign: 'center' }}>
