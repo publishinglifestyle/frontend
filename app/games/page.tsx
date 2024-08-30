@@ -44,13 +44,11 @@ export default function GamesPage() {
     const [selectedFont, setSelectedFont] = useState<string>('times');
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
     const [crosswordWords, setCrosswordWords] = useState<string>('');
-    const [selectedSize, setSelectedSize] = useState<number>(5);
+    const [crosswordClues, setCrosswordClues] = useState<string>('');
     const [wordSearchWords, setWordSearchWords] = useState<string>('');
     const [hangmanWord, setHangmanWord] = useState<string>('');
     const [scrambleWordsInput, setScrambleWordsInput] = useState<string>('');
     const [cryptogramPhrases, setCryptogramPhrases] = useState<string>('');
-    const [mazeWidth, setMazeWidth] = useState<number>(41);
-    const [mazeHeight, setMazeHeight] = useState<number>(41);
     const [mineFinderWidth, setMineFinderWidth] = useState<number>(9);
     const [mineFinderHeight, setMineFinderHeight] = useState<number>(9);
     const [mineCount, setMineCount] = useState<number>(10);
@@ -108,7 +106,7 @@ export default function GamesPage() {
             if (selectedGame === '1') {
                 return <GameComponent difficulty={selectedDifficulty} {...commonProps} />;
             } else if (selectedGame === '2') {
-                return <GameComponent cross_words={crosswordWords.split(',')} wordsPerPuzzle={wordsPerPuzzle} {...commonProps} />;
+                return <GameComponent cross_words={crosswordWords.split(',')} clues={crosswordClues.split(',')} wordsPerPuzzle={wordsPerPuzzle} {...commonProps} />;
             } else if (selectedGame === '3') {
                 return <GameComponent words={wordSearchWords.split(',')} {...commonProps} />;
             } else if (selectedGame === '4') {
@@ -150,15 +148,11 @@ export default function GamesPage() {
                                 // Reset specific states when switching games
                                 if (e.target.value !== '1') setSelectedDifficulty('');
                                 if (e.target.value !== '2') setCrosswordWords('');
-                                if (e.target.value !== '3') setSelectedSize(0);
+                                //if (e.target.value !== '3') setSelectedSize(0);
                                 if (e.target.value !== '4') setWordSearchWords('');
                                 if (e.target.value !== '5') setHangmanWord('');
                                 if (e.target.value !== '6') setScrambleWordsInput('');
                                 if (e.target.value !== '7') setCryptogramPhrases('');
-                                if (e.target.value !== '8') {
-                                    setMazeWidth(41);
-                                    setMazeHeight(41);
-                                }
                                 if (e.target.value !== '9') {
                                     setMineFinderWidth(9);
                                     setMineFinderHeight(9);
@@ -318,14 +312,25 @@ export default function GamesPage() {
                         )}
 
                         {selectedGame === '2' && (
-                            <Input
-                                isRequired={true}
-                                size="sm"
-                                label="Enter words"
-                                placeholder="Enter words separated by commas"
-                                onChange={(e) => setCrosswordWords(e.target.value)}
-                                value={crosswordWords}
-                            />
+                            <>
+                                <Input
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Enter words"
+                                    placeholder="Enter words separated by commas"
+                                    onChange={(e) => setCrosswordWords(e.target.value)}
+                                    value={crosswordWords}
+                                />
+                                <Input
+                                    isRequired={true}
+                                    size="sm"
+                                    label="Enter clues"
+                                    placeholder="Enter clues separated by commas"
+                                    onChange={(e) => setCrosswordClues(e.target.value)}
+                                    value={crosswordClues}
+                                />
+                            </>
+
                         )}
 
                         {selectedGame === '4' && (

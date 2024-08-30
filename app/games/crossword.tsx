@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
 import { generateCrossword } from '@/managers/gamesManager'; // Import backend function
 import jsPDF from 'jspdf';
+import ErrorModal from "../modals/errorModal";
 
 interface CrosswordProps {
     cross_words?: string[];
+    clues?: string[];
     font?: string;
     custom_name?: string;
     custom_solution_name?: string;
@@ -16,19 +18,25 @@ interface CrosswordProps {
     is_sequential?: boolean;
 }
 
-export default function Crossword({ cross_words, font, custom_name, custom_solution_name, wordsPerPuzzle = 10, num_puzzles = 1, solutions_per_page = 1, is_sequential = true }: CrosswordProps) {
+export default function Crossword({ cross_words, clues, font, custom_name, custom_solution_name, wordsPerPuzzle = 10, num_puzzles = 1, solutions_per_page = 1, is_sequential = true }: CrosswordProps) {
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+    const [errorModalOpen, setErrorModalOpen] = useState<boolean>(false);
 
     const handleGenerateCrossword = async () => {
         setIsGenerating(true);
 
         try {
-            const crosswordResponse = await generateCrossword(cross_words, wordsPerPuzzle, num_puzzles);
+            const crosswordResponse = await generateCrossword(cross_words, clues, wordsPerPuzzle, num_puzzles);
             if (crosswordResponse) {
                 generatePDF(crosswordResponse.response);
             }
-        } catch (error) {
-            console.error("Error generating crossword:", error);
+        } catch (error: any) {
+            console.error("Error generating crossword:", error.response?.data?.error);
+            if (error) {
+                setError(error.response?.data?.error || error.message);
+                setErrorModalOpen(true);
+            }
         }
 
         setIsGenerating(false);
@@ -43,8 +51,8 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
         crosswordData.forEach((crossword, index) => {
             const { rows, cols, table: grid, outputJson: placedWords } = crossword;
 
-            if (!grid || !placedWords) {
-                console.error("Grid or placedWords are undefined!");
+            if (!grid || !placedWords || !Array.isArray(grid) || grid.length === 0 || !Array.isArray(placedWords)) {
+                console.error("Grid or placedWords are undefined or not in the expected format!");
                 return;
             }
 
@@ -69,34 +77,32 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
             };
 
             const drawGrid = (isSolution = false) => {
-                for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-                    for (let colIndex = 0; colIndex < cols; colIndex++) {
-                        const cell = grid[rowIndex][colIndex];
+                for (const word of placedWords) {
+                    const { startx, starty, answer, orientation, position } = word;
+                    for (let i = 0; i < answer.length; i++) {
+                        const colIndex = orientation === 'across' ? startx + i : startx;
+                        const rowIndex = orientation === 'down' ? starty + i : starty;
+
                         const x = gridOffsetX + colIndex * cellSize;
                         const y = gridOffsetY + rowIndex * cellSize;
 
                         doc.rect(x, y, cellSize, cellSize);
 
-                        if (cell === '-' || cell === ' ') {
-                            doc.setFillColor(0, 0, 0);
-                            doc.rect(x, y, cellSize, cellSize, 'F');
-                        } else {
-                            const number = getNumberForCell(colIndex, rowIndex);
-                            if (number) {
-                                doc.setFontSize(numberFontSize);
-                                doc.setFont(font || "times", "normal");
-                                doc.text(number, x + 2, y + 4);
-                            }
+                        const number = (i === 0) ? position.toString() : '';  // Only add the number at the start of the word
+                        if (number) {
+                            doc.setFontSize(numberFontSize);
+                            doc.setFont(font || "times", "normal");
+                            doc.text(number, x + 2, y + 4);
+                        }
 
-                            if (isSolution) {
-                                doc.setFontSize(letterFontSize);
-                                doc.setFont(font || "times", "normal");
-                                doc.text(
-                                    cell.toUpperCase(),
-                                    x + cellSize / 4,
-                                    y + cellSize * 0.75
-                                );
-                            }
+                        if (isSolution) {
+                            doc.setFontSize(letterFontSize);
+                            doc.setFont(font || "times", "normal");
+                            doc.text(
+                                answer[i].toUpperCase(),
+                                x + cellSize / 4,
+                                y + cellSize * 0.75
+                            );
                         }
                     }
                 }
@@ -159,10 +165,7 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
             }
         });
 
-        console.log("solution_per_page", solutions_per_page);
-
         if (num_puzzles > 1) {
-            // If more than one puzzle, print solutions in a compact layout
             const solutionsPages = Math.ceil(num_puzzles / solutions_per_page);
             for (let page = 0; page < solutionsPages; page++) {
                 doc.addPage();
@@ -177,11 +180,10 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
 
                 const solutionsToShow = crosswordData.slice(page * solutions_per_page, (page + 1) * solutions_per_page);
 
-                // Determine number of rows and columns based on solutions_per_page
-                const gridPerRow = solutions_per_page === 4 ? 2 : solutions_per_page; // 2 grids per row for 4 solutions, else use solutions_per_page as column count
+                const gridPerRow = solutions_per_page === 4 ? 2 : solutions_per_page;
                 const gridsInRow = Math.min(gridPerRow, solutions_per_page);
-                const gridWidth = (pageWidth - (gridsInRow + 1) * margin) / gridsInRow; // Adjust grid width to fit within margins
-                const gridHeight = gridWidth; // Keep the grid square
+                const gridWidth = (pageWidth - (gridsInRow + 1) * margin) / gridsInRow;
+                const gridHeight = gridWidth;
 
                 solutionsToShow.forEach((crossword, index) => {
                     const { rows, cols, table: grid, outputJson: placedWords } = crossword;
@@ -193,26 +195,27 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
                     const offsetY = margin + 20 + rowIndex * (gridHeight + 20);
 
                     // Draw the solution grid for each crossword
-                    for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-                        for (let colIndex = 0; colIndex < cols; colIndex++) {
-                            const cell = grid[rowIndex][colIndex];
+                    for (const word of placedWords) {
+                        const { startx, starty, answer, orientation } = word;
+                        for (let i = 0; i < answer.length; i++) {
+                            const colIndex = orientation === 'across' ? startx + i : startx;
+                            const rowIndex = orientation === 'down' ? starty + i : starty;
+
                             const x = offsetX + colIndex * adjustedCellSize;
                             const y = offsetY + rowIndex * adjustedCellSize;
 
                             doc.rect(x, y, adjustedCellSize, adjustedCellSize);
 
-                            if (cell !== '-' && cell !== ' ') {
+                            if (answer[i] !== '-' && answer[i] !== ' ') {
                                 doc.setFontSize(8);
                                 doc.setFont(font || "times", "normal");
-                                doc.text(cell.toUpperCase(), x + adjustedCellSize / 4, y + adjustedCellSize * 0.75);
+                                doc.text(answer[i].toUpperCase(), x + adjustedCellSize / 4, y + adjustedCellSize * 0.75);
                             }
                         }
                     }
                 });
             }
         }
-
-
 
         const pdfDataUrl = doc.output('bloburl');
         window.open(pdfDataUrl, '_blank');
@@ -227,6 +230,11 @@ export default function Crossword({ cross_words, font, custom_name, custom_solut
             >
                 {isGenerating ? "Generating..." : "Generate Crossword PDF"}
             </Button>
+            <ErrorModal
+                isOpen={errorModalOpen}
+                onClose={() => setErrorModalOpen(false)}
+                message={error || "An error occurred while generating the crossword."}
+            />
         </div>
     );
 }

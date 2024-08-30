@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState } from "react";
 import { Button } from '@nextui-org/button';
@@ -8,6 +8,11 @@ import jsPDF from 'jspdf';
 interface Word {
     clean: string;
     path: { x: number; y: number }[];
+}
+
+interface Cell {
+    letter: string;
+    should_be_empty: boolean;
 }
 
 interface WordSearchProps {
@@ -31,7 +36,7 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
         const wordSearchResponses = await generateWordSearch(words, num_puzzles, invert_words);
 
         if (wordSearchResponses) {
-            generatePDF(wordSearchResponses);
+            generatePDF(wordSearchResponses); // Accessing response directly from the backend data structure
         }
 
         setIsGenerating(false);
@@ -64,7 +69,6 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
 
             // Draw the puzzle grid
             drawWordSearchGrid(doc, grid, offsetX, offsetY, adjustedCellSize, false);
-
 
             // Draw the words to find below the grid, aligned to the left of the centered grid
             const wordsStartY = offsetY + gridSize * adjustedCellSize + 10;
@@ -119,7 +123,7 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
                     const gridSize = wordSearch.grid.length;
                     const adjustedSolutionCellSize = Math.min(baseCellSize, maxGridSize / gridSize); // Adjust cell size for solutions
                     const offsetX = margin + (index % gridPerRow) * (maxGridSize + margin);
-                    const offsetY = margin + 20 + Math.floor(index / gridPerRow) * (maxGridSize + 20);
+                    const offsetY = margin + 20 + Math.floor(index / gridPerRow) * (gridSize + 20);
                     drawWordSearchGrid(doc, wordSearch.grid, offsetX, offsetY, adjustedSolutionCellSize, true, wordSearch.words);
                 });
             }
@@ -129,77 +133,52 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
         window.open(pdfDataUrl, '_blank');
     };
 
-    const drawWordSearchGrid = (doc: jsPDF, grid: string[][], offsetX: number, offsetY: number, cellSize: number, showWords: boolean, words?: Word[]) => {
+    const drawWordSearchGrid = (doc: jsPDF, grid: Cell[][], offsetX: number, offsetY: number, cellSize: number, showWords: boolean, words?: Word[]) => {
         const gridSize = grid.length;
-        const lineThickness = 2; // Thickness of the highlight line
-        const cornerRadius = cellSize / 2; // Radius for the rounded ends
 
+        // Draw borders only for cells that contain solution words
+        if (showWords && words) {
+            const highlightedCells = new Set();  // To avoid drawing multiple times on the same cell
+
+            words.forEach((word) => {
+                word.path.forEach((coord) => {
+                    // Check if the coordinates are within bounds and the cell is not meant to be empty
+                    if (coord.x >= 0 && coord.x < gridSize && coord.y >= 0 && coord.y < gridSize && !grid[coord.y][coord.x].should_be_empty) {
+                        const cellKey = `${coord.x},${coord.y}`;
+                        if (!highlightedCells.has(cellKey)) {
+                            highlightedCells.add(cellKey);
+
+                            const x = offsetX + coord.x * cellSize;
+                            const y = offsetY + coord.y * cellSize;
+                            doc.setDrawColor(0, 0, 0); // Standard border color
+                            doc.setLineWidth(0.5); // Standard border thickness
+                            doc.rect(x, y, cellSize, cellSize); // Draw border around each letter in the solution
+                        }
+                    } else {
+                        console.warn(`Coordinate out of bounds or should be empty: (${coord.x}, ${coord.y})`);
+                    }
+                });
+            });
+        }
+
+        // Draw the entire grid and letters
         for (let r = 0; r < gridSize; r++) {
             for (let c = 0; c < gridSize; c++) {
-                const letter = grid[r][c];
+                const cell = grid[r][c];
+                const letter = cell.letter;
 
                 if (typeof letter === 'string' && letter.trim() !== '') {
                     const x = offsetX + c * cellSize;
                     const y = offsetY + r * cellSize + cellSize * 0.75; // Adjusted position to ensure correct alignment
 
-                    if (showWords) {
-                        const wordPath = words?.find((word: Word) =>
-                            word.path.some((coord: { x: number; y: number }) => coord.x === c && coord.y === r)
-                        );
-
-                        if (wordPath) {
-                            const startX = offsetX + wordPath.path[0].x * cellSize + cellSize / 2;
-                            const startY = offsetY + wordPath.path[0].y * cellSize + cellSize / 2;
-                            const endX = offsetX + wordPath.path[wordPath.path.length - 1].x * cellSize + cellSize / 2;
-                            const endY = offsetY + wordPath.path[wordPath.path.length - 1].y * cellSize + cellSize / 2;
-
-                            // Set the line color and width
-                            doc.setDrawColor(255, 0, 0); // Red color for the highlight
-                            doc.setLineWidth(lineThickness);
-
-                            // Draw the straight line connecting the start and end points
-                            doc.line(startX, startY, endX, endY);
-
-                            // Draw rounded ends using custom arcs
-                            drawRoundedEnd(doc, startX, startY, cornerRadius);
-                            drawRoundedEnd(doc, endX, endY, cornerRadius);
-                        }
-
-                        // Draw the letter inside the cell
-                        doc.setFont(font || "times", "bold");
-                        doc.setFontSize(8 * (cellSize / baseCellSize)); // Adjust font size based on cell size
-                        doc.text(letter, x + cellSize / 4, y);
-                    } else {
-                        // Draw the letter normally if not highlighting
-                        doc.setFont(font || "times", "normal");
-                        doc.setFontSize(8 * (cellSize / baseCellSize));
-                        doc.text(letter, x + cellSize / 4, y);
-                    }
+                    // Draw the letter inside the cell
+                    doc.setFont(font || "times", "bold");
+                    doc.setFontSize(8 * (cellSize / baseCellSize)); // Adjust font size based on cell size
+                    doc.text(letter, x + cellSize / 4, y);
                 }
             }
         }
     };
-
-    // Helper function to draw rounded ends using small line segments to simulate a curve
-    const drawRoundedEnd = (doc: jsPDF, centerX: number, centerY: number, radius: number) => {
-        const numSegments = 8; // Number of segments to approximate a circle
-        const angleStep = Math.PI / numSegments; // Angle step for each segment
-
-        for (let i = 0; i <= numSegments; i++) {
-            const angle = i * angleStep;
-            const x = centerX + radius * Math.cos(angle);
-            const y = centerY + radius * Math.sin(angle);
-
-            if (i === 0) {
-                doc.moveTo(x, y);
-            } else {
-                doc.lineTo(x, y);
-            }
-        }
-        doc.fill(); // Fill the rounded end with the current fill color
-    };
-
-
 
     return (
         <div style={{ textAlign: 'center' }}>
@@ -213,4 +192,3 @@ export default function WordSearch({ words, font, is_sequential, num_puzzles = 1
         </div>
     );
 }
-
