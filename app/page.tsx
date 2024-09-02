@@ -20,7 +20,7 @@ export default function Home() {
   }, [isAuthenticatedClient]);
 
   const toggleToSignUp = () => {
-    setIsSignUp(true);
+    setIsSignUp(false);
     setIsLogin(false);
     setIsForgot(false);
   };
