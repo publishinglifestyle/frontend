@@ -19,6 +19,20 @@ export const siteConfig = {
       'language': 'it'
     },
     {
+      'value': 'games',
+      'label': 'Giochi',
+      'href': '/games',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
+      'value': 'games',
+      'label': 'Games',
+      'href': '/games',
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
       'value': 'Agents',
       'label': 'Agents',
       'href': '/agents',
@@ -61,6 +75,20 @@ export const siteConfig = {
       'href': '/chat',
       'allow_user': true,
       'language': 'it'
+    },
+    {
+      'value': 'games',
+      'label': 'Giochi',
+      'href': '/games',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
+      'value': 'games',
+      'label': 'Games',
+      'href': '/games',
+      'allow_user': true,
+      'language': 'en'
     },
     {
       'value': 'Agents',

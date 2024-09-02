@@ -9,12 +9,16 @@ import { Input } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
 import { getUser, updateProfile, deleteUser, getProfilePic, uploadProfilePic } from "@/managers/userManager";
 import { getSubscription, getPortal } from '@/managers/subscriptionManager'
+import { buyCredits } from "@/managers/creditsManager";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../auth-context';
 import SubscriptionModal from "../modals/subscriptionModal";
 import PasswordModal from "@/app/modals/passwordModal";
 import ErrorModal from "@/app/modals/errorModal";
 import ConfirmModal from "@/app/modals/confirmModal";
+import CreditsModal from "@/app/modals/creditsModal";
+import SuccessModal from "../modals/successModal";
+
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
@@ -58,6 +62,9 @@ export default function ProfilePage() {
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
     const [errorModalMessage, setErrorModalMessage] = useState('');
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
+
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -77,6 +84,12 @@ export default function ProfilePage() {
         if (!isAuthenticatedClient) {
             router.push('/');
         }
+
+        if (window.location.href.includes('session_id')) {
+            console.log("Session ID found");
+            setIsSuccessModalOpen(true);
+        }
+
     }, [isAuthenticatedClient]);
 
     useEffect(() => {
@@ -202,6 +215,12 @@ export default function ProfilePage() {
         setLastName(initialLastName);
         setEmail(initialEmail);
         setProfileImage(initialProfileImage);
+    };
+
+    const handlePurchase = async (selectedOption: string) => {
+        console.log("Selected package:", selectedOption);
+        const url = await buyCredits(parseInt(selectedOption))
+        window.open(url, '_blank');
     };
 
     if (isLoading) {
@@ -341,20 +360,32 @@ export default function ProfilePage() {
                             <Spacer y={8} />
                             {
                                 subscriptionActive ?
-                                    <Button
-                                        color="secondary"
-                                        style={{ color: "white" }}
-                                        onClick={async () => {
-                                            setIsLoading(true)
-                                            const url = await getPortal()
-                                            if (url) {
-                                                window.open(url, '_blank');
-                                            }
-                                            setIsLoading(false)
-                                        }}
-                                    >
-                                        {translations?.manage_subscription}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            color="secondary"
+                                            style={{ color: "white" }}
+                                            onClick={async () => {
+                                                setIsLoading(true)
+                                                const url = await getPortal()
+                                                if (url) {
+                                                    window.open(url, '_blank');
+                                                }
+                                                setIsLoading(false)
+                                            }}
+                                        >
+                                            {translations?.manage_subscription}
+                                        </Button>
+                                        <Button
+                                            color="secondary"
+                                            variant="ghost"
+                                            onClick={async () => {
+                                                setIsCreditsModalOpen(true);
+                                            }}
+                                        >
+                                            {translations?.buy_credits}
+                                        </Button>
+                                    </div>
+
                                     :
                                     <Button
                                         color="secondary"
@@ -413,6 +444,18 @@ export default function ProfilePage() {
             />
 
             <SubscriptionModal isOpen={isSubscriptionModalOpen} onClose={() => setIsSubscriptionModalOpen(false)} />
+
+            <CreditsModal
+                isOpen={isCreditsModalOpen}
+                onClose={() => setIsCreditsModalOpen(false)}
+                onPurchase={handlePurchase}
+            />
+
+            <SuccessModal
+                isOpen={isSuccessModalOpen}
+                onClose={() => setIsSuccessModalOpen(false)}
+                message={translations?.credits_purchased || "Credits purchased successfully!"}
+            />
         </div>
     );
 }

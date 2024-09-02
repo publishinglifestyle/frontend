@@ -63,4 +63,10 @@ export interface Translations {
     commands: string;
     copy: string;
     start_free_trial: string;
+    games: string;
+    buy_credits: string;
+    purchase: string;
+    select_option_message: string;
+    select_package: string;
+    credits_purchased: string;
 }

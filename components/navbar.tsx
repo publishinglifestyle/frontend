@@ -61,6 +61,7 @@ export const Navbar = () => {
     switch (pathname) {
       case '/': setShowMenu(false); break;
       case '/chat': setCurrentPage('chat'); setShowMenu(true); break;
+      case '/games': setCurrentPage('games'); setShowMenu(true); break;
       case '/agents': setCurrentPage('agents'); setShowMenu(true); break;
       case '/profile': setCurrentPage('profile'); setShowMenu(true); break;
       default: setShowMenu(false); break;

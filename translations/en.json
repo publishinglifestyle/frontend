@@ -63,5 +63,11 @@
     "already_have_an_account": "Already have an account?",
     "commands": "Commands",
     "copy": "Copy",
-    "start_free_trial": "Start Free Trial"
+    "start_free_trial": "Start Free Trial",
+    "games": "Games",
+    "buy_credits": "Buy Credits",
+    "purchase": "Purchase",
+    "select_option_message": "Please select an option",
+    "select_package": "Select Package",
+    "credits_purchased": "Credits purchased successfully"
 }

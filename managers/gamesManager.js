@@ -86,14 +86,14 @@ export async function generateCryptogram(phrases) {
     }
 }
 
-export async function generateMazeBase64(width, height, cell_size) {
-    let response = await axios.post(endpoint + "generate_maze",
-        { width, height, cell_size }, {
-        headers: headers
-    });
+export async function generateMaze() {
+    let response = await axios.get(endpoint + "generate_maze",
+        {
+            headers: headers
+        });
 
     if (response) {
-        return response.data.response;
+        return response.data;
     }
 }
 

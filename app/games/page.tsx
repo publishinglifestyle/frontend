@@ -7,6 +7,9 @@ import { Input } from "@nextui-org/input";
 import dynamic from 'next/dynamic';
 import jsPDF from 'jspdf';
 
+import { generateMaze } from '@/managers/gamesManager'
+import ErrorModal from "@/app/modals/errorModal";
+
 
 // Dynamically import the game components
 const Sudoku = dynamic(() => import('./sudoku'));
@@ -59,6 +62,10 @@ export default function GamesPage() {
     const [wordsPerPuzzle, setWordsPerPuzzle] = useState<number>(1);
     const [numPuzzles, setNumPuzzles] = useState<number>(1);
     const [invertWords, setInvertWords] = useState<number>(0);
+    const [isMazeAllowed, setIsMazeAllowed] = useState<boolean>(false);
+
+    const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+    const [errorModalMessage, setErrorModalMessage] = useState('');
 
     // Register the font with jsPDF
     jsPDF.API.events.push(['addFonts', function (this: jsPDF) {
@@ -76,7 +83,7 @@ export default function GamesPage() {
     }]);
 
     const renderSelectedGame = () => {
-        if (selectedGame === '7') {
+        if (selectedGame === '7' && isMazeAllowed) {
             // Render an iframe for the Maze game
             return (
                 <iframe
@@ -143,7 +150,7 @@ export default function GamesPage() {
                             size="sm"
                             label="Select a game"
                             placeholder="Select a game"
-                            onChange={(e) => {
+                            onChange={async (e) => {
                                 setSelectedGame(e.target.value);
                                 // Reset specific states when switching games
                                 if (e.target.value !== '1') setSelectedDifficulty('');
@@ -164,6 +171,17 @@ export default function GamesPage() {
                                 setSolutionsPerPage(1);
                                 setNumPuzzles(1);
                                 setInvertWords(0); // Reset inversion setting
+
+                                if (e.target.value === '7') {
+                                    const is_maze_allowed = await generateMaze();
+                                    if (!is_maze_allowed.allowed) {
+                                        setErrorModalMessage(is_maze_allowed.error);
+                                        setIsErrorModalOpen(true);
+                                        setSelectedGame(null);
+                                    } else {
+                                        setIsMazeAllowed(true);
+                                    }
+                                }
                             }}
                         >
                             {games.map((game) => (
@@ -431,6 +449,12 @@ export default function GamesPage() {
                     </div>
                 </CardFooter>
             </Card>
+
+            <ErrorModal
+                isOpen={isErrorModalOpen}
+                onClose={() => setIsErrorModalOpen(false)}
+                message={errorModalMessage}
+            />
         </>
     );
 }
