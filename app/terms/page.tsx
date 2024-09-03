@@ -50,24 +50,31 @@ export default function TermsPage() {
                         purposes, with the user's authorization.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">5. Limitation of Liability</h2>
+                    <h2 className="text-2xl font-semibold mb-4">5. Costs for Generating Content</h2>
+                    <p className="mb-6">
+                        Generating images and text on LowContent.ai incurs the following costs:
+                        - Each image costs 100,000 tokens.
+                        - Each word of generated text costs approximately 1.33 tokens.
+                    </p>
+
+                    <h2 className="text-2xl font-semibold mb-4">6. Limitation of Liability</h2>
                     <p className="mb-6">
                         LowContent.ai will not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from the use or
                         inability to use the site or its services.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">6. Privacy</h2>
+                    <h2 className="text-2xl font-semibold mb-4">7. Privacy</h2>
                     <p className="mb-6">
                         Your privacy is important to us. We invite you to read our <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Privacy Policy</a> to understand how we collect, use, and protect your personal information.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">7. Governing Law</h2>
+                    <h2 className="text-2xl font-semibold mb-4">8. Governing Law</h2>
                     <p className="mb-6">
                         These terms are governed by the laws of the Italian State. Any disputes arising from or
                         related to these terms will be subject to the exclusive jurisdiction of the courts of Milan.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">8. Contact</h2>
+                    <h2 className="text-2xl font-semibold mb-4">9. Contact</h2>
                     <p className="mb-6">
                         For questions regarding these terms and conditions, please contact us at the email address:
                         <a href="mailto:info@lowcontent.ai" className="text-blue-500 underline"> info@lowcontent.ai</a>.

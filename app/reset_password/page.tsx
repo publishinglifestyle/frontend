@@ -25,8 +25,8 @@ export default function ResetPasswordPage() {
     const [errorModalMessage, setErrorModalMessage] = useState('');
 
     const validatePassword = (password: string): boolean => {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        return passwordRegex.test(password);
+        // You can add specific criteria here, for now, we're just checking length
+        return password.length >= 8;
     };
 
     const isInvalidPassword = useMemo(() => password === "" ? null : !validatePassword(password), [password]);
