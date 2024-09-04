@@ -116,7 +116,7 @@ export const Navbar = () => {
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
-                    target={item.value === 'feedback' ? '_blank' : ''}
+                    target={item.value === 'feedback' || 'help' ? '_blank' : ''}
                   >
                     {item.label}
                   </NextLink>
@@ -175,7 +175,7 @@ export const Navbar = () => {
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
-                    target={item.value === 'feedback' ? '_blank' : ''}
+                    target={item.value === 'feedback' || 'help' ? '_blank' : ''}
                     size="lg"
                   >
                     {item.label}

@@ -6,76 +6,72 @@ export default function PrivacyPage() {
         <div className="p-6 font-sans leading-relaxed">
             <Card className="shadow-lg rounded-lg">
                 <CardBody className='p-8'>
-                    <h1 className="text-3xl font-bold mb-6">Informativa sulla Privacy</h1>
+                    <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
                     <p className="mb-6">
-                        Ultimo aggiornamento: <strong>16/08/2024</strong>
+                        Last updated: <strong>08/16/2024</strong>
                     </p>
 
                     <p className="mb-6">
-                        Questa informativa sulla privacy descrive come LowContent.ai (di seguito "noi" o "il sito") raccoglie, utilizza e protegge i dati personali
-                        degli utenti (di seguito "tu" o "l'utente") che visitano e utilizzano il nostro sito.
+                        This privacy policy describes how LowContent.ai (hereinafter "we" or "the site") collects, uses, and protects the personal data of users (hereinafter "you" or "the user") who visit and use our site.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">1. Tipologia di Dati Raccolti</h2>
+                    <h2 className="text-2xl font-semibold mb-4">1. Types of Data Collected</h2>
                     <p className="mb-6">
-                        Raccogliamo i seguenti dati personali:
-                    </p>
-                    <ul className="list-disc ml-6 mb-6">
-                        <li>Nome</li>
-                        <li>Indirizzo</li>
-                        <li>Indirizzo email</li>
-                        <li>Informazioni di pagamento</li>
-                    </ul>
-
-                    <h2 className="text-2xl font-semibold mb-4">2. Modalità di Raccolta</h2>
-                    <p className="mb-6">
-                        I dati personali vengono raccolti tramite:
+                        We collect the following personal data:
                     </p>
                     <ul className="list-disc ml-6 mb-6">
-                        <li>Moduli online</li>
-                        <li>Registrazione al sito</li>
+                        <li>Name</li>
+                        <li>Address</li>
+                        <li>Email address</li>
+                        <li>Payment information</li>
                     </ul>
 
-                    <h2 className="text-2xl font-semibold mb-4">3. Utilizzo dei Dati</h2>
+                    <h2 className="text-2xl font-semibold mb-4">2. Methods of Data Collection</h2>
                     <p className="mb-6">
-                        I dati raccolti vengono utilizzati per:
+                        Personal data is collected through:
                     </p>
                     <ul className="list-disc ml-6 mb-6">
-                        <li>Sottoscrivere gli abbonamenti</li>
-                        <li>Migliorare il nostro sito e i nostri servizi</li>
+                        <li>Online forms</li>
+                        <li>Site registration</li>
                     </ul>
 
-                    <h2 className="text-2xl font-semibold mb-4">4. Condivisione dei Dati</h2>
+                    <h2 className="text-2xl font-semibold mb-4">3. Use of Data</h2>
                     <p className="mb-6">
-                        Non condividiamo i dati personali degli utenti con terze parti.
+                        The collected data is used for:
+                    </p>
+                    <ul className="list-disc ml-6 mb-6">
+                        <li>Subscribing to memberships</li>
+                        <li>Improving our site and services</li>
+                    </ul>
+
+                    <h2 className="text-2xl font-semibold mb-4">4. Data Sharing</h2>
+                    <p className="mb-6">
+                        We do not share users' personal data with third parties.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">5. Conservazione dei Dati</h2>
+                    <h2 className="text-2xl font-semibold mb-4">5. Data Retention</h2>
                     <p className="mb-6">
-                        Conserviamo i dati personali fino al recesso da parte del cliente.
+                        We retain personal data until the customer unsubscribes.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">6. Diritti degli Utenti</h2>
+                    <h2 className="text-2xl font-semibold mb-4">6. User Rights</h2>
                     <p className="mb-6">
-                        Hai il diritto di richiedere la cancellazione dei tuoi dati personali in qualsiasi momento. Per esercitare questo diritto, puoi contattarci
-                        utilizzando le informazioni fornite nella sezione contatti.
+                        You have the right to request the deletion of your personal data at any time. To exercise this right, you can contact us using the information provided in the contact section.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">7. Sicurezza dei Dati</h2>
+                    <h2 className="text-2xl font-semibold mb-4">7. Data Security</h2>
                     <p className="mb-6">
-                        Adottiamo misure di sicurezza adeguate per proteggere i dati personali degli utenti da accessi non autorizzati, alterazioni o divulgazioni.
+                        We implement appropriate security measures to protect users' personal data from unauthorized access, alterations, or disclosures.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">8. Contatti</h2>
+                    <h2 className="text-2xl font-semibold mb-4">8. Contact Information</h2>
                     <p className="mb-6">
-                        Per domande riguardanti questa informativa sulla privacy o per esercitare i tuoi diritti, ti preghiamo di contattarci tramite il form dedicato
-                        sul nostro sito o inviando un'email a <a href="mailto:info@lowcontent.ai" className="text-blue-500 underline"> info@lowcontent.ai</a>.
+                        For questions regarding this privacy policy or to exercise your rights, please contact us through the dedicated form on our site or by sending an email to <a href="mailto:info@lowcontent.ai" className="text-blue-500 underline"> info@lowcontent.ai</a>.
                     </p>
 
-                    <h2 className="text-2xl font-semibold mb-4">9. Modifiche all'Informativa sulla Privacy</h2>
+                    <h2 className="text-2xl font-semibold mb-4">9. Changes to the Privacy Policy</h2>
                     <p className="mb-6">
-                        Ci riserviamo il diritto di modificare questa informativa sulla privacy in qualsiasi momento. Le modifiche saranno pubblicate su questa pagina e ti invitiamo
-                        a controllare periodicamente questa informativa per eventuali aggiornamenti.
+                        We reserve the right to modify this privacy policy at any time. Changes will be posted on this page, and we encourage you to review this policy periodically for any updates.
                     </p>
                 </CardBody>
             </Card>

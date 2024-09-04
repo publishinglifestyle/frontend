@@ -60,6 +60,20 @@ export const siteConfig = {
       'allow_user': true,
       'language': 'it'
     },
+    {
+      'value': 'help',
+      'label': 'Help',
+      'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
+      'value': 'help',
+      'label': 'Help',
+      'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
+      'allow_user': true,
+      'language': 'en'
+    },
   ],
   navMenuItems: [
     {
@@ -117,6 +131,20 @@ export const siteConfig = {
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
       'allow_user': true,
       'language': 'it'
+    },
+    {
+      'value': 'help',
+      'label': 'Help',
+      'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
+      'value': 'help',
+      'label': 'Help',
+      'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
+      'allow_user': true,
+      'language': 'en'
     },
   ]
 };
