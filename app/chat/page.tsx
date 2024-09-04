@@ -503,7 +503,7 @@ export default function ChatPage() {
     }, [isAuthenticatedClient]);
 
 
-    useEffect(() => {
+    /*useEffect(() => {
         const chatContainer = chatContainerRef.current;
 
         const handleScroll = () => {
@@ -534,7 +534,7 @@ export default function ChatPage() {
         if (chatContainer && isUserAtBottomRef.current) {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-    }, [messages]);
+    }, [messages]);*/
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {

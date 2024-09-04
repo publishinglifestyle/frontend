@@ -116,7 +116,8 @@ export const Navbar = () => {
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
-                    target={item.value === 'feedback' || 'help' ? '_blank' : ''}
+                    // Correct condition for internal and external links
+                    target={item.value === 'feedback' || item.value === 'help' ? '_blank' : undefined}
                   >
                     {item.label}
                   </NextLink>
@@ -170,30 +171,28 @@ export const Navbar = () => {
             .map((item, index) => (
               name && (
                 <NavbarMenuItem key={`${item}-${index}`}>
-                  <Link
+                  <NextLink
                     style={{
                       color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
                     }}
                     href={item.href}
-                    target={item.value === 'feedback' || 'help' ? '_blank' : ''}
-                    size="lg"
+                    target={item.value === 'feedback' || item.value === 'help' ? '_blank' : undefined}
                   >
                     {item.label}
-                  </Link>
+                  </NextLink>
                 </NavbarMenuItem>
               )
             ))}
           <Spacer y={4} />
           <Divider />
           <NavbarMenuItem key="profile">
-            <Link
+            <NextLink
               href="/profile"
               color='foreground'
               onClick={() => setIsMenuOpen(false)}
-              size="lg"
             >
               {translations?.my_profile}
-            </Link>
+            </NextLink>
           </NavbarMenuItem>
           <NavbarMenuItem key="logout">
             <Link

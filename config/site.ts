@@ -1,8 +1,8 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Low Content AI",
-  description: "AI per i tuoi contenuti",
+  name: "Low Content AI - Create Low-Content Books with AI-Powered Tools for KDP",
+  description: "Low Content AI offers an easy-to-use platform to create low-content books such as journals, planners, and activity books. Use our AI-driven tools for custom text, images, and printable games, perfect for publishing on Kindle Direct Publishing (KDP). Start creating today!",
   navItems: [
     {
       'value': 'Chat',

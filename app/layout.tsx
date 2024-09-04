@@ -8,6 +8,20 @@ import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
 
+// Structured Data for SEO (JSON-LD)
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Low Content AI",
+  "url": "https://www.lowcontent.ai",
+  "description": "AI-driven platform to create low-content books such as journals, planners, and activity books.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://www.lowcontent.ai/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+};
+
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
@@ -17,6 +31,22 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  keywords: ["Low Content Books", "AI Book Creator", "KDP Tools", "Journal Design", "Activity Books"],
+  openGraph: {
+    title: "Low Content AI - AI-Powered Low-Content Book Creator",
+    description: siteConfig.description,
+    url: "https://www.lowcontent.ai",
+    images: [{ url: "/og-image.jpg", width: 800, height: 600, alt: "Low Content AI Platform" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@LowContentAI",
+    title: "Low Content AI",
+    description: siteConfig.description,
+    images: "/og-image.jpg",
+  },
+  viewport: "width=device-width, initial-scale=1.0",
+  robots: "index, follow",
 };
 
 export const viewport: Viewport = {
@@ -31,10 +61,18 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="canonical" href="https://www.lowcontentai.com" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <meta name="robots" content="index, follow" />
+      </head>
       <body
         className={clsx(
           "min-h-screen bg-background font-sans antialiased",
@@ -48,7 +86,7 @@ export default function RootLayout({
         }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col ">
+          <div className="relative flex flex-col">
             <Navbar />
             <main className="w-full max-w-screen-4xl mx-auto pt-16 px-6 flex-grow">
               {children}
@@ -65,7 +103,7 @@ export default function RootLayout({
               </Link>
             </footer>
           </div>
-        </Providers>y
+        </Providers>
       </body>
     </html>
   );
