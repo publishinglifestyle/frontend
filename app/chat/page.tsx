@@ -589,324 +589,331 @@ export default function ChatPage() {
     }
 
     return (
-        <div className='flex flex-col md:flex-row justify-between gap-2'>
-            <div className='flex flex-col md:w-1/4' style={{ height: '750px' }}>
-                <Button
-                    isDisabled={!agents || agents.length === 0}
-                    className='mb-4'
-                    size='sm'
-                    color='secondary'
-                    onClick={async () => {
-                        setIsLoading(true);
-                        const newConversation = await createConversation();
-                        console.log("New Conversation: ", newConversation);
-                        setConversations(prevConversations => [...prevConversations, newConversation]);
-                        setCurrentConversation(newConversation.id);
+        <div className='flex flex-col text-center'>
+            <h1 className="text-4xl font-bold text-center">Chat with Low Content AI</h1>
+            <h2 className="text-lg font-semibold text-center mb-4">
+                Start a Conversation and Create Low-Content Books with AI
+            </h2>
 
-                        // Fetch and display messages for the new conversation
-                        const conversation = await getConversation(newConversation.id);
-                        let conversation_messages = [];
-                        let messageId = 0;
-                        for (let i = 0; i < conversation.context.length; i++) {
-                            const textMessage = i === 0 ? GREETING_MESSAGE : conversation.context[i].content;
-                            const conversation_message: Message = {
-                                id: i.toString(),
-                                text: textMessage,
-                                username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
-                                conversation_id: newConversation.id,
-                                complete: false,
-                                title: "",
-                                buttons: conversation.context[i].buttons,
-                                messageId: conversation.context[i].messageId
-                            };
-                            conversation_messages.push(conversation_message);
-                        }
-                        setMessages(conversation_messages.map((message) => ({ ...message })));
-                        setNextMessageId(messageId);
-                        setIsLoading(false);
-                    }}
-                >
-                    {translations?.new_conversation}
-                </Button>
 
-                {/* Updated container to handle scrolling */}
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                    <Table
-                        aria-label={translations?.conversations || ""}
-                        selectionMode="single"
-                        selectedKeys={[currentConversation]}
+            <div className='flex flex-col md:flex-row justify-between gap-2'>
+                <div className='flex flex-col md:w-1/4' style={{ height: '750px' }}>
+                    <Button
+                        isDisabled={!agents || agents.length === 0}
+                        className='mb-4'
+                        size='sm'
+                        color='secondary'
+                        onClick={async () => {
+                            setIsLoading(true);
+                            const newConversation = await createConversation();
+                            console.log("New Conversation: ", newConversation);
+                            setConversations(prevConversations => [...prevConversations, newConversation]);
+                            setCurrentConversation(newConversation.id);
+
+                            // Fetch and display messages for the new conversation
+                            const conversation = await getConversation(newConversation.id);
+                            let conversation_messages = [];
+                            let messageId = 0;
+                            for (let i = 0; i < conversation.context.length; i++) {
+                                const textMessage = i === 0 ? GREETING_MESSAGE : conversation.context[i].content;
+                                const conversation_message: Message = {
+                                    id: i.toString(),
+                                    text: textMessage,
+                                    username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
+                                    conversation_id: newConversation.id,
+                                    complete: false,
+                                    title: "",
+                                    buttons: conversation.context[i].buttons,
+                                    messageId: conversation.context[i].messageId
+                                };
+                                conversation_messages.push(conversation_message);
+                            }
+                            setMessages(conversation_messages.map((message) => ({ ...message })));
+                            setNextMessageId(messageId);
+                            setIsLoading(false);
+                        }}
                     >
-                        <TableHeader columns={columns}>
-                            {(column: Column) => (
-                                <TableColumn key={column.key}>
-                                    {column.name}
-                                </TableColumn>
-                            )}
-                        </TableHeader>
-                        <TableBody items={conversations}>
-                            {(item: Conversation) => (
-                                <TableRow
-                                    key={item.id.toString()}
-                                    onClick={async () => {
-                                        setIsLoading(true);
-                                        setCurrentConversation(item.id);
-                                        setSelectedAgentId('');
-                                        setSelectedAgent(undefined);
+                        {translations?.new_conversation}
+                    </Button>
 
-                                        const conversation = await getConversation(item.id);
+                    {/* Updated container to handle scrolling */}
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        <Table
+                            aria-label={translations?.conversations || ""}
+                            selectionMode="single"
+                            selectedKeys={[currentConversation]}
+                        >
+                            <TableHeader columns={columns}>
+                                {(column: Column) => (
+                                    <TableColumn key={column.key}>
+                                        {column.name}
+                                    </TableColumn>
+                                )}
+                            </TableHeader>
+                            <TableBody items={conversations}>
+                                {(item: Conversation) => (
+                                    <TableRow
+                                        key={item.id.toString()}
+                                        onClick={async () => {
+                                            setIsLoading(true);
+                                            setCurrentConversation(item.id);
+                                            setSelectedAgentId('');
+                                            setSelectedAgent(undefined);
 
-                                        let conversation_messages = [];
-                                        let messageId = 0;
-                                        for (let i = 0; i < conversation.context.length; i++) {
-                                            const textMessage = i == 0 ? GREETING_MESSAGE : conversation.context[i].content;
-                                            const conversation_message: Message = {
-                                                id: i.toString(),
-                                                text: textMessage,
-                                                username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
-                                                conversation_id: item.id,
-                                                complete: false,
-                                                title: "",
-                                                buttons: conversation.context[i].buttons,
-                                                messageId: conversation.context[i].messageId
-                                            };
-                                            conversation_messages.push(conversation_message);
-                                        }
-                                        setMessages(conversation_messages.map((message) => ({ ...message })));
-                                        setNextMessageId(messageId);
+                                            const conversation = await getConversation(item.id);
 
-                                        setIsLoading(false);
-                                    }}
-                                >
-                                    {columns.map((column) => (
-                                        <TableCell key={column.key}>{renderCell(item, column.key as keyof Conversation)}</TableCell>
-                                    ))}
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                            let conversation_messages = [];
+                                            let messageId = 0;
+                                            for (let i = 0; i < conversation.context.length; i++) {
+                                                const textMessage = i == 0 ? GREETING_MESSAGE : conversation.context[i].content;
+                                                const conversation_message: Message = {
+                                                    id: i.toString(),
+                                                    text: textMessage,
+                                                    username: conversation.context[i].role === 'user' ? fullName : 'LowContent AI',
+                                                    conversation_id: item.id,
+                                                    complete: false,
+                                                    title: "",
+                                                    buttons: conversation.context[i].buttons,
+                                                    messageId: conversation.context[i].messageId
+                                                };
+                                                conversation_messages.push(conversation_message);
+                                            }
+                                            setMessages(conversation_messages.map((message) => ({ ...message })));
+                                            setNextMessageId(messageId);
+
+                                            setIsLoading(false);
+                                        }}
+                                    >
+                                        {columns.map((column) => (
+                                            <TableCell key={column.key}>{renderCell(item, column.key as keyof Conversation)}</TableCell>
+                                        ))}
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </div>
 
 
-            <div className='md:w-3/4'>
-                <Card>
-                    <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
-                        <CardBody>
+                <div className='md:w-3/4'>
+                    <Card>
+                        <div ref={chatContainerRef} className="overflow-auto" style={{ height: "570px" }}>
+                            <CardBody>
 
-                            {messages.filter(message => message.text && message.text !== "NaN").map((message) => (
-                                <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
-                                    <div className="flex items-start rounded-lg" style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}>
-                                        {message.username === Cookies.get('user_name') && (
-                                            <Avatar src={profileImage} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
-                                        )}
-                                        {message.username !== Cookies.get('user_name') && (
-                                            <Avatar src={aiPic} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
-                                        )}
-                                        <div className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`} style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}>
-                                            {message.username !== Cookies.get('user_name') && (
-                                                <p className="font-semibold">LowContent AI</p>
-                                            )}
+                                {messages.filter(message => message.text && message.text !== "NaN").map((message) => (
+                                    <div key={message.id} className={`mt-4 message flex ${message.username === Cookies.get('user_name') ? 'justify-end' : 'justify-start'}`}>
+                                        <div className="flex items-start rounded-lg" style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray' }}>
                                             {message.username === Cookies.get('user_name') && (
-                                                <p className="font-semibold">{fullName}</p>
+                                                <Avatar src={profileImage} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
                                             )}
-                                            {message.text.startsWith("http") ? (
-                                                <>
-                                                    <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
-                                                    {message.buttons?.length > 0 && (
-                                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
-                                                            {message.buttons.map((button, index) => (
-                                                                <Button
-                                                                    size="sm"
-                                                                    key={index}
-                                                                    color="secondary"
-                                                                    className="w-full"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        sendChatMessage(button, true, message.messageId, true, promptCommands);
-                                                                    }}
-                                                                >
-                                                                    {button}
-                                                                </Button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
+                                            {message.username !== Cookies.get('user_name') && (
+                                                <Avatar src={aiPic} className="transition-transform mr-2 mt-2 ml-2" alt='Profile Picture' />
                                             )}
+                                            <div className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`} style={{ backgroundColor: message.username === Cookies.get('user_name') ? '#9353D3' : 'lightgray', color: message.username === Cookies.get('user_name') ? 'white' : 'black' }}>
+                                                {message.username !== Cookies.get('user_name') && (
+                                                    <p className="font-semibold">LowContent AI</p>
+                                                )}
+                                                {message.username === Cookies.get('user_name') && (
+                                                    <p className="font-semibold">{fullName}</p>
+                                                )}
+                                                {message.text.startsWith("http") ? (
+                                                    <>
+                                                        <img src={message.text} alt="Received" className="max-w-full h-auto rounded-lg" />
+                                                        {message.buttons?.length > 0 && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
+                                                                {message.buttons.map((button, index) => (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        key={index}
+                                                                        color="secondary"
+                                                                        className="w-full"
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            sendChatMessage(button, true, message.messageId, true, promptCommands);
+                                                                        }}
+                                                                    >
+                                                                        {button}
+                                                                    </Button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
+                                                )}
 
 
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-
-                        </CardBody>
-                    </div>
-
-                    <CardFooter>
-                        <div className='flex flex-col w-full'>
-                            <div className='flex gap-2'>
-                                {selectedAgent?.buttons?.map((agent_button) => (
-                                    <Button
-                                        key={agent_button.id}
-                                        variant='ghost'
-                                        size="sm"
-                                        color="secondary"
-                                        className='mb-8'
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            sendChatMessage(agent_button.prompt, false, '', false, promptCommands);
-                                        }}
-                                    >
-                                        {agent_button.name}
-                                    </Button>
                                 ))}
-                            </div>
 
-                            <div className='flex gap-4 md:flex-row flex-col'>
-                                <Textarea
-                                    isDisabled={
-                                        (conversations.length === 0 || isGeneratingResponse)
-                                        ||
-                                        (selectedAgent?.buttons && selectedAgent?.buttons?.length > 0)
-                                    }
-                                    fullWidth
-                                    type='text'
-                                    size='sm'
-                                    label={translations?.type_message}
-                                    value={messageText}
-                                    onChange={e => setMessageText(e.target.value)}
-                                    onKeyDown={async e => {
-                                        if (e.key === 'Enter' && !e.shiftKey && messageText) {
-                                            e.preventDefault();
-                                            sendChatMessage(messageText, false, '', true, promptCommands);
-                                        }
-                                    }}
-                                />
-                                <div className='flex flex-col md:w-1/3'>
-                                    <Select
-                                        isDisabled={conversations.length === 0}
-                                        //className='md:w-1/3 '
-                                        size="sm"
-                                        label={translations?.type}
-                                        placeholder={translations?.select_agent || ""}
-                                        onChange={(e) => {
-                                            console.log(e.target.value);
-                                            setSelectedAgentId(e.target.value);
-                                            const s_agent = agents.find(agent => agent.id === e.target.value);
-                                            setSelectedAgent(s_agent);
-                                        }}
-                                    >
-                                        {agents.map((agent) => (
-                                            <SelectItem key={agent.id} value={agent.id}>
-                                                {agent.name}
-                                            </SelectItem>
-                                        ))}
-                                    </Select>
-                                    {
-                                        selectedAgent?.model == 'midjourney' &&
-                                        <Button
-                                            variant={promptCommands.length > 0 ? 'ghost' : 'flat'}
-                                            color={promptCommands.length > 0 ? 'secondary' : 'default'}
-                                            className='mt-2'
-                                            onClick={() => setIsCommandsModalOpen(true)}
-                                        >
-                                            {translations?.commands}
-                                        </Button>
-                                    }
-
-                                </div>
-
-                            </div>
-
-                            <Spacer y={4} />
-
-                            <div className='flex gap-2'>
-                                <Button
-                                    isDisabled={conversations.length === 0 || !messageText}
-                                    fullWidth
-                                    color='secondary'
-                                    style={{ color: "white" }}
-                                    onClick={async (e) => {
-                                        e.preventDefault();
-                                        sendChatMessage(messageText, false, '', true, promptCommands);
-                                    }}
-                                >
-                                    {translations?.send}
-                                </Button>
-                                <Button size='sm' onClick={handleIconClick}>
-                                    <PaperClipIcon width={20} height={20} />
-                                </Button>
-                                <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageChange} />
-                                <Button
-                                    isDisabled={!isGeneratingResponse}
-                                    size='sm'
-                                    onClick={async () => {
-                                        setIsGeneratingResponse(false);
-                                        socket?.disconnect();
-                                    }}
-                                >
-                                    <StopIcon />
-                                </Button>
-                            </div>
-
+                            </CardBody>
                         </div>
 
-                    </CardFooter>
-                </Card>
+                        <CardFooter>
+                            <div className='flex flex-col w-full'>
+                                <div className='flex gap-2'>
+                                    {selectedAgent?.buttons?.map((agent_button) => (
+                                        <Button
+                                            key={agent_button.id}
+                                            variant='ghost'
+                                            size="sm"
+                                            color="secondary"
+                                            className='mb-8'
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                sendChatMessage(agent_button.prompt, false, '', false, promptCommands);
+                                            }}
+                                        >
+                                            {agent_button.name}
+                                        </Button>
+                                    ))}
+                                </div>
+
+                                <div className='flex gap-4 md:flex-row flex-col'>
+                                    <Textarea
+                                        isDisabled={
+                                            (conversations.length === 0 || isGeneratingResponse)
+                                            ||
+                                            (selectedAgent?.buttons && selectedAgent?.buttons?.length > 0)
+                                        }
+                                        fullWidth
+                                        type='text'
+                                        size='sm'
+                                        label={translations?.type_message}
+                                        value={messageText}
+                                        onChange={e => setMessageText(e.target.value)}
+                                        onKeyDown={async e => {
+                                            if (e.key === 'Enter' && !e.shiftKey && messageText) {
+                                                e.preventDefault();
+                                                sendChatMessage(messageText, false, '', true, promptCommands);
+                                            }
+                                        }}
+                                    />
+                                    <div className='flex flex-col md:w-1/3'>
+                                        <Select
+                                            isDisabled={conversations.length === 0}
+                                            //className='md:w-1/3 '
+                                            size="sm"
+                                            label={translations?.type}
+                                            placeholder={translations?.select_agent || ""}
+                                            onChange={(e) => {
+                                                console.log(e.target.value);
+                                                setSelectedAgentId(e.target.value);
+                                                const s_agent = agents.find(agent => agent.id === e.target.value);
+                                                setSelectedAgent(s_agent);
+                                            }}
+                                        >
+                                            {agents.map((agent) => (
+                                                <SelectItem key={agent.id} value={agent.id}>
+                                                    {agent.name}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                        {
+                                            selectedAgent?.model == 'midjourney' &&
+                                            <Button
+                                                variant={promptCommands.length > 0 ? 'ghost' : 'flat'}
+                                                color={promptCommands.length > 0 ? 'secondary' : 'default'}
+                                                className='mt-2'
+                                                onClick={() => setIsCommandsModalOpen(true)}
+                                            >
+                                                {translations?.commands}
+                                            </Button>
+                                        }
+
+                                    </div>
+
+                                </div>
+
+                                <Spacer y={4} />
+
+                                <div className='flex gap-2'>
+                                    <Button
+                                        isDisabled={conversations.length === 0 || !messageText}
+                                        fullWidth
+                                        color='secondary'
+                                        style={{ color: "white" }}
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            sendChatMessage(messageText, false, '', true, promptCommands);
+                                        }}
+                                    >
+                                        {translations?.send}
+                                    </Button>
+                                    <Button size='sm' onClick={handleIconClick}>
+                                        <PaperClipIcon width={20} height={20} />
+                                    </Button>
+                                    <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageChange} />
+                                    <Button
+                                        isDisabled={!isGeneratingResponse}
+                                        size='sm'
+                                        onClick={async () => {
+                                            setIsGeneratingResponse(false);
+                                            socket?.disconnect();
+                                        }}
+                                    >
+                                        <StopIcon />
+                                    </Button>
+                                </div>
+
+                            </div>
+
+                        </CardFooter>
+                    </Card>
+                </div>
+
+                <SuccessModal
+                    isOpen={isSuccessModalOpen}
+                    onClose={() => {
+                        setIsSuccessModalOpen(false);
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }}
+                    message={translations?.subscription_is_active || ""}
+                />
+
+                <CommandsModal
+                    isOpen={isCommandsModalOpen}
+                    onClose={() => setIsCommandsModalOpen(false)}
+                    onSuccess={(selected_commands) => {
+                        setPromptCommands(selected_commands);
+                        setIsCommandsModalOpen(false);
+                    }}
+                />
+
+                <ErrorModal
+                    isOpen={isErrorModalOpen}
+                    onClose={() => setIsErrorModalOpen(false)}
+                    message={errorMessage}
+                />
+
+                <ImageModal
+                    imageUrl={uploadedImageUrl}
+                    isOpen={isImageModalOpen}
+                    onClose={() => setIsImageModalOpen(false)}
+                />
+
+                <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {
+                    if (new_name) { // Ensure new_name is not undefined
+                        setIsConversationNameModalOpen(false);
+                        setIsLoading(true);
+                        await changeName(currentConversation, new_name);
+                        setIsLoading(false);
+                        setConversations(conversations.map((conversation) => {
+                            if (conversation.id === currentConversation) {
+                                return {
+                                    ...conversation,
+                                    name: new_name as string
+                                };
+                            }
+                            return conversation;
+                        }));
+                    } else {
+                        setIsConversationNameModalOpen(false);
+                    }
+                }} />
             </div>
-
-            <SuccessModal
-                isOpen={isSuccessModalOpen}
-                onClose={() => {
-                    setIsSuccessModalOpen(false);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }}
-                message={translations?.subscription_is_active || ""}
-            />
-
-            <CommandsModal
-                isOpen={isCommandsModalOpen}
-                onClose={() => setIsCommandsModalOpen(false)}
-                onSuccess={(selected_commands) => {
-                    setPromptCommands(selected_commands);
-                    setIsCommandsModalOpen(false);
-                }}
-            />
-
-            <ErrorModal
-                isOpen={isErrorModalOpen}
-                onClose={() => setIsErrorModalOpen(false)}
-                message={errorMessage}
-            />
-
-            <ImageModal
-                imageUrl={uploadedImageUrl}
-                isOpen={isImageModalOpen}
-                onClose={() => setIsImageModalOpen(false)}
-            />
-
-            <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {
-                if (new_name) { // Ensure new_name is not undefined
-                    setIsConversationNameModalOpen(false);
-                    setIsLoading(true);
-                    await changeName(currentConversation, new_name);
-                    setIsLoading(false);
-                    setConversations(conversations.map((conversation) => {
-                        if (conversation.id === currentConversation) {
-                            return {
-                                ...conversation,
-                                name: new_name as string
-                            };
-                        }
-                        return conversation;
-                    }));
-                } else {
-                    setIsConversationNameModalOpen(false);
-                }
-            }} />
-
         </div>
     );
 }

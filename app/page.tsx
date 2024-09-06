@@ -90,6 +90,9 @@ export default function Home() {
           </head>
         )
       }
+      <div className='flex flex-col text-center align-center items-center w-full'>
+        <h1 className="text-3xl font-bold text-center mb-6">Welcome to Low Content AI</h1>
+      </div>
       <section className="flex flex-col md:flex-row items-center justify-center gap-8 py-8 md:py-10">
         <div className="w-full md:w-1/2">
           {isLogin && <Login toggleToSignUp={toggleToSignUp} toggleToForgotPassword={toggleToForgotPassword} />}

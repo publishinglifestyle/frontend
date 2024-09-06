@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
-  keywords: ["Low Content Books", "AI Book Creator", "KDP Tools", "Journal Design", "Activity Books"],
+  keywords: ["Low Content AI", "Low Content Books", "AI Book Creator", "KDP Tools", "Journal Design", "Activity Books"],
   openGraph: {
     title: "Low Content AI - AI-Powered Low-Content Book Creator",
     description: siteConfig.description,
