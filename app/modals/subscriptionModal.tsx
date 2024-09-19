@@ -15,6 +15,7 @@ interface Subscription {
     name: string;
     price_id: string;
     price: number;
+    credits: number;
 }
 
 interface SubscriptionModalProps {
@@ -110,13 +111,22 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ isOpen, onClose }
                                     >
                                         <CardHeader className="flex flex-col items-center justify-center" style={{ height: '100%' }}>
                                             <h2 className="text-3xl">{sub.name}</h2>
-                                            {
-                                                isAnnual ? (
-                                                    <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.yearly}</p>
-                                                ) : (
-                                                    <p style={{ color: "#9353D3" }}>€ {sub.price} / {translations?.monthly}</p>
-                                                )
-                                            }
+                                            {isAnnual ? (
+                                                <p style={{ color: "#9353D3" }}>
+                                                    <del>€ {sub.price}</del> € {(sub.price * 0.75).toFixed(2)} / {translations?.yearly}
+                                                </p>
+                                            ) : (
+                                                <p style={{ color: "#9353D3" }}>
+                                                    <del>€ {sub.price}</del> € {(sub.price * 0.75).toFixed(2)} / {translations?.monthly}
+                                                </p>
+                                            )}
+
+                                            {/* Credits Section */}
+                                            <div className="flex flex-col items-center space-x-2 mt-4">
+                                                <span className="text-2xl font-bold">{sub.credits.toLocaleString('en-US')}</span>
+                                                <span className="text-gray-500 text-lg">credits</span>
+                                            </div>
+
                                         </CardHeader>
                                     </Card>
                                 ))}
