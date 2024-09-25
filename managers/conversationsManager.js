@@ -48,9 +48,9 @@ export async function deleteConversation(conversation_id) {
     }
 }
 
-export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands) {
+export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id) {
     let response = await axios.post(endpoint + "generate_image",
-        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands },
+        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id },
         { headers: headers });
 
     if (response) {
@@ -58,9 +58,9 @@ export async function generateImage(msg, agent_id, conversation_id, save_user_pr
     }
 }
 
-export async function checkImageStatus(msg, messageId, conversation_id, save_user_prompt) {
-    let response = await axios.post(endpoint + "check_image_status",
-        { msg, messageId, conversation_id, save_user_prompt },
+export async function saveMjImage(msg, messageId, conversation_id, save_user_prompt, imageUrl, options, flags) {
+    let response = await axios.post(endpoint + "save_mj_image",
+        { msg, messageId, conversation_id, save_user_prompt, imageUrl, options, flags },
         { headers: headers });
 
     if (response) {
@@ -68,9 +68,9 @@ export async function checkImageStatus(msg, messageId, conversation_id, save_use
     }
 }
 
-export async function pressButton(conversation_id, messageId, midjourneyMessageId, button) {
-    let response = await axios.post(endpoint + "press_button",
-        { conversation_id, messageId, midjourneyMessageId, button },
+export async function sendAction(conversation_id, message_id, custom_id, prompt, prompt_commands, flags, socket_id, new_prompt) {
+    let response = await axios.post(endpoint + "send_action",
+        { conversation_id, message_id, custom_id, prompt, prompt_commands, flags, new_prompt, socket_id },
         { headers: headers });
 
     if (response) {

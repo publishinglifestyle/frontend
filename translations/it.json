@@ -69,5 +69,7 @@
     "purchase": "Acquista",
     "select_option_message": "Seleziona un'opzione",
     "select_package": "Seleziona pacchetto",
-    "credits_purchased": "Crediti acquistati con success"
+    "credits_purchased": "Crediti acquistati con success",
+    "edit_image": "Modifica immagine",
+    "enter_your_prompt_here": "Inserisci il tuo prompt qui"
 }

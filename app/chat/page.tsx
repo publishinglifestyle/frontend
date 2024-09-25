@@ -15,7 +15,7 @@ import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, checkImageStatus, pressButton, changeName, uploadImage } from '@/managers/conversationsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, saveMjImage, sendAction, changeName, uploadImage } from '@/managers/conversationsManager';
 import { TrashIcon, StopIcon, PencilSquareIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
@@ -24,6 +24,8 @@ import ImageModal from '../modals/imageModal';
 import SuccessModal from '../modals/successModal';
 import ErrorModal from '../modals/errorModal';
 import CommandsModal from '../modals/commandsModal';
+import PromptModal from '../modals/promptModal';
+import { button } from '@nextui-org/theme';
 
 let GREETING_MESSAGE = "";
 
@@ -45,6 +47,11 @@ interface Button {
     prompt: string;
 }
 
+interface Option {
+    custom: string;
+    label: string;
+}
+
 interface Message {
     id: string;
     text: string;
@@ -52,8 +59,10 @@ interface Message {
     conversation_id: string;
     complete: boolean;
     title: string;
-    buttons: string[];
+    buttons: Option[];
     messageId: string;
+    flags: number;
+    prompt: string;
 }
 
 interface Conversation {
@@ -84,7 +93,6 @@ let columns: Column[] = [
 let socket: Socket | null = null;
 const defaultPic = "./profile.png";
 const aiPic = "./ai.png";
-let pageLoaded = false;
 
 export default function ChatPage() {
     const pageLoadedRef = useRef(false);
@@ -119,6 +127,12 @@ export default function ChatPage() {
     const [promptCommands, setPromptCommands] = useState<Command[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+    const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+
+    const [buttonMidjourneyMessageId, setButtonMidjourneyMessageId] = useState('');
+    const [buttonCustomId, setButtonCustomId] = useState('');
+    const [buttonText, setButtonText] = useState('');
+    const [buttonFlags, setButtonFlags] = useState(0);
 
     const handleIconClick = () => {
         fileInputRef.current?.click();
@@ -186,7 +200,7 @@ export default function ChatPage() {
         }
     };
 
-    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean, commands = promptCommands) => {
+    const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean, commands = promptCommands, flags: number, customId: string) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
 
@@ -217,7 +231,9 @@ export default function ChatPage() {
                 complete: true,
                 title: "",
                 buttons: [],
-                messageId: ""
+                messageId: "",
+                flags: 0,
+                prompt: ""
             };
 
             setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -231,7 +247,9 @@ export default function ChatPage() {
                 complete: false,
                 title: "",
                 buttons: [],
-                messageId: ""
+                messageId: "",
+                flags: 0,
+                prompt: ""
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
@@ -249,13 +267,26 @@ export default function ChatPage() {
 
             if ((current_agent && current_agent.type === 'image') || isButtonPressed) {
                 setIsGeneratingResponse(true);
-                let image_response: any = ""; // Use 'any' type for now to bypass TypeScript issues
+                let image_response: any = "";
 
                 if (isButtonPressed) {
-                    image_response = await pressButton(currentConversation, userMessageId, midjourneyMessageId, text);
+                    /*if (customId.includes("variation") || customId.includes("pan")) {
+                        console.log(prompt)
+                        setButtonMidjourneyMessageId(midjourneyMessageId);
+                        setButtonCustomId(customId);
+                        setButtonText(text);
+                        setButtonFlags(flags);
+                        setIsPromptModalOpen(true);
+                    } else {
+                        image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
+                        console.log("Button pressed response: ", image_response);
+                    }*/
+                    image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
                     console.log("Button pressed response: ", image_response);
+
                 } else {
-                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands);
+                    console.log("Conversation", currentConversation);
+                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands, socket?.id);
                 }
 
                 if (image_response.error || (image_response && image_response.image_ready)) {
@@ -267,7 +298,9 @@ export default function ChatPage() {
                         title: image_response.conversation_name,
                         complete: true,
                         buttons: [],
-                        messageId: ""
+                        messageId: "",
+                        flags: 0,
+                        prompt: ""
                     };
 
                     setMessages((prevMessages) => {
@@ -294,12 +327,12 @@ export default function ChatPage() {
                     setErrorMessage(image_response.error);
                     setIsErrorModalOpen(true);
 
-                } else if (!image_response || !image_response.image_ready) {
+                } /*else if (!image_response || !image_response.image_ready) {
                     const waiting_time = isButtonPressed ? 5000 : 60000;
                     setTimeout(() => {
                         checkImageStatusPeriodically(text, image_response.response.messageId, save_user_prompt);
                     }, waiting_time);
-                }
+                }*/
 
             } else {
                 console.log("Sending message to server:", {
@@ -318,49 +351,6 @@ export default function ChatPage() {
 
         }
     }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
-
-    async function checkImageStatusPeriodically(prompt: string, messageId: string, save_user_prompt: boolean) {
-        // Check the status of the image
-        const image_status = await checkImageStatus(prompt, messageId, currentConversation, save_user_prompt);
-        console.log("Image Status: ", image_status);
-
-        if (image_status.status == "PROCESSING" || image_status.status == "QUEUED") {
-            console.log("Image still processing...");
-            // Wait for 30 seconds before checking again
-            setTimeout(() => {
-                checkImageStatusPeriodically(prompt, messageId, save_user_prompt);
-            }, 10000);
-        } else {
-            console.log("Image processing complete.");
-            console.log(image_status)
-            const message = { id: image_status.messageId, username: 'LowContent AI', text: image_status.imageUrl, conversation_id: currentConversation, title: image_status.conversation_name, complete: true, buttons: image_status.buttons, messageId: image_status.messageId };
-
-            setMessages((prevMessages) => {
-                const existingMessageIndex = prevMessages.findIndex(
-                    (m) => m.id === message.id
-                );
-
-                const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
-
-                if (existingMessageIndex !== -1) {
-                    updatedMessages[existingMessageIndex] = {
-                        ...updatedMessages[existingMessageIndex],
-                        text: updatedMessages[existingMessageIndex].text + message.text,
-                        id: message.id
-                    };
-
-                    return updatedMessages;
-                } else {
-                    return [...updatedMessages, message];
-                }
-            });
-
-            if (message.complete) {
-                setIsGeneratingResponse(false);
-            }
-            setIsGeneratingResponse(false); // Stop the loading bubble
-        }
-    }
 
     useEffect(() => {
         if (isAuthenticatedClient && !socket) {
@@ -389,12 +379,49 @@ export default function ChatPage() {
                 socket.on('message', messageListener);
             }
 
+            // Listen for the midjourneyCallback event
+            socket.on('midjourneyCallback', async (response) => {
+                console.log("Received midjourney callback:", response);
+
+                const message = {
+                    id: uuidv4(),
+                    username: 'LowContent AI',
+                    text: response.result.url,
+                    conversation_id: response.conversation_id,
+                    complete: true,
+                    buttons: response.result.options || [],
+                    messageId: response.result.message_id,
+                    flags: response.result.flags,
+                    prompt: response.result.prompt
+                };
+
+                // Store conversation context
+                await saveMjImage(response.result.prompt, response.result.message_id, response.conversation_id, true, response.result.url, response.result.options, response.result.flags);
+
+                setMessages((prevMessages) => {
+                    const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+                    // Ensure the new message conforms to the Message type
+                    return [
+                        ...updatedMessages,
+                        {
+                            ...message,
+                            title: '',
+                        }
+                    ];
+                });
+
+                setIsGeneratingResponse(false); // Stop the loading bubble
+            });
+
+
             return () => {
                 if (socket) {
                     socket.off('connect');
                     socket.off('disconnect');
                     socket.off('connect_error');
                     socket.off('message', messageListener);
+                    socket.off('midjourneyCallback');
                     socket.close();
                     socket = null;
                 }
@@ -461,7 +488,9 @@ export default function ChatPage() {
                                 complete: false,
                                 title: "",
                                 buttons: current_conversation.context[i].buttons,
-                                messageId: current_conversation.context[i].messageId
+                                messageId: current_conversation.context[i].messageId,
+                                flags: current_conversation.context[i].flags,
+                                prompt: ""
                             };
                             conversation_messages.push(conversation_message);
                         }
@@ -501,40 +530,6 @@ export default function ChatPage() {
             }
         }
     }, [isAuthenticatedClient]);
-
-
-    /*useEffect(() => {
-        const chatContainer = chatContainerRef.current;
-
-        const handleScroll = () => {
-            if (chatContainer) {
-                const scrollTop = chatContainer.scrollTop;
-                const scrollHeight = chatContainer.scrollHeight;
-                const clientHeight = chatContainer.clientHeight;
-
-                // Check if the user is at the bottom
-                isUserAtBottomRef.current = scrollTop + clientHeight >= scrollHeight - 10;
-            }
-        };
-
-        if (chatContainer) {
-            chatContainer.addEventListener('scroll', handleScroll);
-        }
-
-        return () => {
-            if (chatContainer) {
-                chatContainer.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        const chatContainer = chatContainerRef.current;
-
-        if (chatContainer && isUserAtBottomRef.current) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    }, [messages]);*/
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {
@@ -624,7 +619,9 @@ export default function ChatPage() {
                                     complete: false,
                                     title: "",
                                     buttons: conversation.context[i].buttons,
-                                    messageId: conversation.context[i].messageId
+                                    messageId: conversation.context[i].messageId,
+                                    flags: conversation.context[i].flags,
+                                    prompt: ""
                                 };
                                 conversation_messages.push(conversation_message);
                             }
@@ -674,7 +671,9 @@ export default function ChatPage() {
                                                     complete: false,
                                                     title: "",
                                                     buttons: conversation.context[i].buttons,
-                                                    messageId: conversation.context[i].messageId
+                                                    messageId: conversation.context[i].messageId,
+                                                    flags: conversation.context[i].flags,
+                                                    prompt: ""
                                                 };
                                                 conversation_messages.push(conversation_message);
                                             }
@@ -729,10 +728,10 @@ export default function ChatPage() {
                                                                         className="w-full"
                                                                         onClick={(e) => {
                                                                             e.preventDefault();
-                                                                            sendChatMessage(button, true, message.messageId, true, promptCommands);
+                                                                            sendChatMessage(button.label, true, message.messageId, true, promptCommands, message.flags, button.custom);
                                                                         }}
                                                                     >
-                                                                        {button}
+                                                                        <span style={{ fontSize: "8px" }}>{button.label}</span>
                                                                     </Button>
                                                                 ))}
                                                             </div>
@@ -763,7 +762,7 @@ export default function ChatPage() {
                                             className='mb-8'
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                sendChatMessage(agent_button.prompt, false, '', false, promptCommands);
+                                                sendChatMessage(agent_button.prompt, false, '', false, promptCommands, 0, '');
                                             }}
                                         >
                                             {agent_button.name}
@@ -787,7 +786,7 @@ export default function ChatPage() {
                                         onKeyDown={async e => {
                                             if (e.key === 'Enter' && !e.shiftKey && messageText) {
                                                 e.preventDefault();
-                                                sendChatMessage(messageText, false, '', true, promptCommands);
+                                                sendChatMessage(messageText, false, '', true, promptCommands, 0, '');
                                             }
                                         }}
                                     />
@@ -837,7 +836,7 @@ export default function ChatPage() {
                                         style={{ color: "white" }}
                                         onClick={async (e) => {
                                             e.preventDefault();
-                                            sendChatMessage(messageText, false, '', true, promptCommands);
+                                            sendChatMessage(messageText, false, '', true, promptCommands, 0, '');
                                         }}
                                     >
                                         {translations?.send}
@@ -892,6 +891,64 @@ export default function ChatPage() {
                     imageUrl={uploadedImageUrl}
                     isOpen={isImageModalOpen}
                     onClose={() => setIsImageModalOpen(false)}
+                />
+
+                <PromptModal
+                    isOpen={isPromptModalOpen}
+                    onClose={() => {
+                        setIsPromptModalOpen(false)
+                    }}
+                    onSuccess={async (midjourneyMessageId, customId, text, flags) => {
+                        const image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
+                        if (image_response.error || (image_response && image_response.image_ready)) {
+                            const message = {
+                                id: image_response.messageId,
+                                username: 'LowContent AI',
+                                text: image_response.response,
+                                conversation_id: currentConversation,
+                                title: image_response.conversation_name,
+                                complete: true,
+                                buttons: [],
+                                messageId: "",
+                                flags: 0,
+                                prompt: ""
+                            };
+
+                            setMessages((prevMessages) => {
+                                const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
+                                const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+                                if (existingMessageIndex !== -1) {
+                                    updatedMessages[existingMessageIndex] = {
+                                        ...updatedMessages[existingMessageIndex],
+                                        text: updatedMessages[existingMessageIndex].text + message.text,
+                                        id: message.id
+                                    };
+
+                                    return updatedMessages;
+                                } else {
+                                    return [...updatedMessages, message];
+                                }
+                            });
+
+                            setIsGeneratingResponse(false);
+                        }
+
+                        if (image_response.error) {
+                            setErrorMessage(image_response.error);
+                            setIsErrorModalOpen(true);
+                        }
+
+                        setButtonMidjourneyMessageId('');
+                        setButtonCustomId('');
+                        setButtonText('');
+                        setButtonFlags(0);
+                        setIsPromptModalOpen(false);
+                    }}
+                    midjourneyMessageId={buttonMidjourneyMessageId}
+                    customId={buttonCustomId}
+                    text={buttonText}
+                    flags={buttonFlags}
                 />
 
                 <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {

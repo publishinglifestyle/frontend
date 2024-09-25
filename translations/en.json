@@ -69,5 +69,7 @@
     "purchase": "Purchase",
     "select_option_message": "Please select an option",
     "select_package": "Select Package",
-    "credits_purchased": "Credits purchased successfully"
+    "credits_purchased": "Credits purchased successfully",
+    "edit_image": "Edit Image",
+    "enter_your_prompt_here": "Enter your prompt here"
 }

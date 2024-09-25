@@ -69,4 +69,6 @@ export interface Translations {
     select_option_message: string;
     select_package: string;
     credits_purchased: string;
+    edit_image: string;
+    enter_your_prompt_here: string;
 }

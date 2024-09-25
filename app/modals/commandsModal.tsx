@@ -30,11 +30,11 @@ const commands = [
         description: 'Use images as character references to create images of the same character.',
         has_parameter: true
     },
-    {
+    /*{
         value: '--fast',
         description: 'Override your current setting and run a single job using Fast Mode.',
         has_parameter: false
-    },
+    },*/
     {
         value: '--iw',
         description: 'Sets image prompt weight relative to text weight. The default value is 1.',
@@ -55,11 +55,11 @@ const commands = [
         description: 'Add a random 32 base styles Style Tuner code to your prompt.',
         has_parameter: false
     },
-    {
-        value: '--relax',
-        description: 'Override your current setting and run a single job using Relax Mode.',
-        has_parameter: false
-    },
+    /*{
+         value: '--relax',
+         description: 'Override your current setting and run a single job using Relax Mode.',
+         has_parameter: false
+     },*/
     {
         value: '--repeat',
         description: 'Create multiple Jobs from a single prompt',
@@ -80,11 +80,11 @@ const commands = [
         description: 'Generates images that can be used as repeating tiles to create seamless patterns.',
         has_parameter: false
     },
-    {
+    /*{
         value: '--turbo',
         description: 'Override your current setting and run a single job using Turbo Mode.',
         has_parameter: false
-    },
+    },*/
     {
         value: '--weird',
         description: 'Explore unusual aesthetics',
