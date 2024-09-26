@@ -171,3 +171,14 @@ export async function resetPassword(token, password_1, password_2) {
         return response.data.response;
     }
 }
+
+export async function logInGoogle(access_token, req_type) {
+    let response = await axios.post(endpoint + "sign_up_google",
+        {
+            access_token, req_type
+        }, { headers: headers });
+
+    if (response) {
+        return response.data.token;
+    }
+}

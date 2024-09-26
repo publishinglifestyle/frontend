@@ -9,10 +9,13 @@ import { Input } from "@nextui-org/input"
 import { Spinner } from "@nextui-org/spinner"
 import { Switch } from "@nextui-org/switch";
 import ErrorModal from "@/app/modals/errorModal";
-import { signUp } from '../../managers/userManager';
+import { signUp, logInGoogle } from '../../managers/userManager';
 import { getSubscriptions, startSubscription } from '../../managers/subscriptionManager';
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
+
+import { useGoogleLogin } from '@react-oauth/google';
+import { FaGoogle } from 'react-icons/fa';
 
 interface Subscription {
     id: string;
@@ -42,6 +45,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     const [subscriptionsFetched, setSubscriptionsFetched] = useState(false);
     const [isAnnual, setIsAnnual] = useState(true);
     const [step, setStep] = useState(1);
+    const [googleAuthToken, setGoogleAuthToken] = useState('');
 
     const validateEmail = (email: string): boolean => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email);
     const isInvalidEmail = useMemo(() => email === "" ? null : !validateEmail(email), [email]);
@@ -93,12 +97,49 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
         }
     }, [isAuthenticatedClient, subscriptionsFetched]);
 
-    const handleSignUp = async (price_id: string) => {
+    const googleLogin = useGoogleLogin({
+        onSuccess: async tokenResponse => {
+            try {
+                await signInWithGoogle(tokenResponse.access_token);
+            } catch (error) {
+                console.error('Failed to sign in with Google:', error);
+            }
+        },
+    });
+
+    const signInWithGoogle = async (access_token: string) => {
         try {
             setIsLoading(true);
-            const response = await signUp(firstName, lastName, email, password, password_2);
-            Cookies.set('authToken', response.token, { expires: 1 });
-            const url = await startSubscription(response.token, price_id)
+            const authToken = await logInGoogle(access_token, 'sign_up')
+            setGoogleAuthToken(authToken);
+            setStep(2);
+            setIsLoading(false);
+
+        } catch (e) {
+            setIsLoading(false);
+            const error = e as any;
+            console.log(error);
+            if (error.response) {
+                setErrorModalMessage(error.response.data.response);
+                setIsErrorModalOpen(true);
+            }
+        }
+    }
+
+    const handleSignUp = async (price_id: string) => {
+        try {
+            let token;
+            setIsLoading(true);
+
+            if (!googleAuthToken) {
+                const response = await signUp(firstName, lastName, email, password, password_2);
+                Cookies.set('authToken', response.token, { expires: 1 });
+                token = response.token;
+            } else {
+                token = googleAuthToken;
+            }
+
+            const url = await startSubscription(token, price_id)
             window.location.href = url;
             // Add success modal logic if needed
         } catch (e) {
@@ -185,6 +226,15 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                                     isDisabled={Boolean((!validateEmail(email) || !validatePassword(password) || !validatePassword(password_2) || password !== password_2))}
                                 >
                                     {translations?.next}
+                                </Button>
+                                <Button
+                                    fullWidth
+                                    style={{ backgroundColor: 'white', border: '0.5px solid gray', color: 'black' }}
+                                    className="rounded-lg mb-6"
+                                    onClick={() => { googleLogin() }}
+                                    startContent={<FaGoogle className="text-red-500" />}
+                                >
+                                    Continue with Google
                                 </Button>
                             </>
                         )}

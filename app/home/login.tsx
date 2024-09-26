@@ -8,9 +8,12 @@ import { Input } from "@nextui-org/input"
 import { Spinner } from "@nextui-org/spinner"
 import { useAuth } from '../auth-context';
 import ErrorModal from "@/app/modals/errorModal";
-import { logIn } from '../../managers/userManager';
+import { logIn, logInGoogle } from '../../managers/userManager';
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
+
+import { useGoogleLogin } from '@react-oauth/google';
+import { FaGoogle } from 'react-icons/fa';
 
 type LoginProps = {
     toggleToSignUp: () => void;
@@ -49,6 +52,35 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
 
         detectLanguage();
     }, []);
+
+    const googleLogin = useGoogleLogin({
+        onSuccess: async tokenResponse => {
+            try {
+                await signInWithGoogle(tokenResponse.access_token);
+            } catch (error) {
+                console.error('Failed to sign in with Google:', error);
+            }
+        },
+    });
+
+    const signInWithGoogle = async (access_token: string) => {
+        try {
+            setIsLoading(true);
+
+            const authToken = await logInGoogle(access_token, 'login')
+            login(authToken, 1);
+            router.push('/chat');
+
+        } catch (e) {
+            setIsLoading(false);
+            const error = e as any;
+            console.log(error);
+            if (error.response) {
+                setErrorModalMessage(error.response.data.response);
+                setIsErrorModalOpen(true);
+            }
+        }
+    }
 
     const handleLogin = async () => {
         try {
@@ -120,11 +152,20 @@ const Login: React.FC<LoginProps> = ({ toggleToSignUp, toggleToForgotPassword })
                             color="secondary"
                             style={{ color: "white" }}
                             radius='lg'
-                            className='mt-12 mb-6'
+                            className='mt-12 mb-4'
                             onClick={async () => await handleLogin()}
                             isDisabled={Boolean((!validateEmail(email) || !validatePassword(password)))}
                         >
                             Login
+                        </Button>
+                        <Button
+                            fullWidth
+                            style={{ backgroundColor: 'white', border: '0.5px solid gray', color: 'black' }}
+                            className="rounded-lg mb-6"
+                            onClick={() => { googleLogin() }}
+                            startContent={<FaGoogle className="text-red-500" />}
+                        >
+                            Continue with Google
                         </Button>
                     </CardBody>
                 </Card>

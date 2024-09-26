@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProviderProps } from "next-themes/dist/types";
 import { AuthProvider } from "./auth-context";
-
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -53,7 +53,9 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <NextUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <AuthProvider>
-          {children}
+          <GoogleOAuthProvider clientId="385572472945-folnm365fm1gr3nooesejvc7ceh16s5i.apps.googleusercontent.com">
+            {children}
+          </GoogleOAuthProvider>
         </AuthProvider>
       </NextThemesProvider>
     </NextUIProvider>
