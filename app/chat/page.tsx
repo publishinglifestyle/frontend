@@ -604,6 +604,8 @@ export default function ChatPage() {
                             console.log("New Conversation: ", newConversation);
                             setConversations(prevConversations => [...prevConversations, newConversation]);
                             setCurrentConversation(newConversation.id);
+                            setSelectedAgentId('');
+                            setSelectedAgent(undefined);
 
                             // Fetch and display messages for the new conversation
                             const conversation = await getConversation(newConversation.id);
