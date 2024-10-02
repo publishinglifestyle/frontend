@@ -77,7 +77,7 @@ export default function TermsPage() {
                     <h2 className="text-2xl font-semibold mb-4">9. Contact</h2>
                     <p className="mb-6">
                         For questions regarding these terms and conditions, please contact us at the email address:
-                        <a href="mailto:info@lowcontent.ai" className="text-blue-500 underline"> info@lowcontent.ai</a>.
+                        <a href="mailto:support@lowcontent.ai" className="text-blue-500 underline"> support@lowcontent.ai</a>.
                     </p>
 
                     <h3 className="text-xl font-bold mb-4">Important</h3>

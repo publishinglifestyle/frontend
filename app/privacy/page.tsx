@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 
                     <h2 className="text-2xl font-semibold mb-4">8. Contact Information</h2>
                     <p className="mb-6">
-                        For questions regarding this privacy policy or to exercise your rights, please contact us through the dedicated form on our site or by sending an email to <a href="mailto:info@lowcontent.ai" className="text-blue-500 underline"> info@lowcontent.ai</a>.
+                        For questions regarding this privacy policy or to exercise your rights, please contact us through the dedicated form on our site or by sending an email to <a href="mailto:support@lowcontent.ai" className="text-blue-500 underline"> support@lowcontent.ai</a>.
                     </p>
 
                     <h2 className="text-2xl font-semibold mb-4">9. Changes to the Privacy Policy</h2>
