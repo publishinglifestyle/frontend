@@ -471,7 +471,7 @@ export default function ChatPage() {
                 setConversations(all_conversations);
 
                 if (all_conversations.length > 0) {
-                    const current_conversation = all_conversations[all_conversations.length - 1];
+                    const current_conversation = all_conversations[0];
                     setCurrentConversation(current_conversation.id);
 
                     let conversation_messages = [];
