@@ -65,6 +65,10 @@ const agent_models = [
     {
         value: 'midjourney',
         label: 'Midjourney'
+    },
+    {
+        value: 'ideogram',
+        label: 'Ideogram'
     }
 ]
 

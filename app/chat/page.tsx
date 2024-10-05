@@ -15,7 +15,7 @@ import { Select, SelectItem } from '@nextui-org/select';
 import { Avatar } from "@nextui-org/avatar";
 import { getProfilePic, getUser } from '@/managers/userManager';
 import { getAgentsPerLevel, getAgent } from '@/managers/agentsManager';
-import { getConversations, createConversation, getConversation, deleteConversation, generateImage, saveMjImage, sendAction, changeName, uploadImage } from '@/managers/conversationsManager';
+import { getConversations, createConversation, getConversation, deleteConversation, generateImage, remixImage, upscaleImage, describeImage, saveMjImage, sendAction, changeName, uploadImage } from '@/managers/conversationsManager';
 import { TrashIcon, StopIcon, PencilSquareIcon, PaperClipIcon } from "@heroicons/react/24/outline";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
@@ -25,7 +25,7 @@ import SuccessModal from '../modals/successModal';
 import ErrorModal from '../modals/errorModal';
 import CommandsModal from '../modals/commandsModal';
 import PromptModal from '../modals/promptModal';
-import { button } from '@nextui-org/theme';
+import IdeogramModal from '../modals/ideogramModal';
 
 let GREETING_MESSAGE = "";
 
@@ -60,6 +60,7 @@ interface Message {
     complete: boolean;
     title: string;
     buttons: Option[];
+    ideogram_buttons: string[];
     messageId: string;
     flags: number;
     prompt: string;
@@ -101,7 +102,6 @@ export default function ChatPage() {
 
     const { isAuthenticated: isAuthenticatedClient } = useAuth();
     const chatContainerRef = useRef<HTMLDivElement>(null);
-    const isUserAtBottomRef = useRef(true); // Define isUserAtBottomRef here
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -128,11 +128,9 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState('');
     const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
-
-    const [buttonMidjourneyMessageId, setButtonMidjourneyMessageId] = useState('');
-    const [buttonCustomId, setButtonCustomId] = useState('');
-    const [buttonText, setButtonText] = useState('');
-    const [buttonFlags, setButtonFlags] = useState(0);
+    const [isIdeogramModalOpen, setIsIdeogramModalOpen] = useState(false);
+    const [ideogramInitialPrompt, setIdeogramInitialPrompt] = useState('');
+    const [ideogramImageUrl, setIdeogramImageUrl] = useState('');
 
     const handleIconClick = () => {
         fileInputRef.current?.click();
@@ -200,6 +198,48 @@ export default function ChatPage() {
         }
     };
 
+    function setImageResponse(image_response: any) {
+        if (image_response.error || (image_response && image_response.image_ready)) {
+            const message = {
+                id: image_response.messageId,
+                username: 'LowContent AI',
+                text: image_response.response,
+                conversation_id: currentConversation,
+                title: image_response.conversation_name,
+                complete: true,
+                buttons: [],
+                ideogram_buttons: image_response.ideogram_buttons || [],
+                messageId: "",
+                flags: 0,
+                prompt: image_response.prompt || ""
+            };
+
+            setMessages((prevMessages) => {
+                const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
+                const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
+
+                if (existingMessageIndex !== -1) {
+                    updatedMessages[existingMessageIndex] = {
+                        ...updatedMessages[existingMessageIndex],
+                        text: updatedMessages[existingMessageIndex].text + message.text,
+                        id: message.id
+                    };
+
+                    return updatedMessages;
+                } else {
+                    return [...updatedMessages, message];
+                }
+            });
+
+            setIsGeneratingResponse(false);
+        }
+
+        if (image_response.error) {
+            setErrorMessage(image_response.error);
+            setIsErrorModalOpen(true);
+        }
+    }
+
     const sendChatMessage = useCallback(async (text = messageText, isButtonPressed: boolean, midjourneyMessageId: string, save_user_prompt: boolean, commands = promptCommands, flags: number, customId: string) => {
         if (text.trim()) {
             const userMessageId = `${Date.now()}`;
@@ -223,6 +263,56 @@ export default function ChatPage() {
                 setIsReconnecting(false);
             }
 
+            setIsGeneratingResponse(true);
+
+            console.log("userId: ", userId);
+            let current_agent;
+            try {
+                current_agent = await getAgent(selectedAgentId);
+            } catch (error) {
+                console.log("Error getting agent: ", error);
+            }
+
+            if ((current_agent && current_agent.type === 'image') || isButtonPressed) {
+                setIsGeneratingResponse(true);
+                let image_response: any = "";
+
+                if (isButtonPressed) {
+                    image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
+                    console.log("Button pressed response: ", image_response);
+
+                } else {
+                    console.log("Conversation", currentConversation);
+                    setMessageText('');
+                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands, socket?.id);
+                    setPromptCommands([]);
+                }
+
+                setImageResponse(image_response);
+
+            } else {
+                console.log("Sending message to server:", {
+                    senderId: userId,
+                    message: text,
+                    agent_id: selectedAgentId,
+                    conversation_id: currentConversation
+                });
+                socket?.emit('sendMessage', {
+                    senderId: userId,
+                    message: text,
+                    agent_id: selectedAgentId,
+                    conversation_id: currentConversation
+                });
+
+                setMessageText('');
+            }
+
+        }
+    }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
+
+    useEffect(() => {
+        if (isGeneratingResponse) {
+            const userMessageId = `${Date.now()}`;
             const userMessage = {
                 id: userMessageId,
                 username: fullName,
@@ -231,6 +321,7 @@ export default function ChatPage() {
                 complete: true,
                 title: "",
                 buttons: [],
+                ideogram_buttons: [],
                 messageId: "",
                 flags: 0,
                 prompt: ""
@@ -247,116 +338,20 @@ export default function ChatPage() {
                 complete: false,
                 title: "",
                 buttons: [],
+                ideogram_buttons: [],
                 messageId: "",
                 flags: 0,
                 prompt: ""
             };
 
             setMessages(prevMessages => [...prevMessages, typingMessage]);
-            setIsGeneratingResponse(true); // Start the loading bubble
-
-            setMessageText('');
-
-            console.log("userId: ", userId);
-            let current_agent;
-            try {
-                current_agent = await getAgent(selectedAgentId);
-            } catch (error) {
-                console.log("Error getting agent: ", error);
-            }
-
-            if ((current_agent && current_agent.type === 'image') || isButtonPressed) {
-                setIsGeneratingResponse(true);
-                let image_response: any = "";
-
-                if (isButtonPressed) {
-                    /*if (customId.includes("variation") || customId.includes("pan")) {
-                        console.log(prompt)
-                        setButtonMidjourneyMessageId(midjourneyMessageId);
-                        setButtonCustomId(customId);
-                        setButtonText(text);
-                        setButtonFlags(flags);
-                        setIsPromptModalOpen(true);
-                    } else {
-                        image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
-                        console.log("Button pressed response: ", image_response);
-                    }*/
-                    image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
-                    console.log("Button pressed response: ", image_response);
-
-                } else {
-                    console.log("Conversation", currentConversation);
-                    image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands, socket?.id);
-                }
-
-                if (image_response.error || (image_response && image_response.image_ready)) {
-                    const message = {
-                        id: image_response.messageId,
-                        username: 'LowContent AI',
-                        text: image_response.response,
-                        conversation_id: currentConversation,
-                        title: image_response.conversation_name,
-                        complete: true,
-                        buttons: [],
-                        messageId: "",
-                        flags: 0,
-                        prompt: ""
-                    };
-
-                    setMessages((prevMessages) => {
-                        const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
-                        const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
-
-                        if (existingMessageIndex !== -1) {
-                            updatedMessages[existingMessageIndex] = {
-                                ...updatedMessages[existingMessageIndex],
-                                text: updatedMessages[existingMessageIndex].text + message.text,
-                                id: message.id
-                            };
-
-                            return updatedMessages;
-                        } else {
-                            return [...updatedMessages, message];
-                        }
-                    });
-
-                    setIsGeneratingResponse(false);
-                }
-
-                if (image_response.error) {
-                    setErrorMessage(image_response.error);
-                    setIsErrorModalOpen(true);
-
-                } /*else if (!image_response || !image_response.image_ready) {
-                    const waiting_time = isButtonPressed ? 5000 : 60000;
-                    setTimeout(() => {
-                        checkImageStatusPeriodically(text, image_response.response.messageId, save_user_prompt);
-                    }, waiting_time);
-                }*/
-
-            } else {
-                console.log("Sending message to server:", {
-                    senderId: userId,
-                    message: text,
-                    agent_id: selectedAgentId,
-                    conversation_id: currentConversation
-                });
-                socket?.emit('sendMessage', {
-                    senderId: userId,
-                    message: text,
-                    agent_id: selectedAgentId,
-                    conversation_id: currentConversation
-                });
-            }
-
         }
-    }, [messageText, setMessages, socket, currentConversation, selectedAgentId, userId, fullName, isSocketConnected, isReconnecting]);
+    }, [isGeneratingResponse]);
 
     useEffect(() => {
         if (isAuthenticatedClient && !socket) {
             console.log('Initializing socket connection...');
-            socket = io('https://3.79.166.136.nip.io', {
-                //socket = io('http://localhost:8090', {
+            socket = io(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8090', {
                 query: { user_id: userId },
                 reconnection: false,
             });
@@ -390,13 +385,14 @@ export default function ChatPage() {
                     conversation_id: response.conversation_id,
                     complete: true,
                     buttons: response.result.options || [],
+                    ideogram_buttons: [],
                     messageId: response.result.message_id,
                     flags: response.result.flags,
                     prompt: response.result.prompt
                 };
 
                 // Store conversation context
-                await saveMjImage(response.result.prompt, response.result.message_id, response.conversation_id, true, response.result.url, response.result.options, response.result.flags);
+                await saveMjImage(response.result.prompt, response.result.message_id, response.conversation_id, true, response.result.url, response.result.options, response.result.flags, selectedAgent?.id);
 
                 setMessages((prevMessages) => {
                     const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
@@ -413,7 +409,6 @@ export default function ChatPage() {
 
                 setIsGeneratingResponse(false); // Stop the loading bubble
             });
-
 
             return () => {
                 if (socket) {
@@ -473,6 +468,9 @@ export default function ChatPage() {
                 if (all_conversations.length > 0) {
                     const current_conversation = all_conversations[0];
                     setCurrentConversation(current_conversation.id);
+                    const current_agent = all_agents.find((agent: any) => agent.id === current_conversation.agent_id);
+                    setSelectedAgent(current_agent);
+                    setSelectedAgentId(current_conversation.agent_id);
 
                     let conversation_messages = [];
                     let messageId = 0;
@@ -488,9 +486,10 @@ export default function ChatPage() {
                                 complete: false,
                                 title: "",
                                 buttons: current_conversation.context[i].buttons,
+                                ideogram_buttons: current_conversation.context[i].ideogram_buttons,
                                 messageId: current_conversation.context[i].messageId,
                                 flags: current_conversation.context[i].flags,
-                                prompt: ""
+                                prompt: current_conversation.context[i].prompt
                             };
                             conversation_messages.push(conversation_message);
                         }
@@ -621,9 +620,10 @@ export default function ChatPage() {
                                     complete: false,
                                     title: "",
                                     buttons: conversation.context[i].buttons,
+                                    ideogram_buttons: conversation.context[i].ideogram_buttons,
                                     messageId: conversation.context[i].messageId,
                                     flags: conversation.context[i].flags,
-                                    prompt: ""
+                                    prompt: conversation.context[i].prompt
                                 };
                                 conversation_messages.push(conversation_message);
                             }
@@ -673,9 +673,10 @@ export default function ChatPage() {
                                                     complete: false,
                                                     title: "",
                                                     buttons: conversation.context[i].buttons,
+                                                    ideogram_buttons: conversation.context[i].ideogram_buttons,
                                                     messageId: conversation.context[i].messageId,
                                                     flags: conversation.context[i].flags,
-                                                    prompt: ""
+                                                    prompt: conversation.context[i].prompt
                                                 };
                                                 conversation_messages.push(conversation_message);
                                             }
@@ -734,6 +735,52 @@ export default function ChatPage() {
                                                                         }}
                                                                     >
                                                                         <span style={{ fontSize: "8px" }}>{button.label}</span>
+                                                                    </Button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {message.ideogram_buttons?.length > 0 && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
+                                                                {message.ideogram_buttons.map((button, index) => (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        key={index}
+                                                                        color="secondary"
+                                                                        className="w-full"
+                                                                        onClick={async (e) => {
+                                                                            e.preventDefault();
+
+                                                                            if (button == 'Remix') {
+                                                                                setIdeogramInitialPrompt(message.prompt);
+                                                                                setIdeogramImageUrl(message.text);
+                                                                                setIsPromptModalOpen(true);
+                                                                            } else if (button == 'Upscale') {
+                                                                                setIsGeneratingResponse(true);
+                                                                                const image_response = upscaleImage(currentConversation, message.text, message.prompt);
+                                                                                setImageResponse(image_response);
+                                                                            } else if (button == 'Describe') {
+                                                                                setIsGeneratingResponse(true);
+                                                                                const description = await describeImage(currentConversation, message.text, selectedAgent?.id);
+                                                                                const description_message = {
+                                                                                    id: uuidv4(),
+                                                                                    username: 'LowContent AI',
+                                                                                    text: description.response,
+                                                                                    conversation_id: currentConversation,
+                                                                                    complete: true,
+                                                                                    title: "",
+                                                                                    buttons: [],
+                                                                                    ideogram_buttons: [],
+                                                                                    messageId: "",
+                                                                                    flags: 0,
+                                                                                    prompt: ""
+                                                                                };
+                                                                                messageListener(description_message);
+                                                                            }
+
+                                                                        }}
+                                                                    >
+                                                                        <span style={{ fontSize: "8px" }}>{button}</span>
                                                                     </Button>
                                                                 ))}
                                                             </div>
@@ -799,6 +846,7 @@ export default function ChatPage() {
                                             size="sm"
                                             label={translations?.type}
                                             placeholder={translations?.select_agent || ""}
+                                            selectedKeys={[selectedAgentId]}
                                             onChange={(e) => {
                                                 console.log(e.target.value);
                                                 setSelectedAgentId(e.target.value);
@@ -819,6 +867,18 @@ export default function ChatPage() {
                                                 color={promptCommands.length > 0 ? 'secondary' : 'default'}
                                                 className='mt-2'
                                                 onClick={() => setIsCommandsModalOpen(true)}
+                                            >
+                                                {translations?.commands}
+                                            </Button>
+                                        }
+
+                                        {
+                                            selectedAgent?.model == 'ideogram' &&
+                                            <Button
+                                                variant={promptCommands.length > 0 ? 'ghost' : 'flat'}
+                                                color={promptCommands.length > 0 ? 'secondary' : 'default'}
+                                                className='mt-2'
+                                                onClick={() => setIsIdeogramModalOpen(true)}
                                             >
                                                 {translations?.commands}
                                             </Button>
@@ -883,6 +943,47 @@ export default function ChatPage() {
                     }}
                 />
 
+                <IdeogramModal
+                    isOpen={isIdeogramModalOpen}
+                    onClose={() => setIsIdeogramModalOpen(false)}
+                    onSuccess={async (selectedTab, styleType, aspectRatio, negativePrompt, remixPrompt, uploadedImageUrl) => {
+                        console.log(styleType, aspectRatio, negativePrompt);
+                        const selected_commands = [
+                            { command: 'styleType', value: styleType },
+                            { command: 'aspectRatio', value: aspectRatio },
+                            { command: 'negativePrompt', value: negativePrompt }
+                        ];
+                        setPromptCommands(selected_commands);
+                        setIsIdeogramModalOpen(false);
+
+                        if (selectedTab == 'remix') {
+                            setIsGeneratingResponse(true);
+                            setMessageText(remixPrompt);
+                            const image_response = await remixImage(currentConversation, remixPrompt, uploadedImageUrl, promptCommands, selectedAgent?.id);
+                            setPromptCommands([]);
+                            setImageResponse(image_response);
+
+                        } else if (selectedTab == 'describe') {
+                            setIsGeneratingResponse(true);
+                            const description = await describeImage(currentConversation, uploadedImageUrl, selectedAgent?.id);
+                            const description_message = {
+                                id: uuidv4(),
+                                username: 'LowContent AI',
+                                text: description.response,
+                                conversation_id: currentConversation,
+                                complete: true,
+                                title: "",
+                                buttons: [],
+                                ideogram_buttons: [],
+                                messageId: "",
+                                flags: 0,
+                                prompt: ""
+                            };
+                            messageListener(description_message);
+                        }
+                    }}
+                />
+
                 <ErrorModal
                     isOpen={isErrorModalOpen}
                     onClose={() => setIsErrorModalOpen(false)}
@@ -897,67 +998,24 @@ export default function ChatPage() {
 
                 <PromptModal
                     isOpen={isPromptModalOpen}
-                    onClose={() => {
-                        setIsPromptModalOpen(false)
-                    }}
-                    onSuccess={async (midjourneyMessageId, customId, text, flags) => {
-                        const image_response = await sendAction(currentConversation, midjourneyMessageId, customId, text, promptCommands, flags, socket?.id);
-                        if (image_response.error || (image_response && image_response.image_ready)) {
-                            const message = {
-                                id: image_response.messageId,
-                                username: 'LowContent AI',
-                                text: image_response.response,
-                                conversation_id: currentConversation,
-                                title: image_response.conversation_name,
-                                complete: true,
-                                buttons: [],
-                                messageId: "",
-                                flags: 0,
-                                prompt: ""
-                            };
-
-                            setMessages((prevMessages) => {
-                                const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
-                                const updatedMessages = prevMessages.filter(m => !m?.id?.startsWith('typing-'));
-
-                                if (existingMessageIndex !== -1) {
-                                    updatedMessages[existingMessageIndex] = {
-                                        ...updatedMessages[existingMessageIndex],
-                                        text: updatedMessages[existingMessageIndex].text + message.text,
-                                        id: message.id
-                                    };
-
-                                    return updatedMessages;
-                                } else {
-                                    return [...updatedMessages, message];
-                                }
-                            });
-
-                            setIsGeneratingResponse(false);
-                        }
-
-                        if (image_response.error) {
-                            setErrorMessage(image_response.error);
-                            setIsErrorModalOpen(true);
-                        }
-
-                        setButtonMidjourneyMessageId('');
-                        setButtonCustomId('');
-                        setButtonText('');
-                        setButtonFlags(0);
+                    initialPrompt={ideogramInitialPrompt}
+                    onClose={() => setIsPromptModalOpen(false)}
+                    onSuccess={async (prompt) => {
                         setIsPromptModalOpen(false);
+                        setIsGeneratingResponse(true);
+
+                        setMessageText(prompt);
+                        const image_response = await remixImage(currentConversation, prompt, ideogramImageUrl, promptCommands, selectedAgent?.id);
+                        setPromptCommands([]);
+                        setImageResponse(image_response);
                     }}
-                    midjourneyMessageId={buttonMidjourneyMessageId}
-                    customId={buttonCustomId}
-                    text={buttonText}
-                    flags={buttonFlags}
                 />
 
                 <ConversationNameModal isOpen={isConversationNameModalOpen} onClose={async (new_name) => {
                     if (new_name) { // Ensure new_name is not undefined
                         setIsConversationNameModalOpen(false);
                         setIsLoading(true);
-                        await changeName(currentConversation, new_name);
+                        await changeName(currentConversation, new_name, selectedAgent?.id);
                         setIsLoading(false);
                         setConversations(conversations.map((conversation) => {
                             if (conversation.id === currentConversation) {

@@ -8,19 +8,19 @@ import { Translations } from '../../translations.d';
 
 interface PromptModalProps {
     isOpen: boolean;
+    initialPrompt: string;
     onClose: () => void;
-    onSuccess: (modifiedPrompt: string, midjourneyMessageId: string, customId: string, text: string, flags: number) => void;
-    midjourneyMessageId: string,
-    customId: string,
-    text: string,
-    flags: number
+    onSuccess: (modifiedPrompt: string) => void;
 }
 
-const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, midjourneyMessageId, customId, text, flags, onSuccess }) => {
+const PromptModal: React.FC<PromptModalProps> = ({ isOpen, initialPrompt, onClose, onSuccess }) => {
     const [language, setLanguage] = useState('');
     const [translations, setTranslations] = useState<Translations | null>(null);
-    const [prompt, setPrompt] = useState('');
+    const [prompt, setPrompt] = useState(initialPrompt);
 
+    useEffect(() => {
+        setPrompt(initialPrompt);
+    }, [initialPrompt]);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -44,7 +44,7 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, midjourneyMe
         <Modal isOpen={isOpen} onClose={onClose} size="sm" isDismissable={false} isKeyboardDismissDisabled={true}>
             <ModalContent>
                 <ModalHeader className="modal-header justify-center">
-                    <h1 style={{ fontSize: "26px" }}>{translations?.edit_image}</h1>
+                    <h1 style={{ fontSize: "26px" }}>{translations?.edit_prompt}</h1>
                 </ModalHeader>
                 <ModalBody style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: "center" }}>
                     <Input
@@ -71,7 +71,7 @@ const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose, midjourneyMe
                         color="secondary"
                         radius="lg"
                         size="md"
-                        onPress={() => onSuccess(prompt, midjourneyMessageId, customId, text, flags)}>
+                        onPress={() => onSuccess(prompt)}>
                         {translations?.confirm}
                     </Button>
                 </ModalFooter>

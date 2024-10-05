@@ -1,7 +1,7 @@
 import Cookie from 'js-cookie';
 import axios from 'axios'
 
-const endpoint = process.env.NEXT_PUBLIC_BASE_URL
+const endpoint = process.env.NEXT_PUBLIC_BASE_URL + "/"
 
 const headers = {
     'Content-Type': 'application/json',

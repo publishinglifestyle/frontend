@@ -71,5 +71,6 @@
     "select_package": "Select Package",
     "credits_purchased": "Credits purchased successfully",
     "edit_image": "Edit Image",
-    "enter_your_prompt_here": "Enter your prompt here"
+    "enter_your_prompt_here": "Enter your prompt here",
+    "edit_prompt": "Edit Prompt"
 }

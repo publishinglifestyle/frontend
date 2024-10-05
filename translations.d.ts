@@ -71,4 +71,5 @@ export interface Translations {
     credits_purchased: string;
     edit_image: string;
     enter_your_prompt_here: string;
+    edit_prompt: string;
 }
