@@ -428,8 +428,10 @@ export default function ChatPage() {
 
 
     useEffect(() => {
+        let user_id;
+        let browserLanguage = '';
         const detectLanguage = async () => {
-            const browserLanguage = navigator.language;
+            browserLanguage = navigator.language;
             setLanguage(browserLanguage);
 
             const translations = await getTranslations(browserLanguage);
@@ -443,10 +445,6 @@ export default function ChatPage() {
         };
 
         detectLanguage();
-    }, []);
-
-    useEffect(() => {
-        let user_id;
 
         async function fetchData() {
             const current_user = await getUser();
@@ -457,7 +455,7 @@ export default function ChatPage() {
             const last_name = current_user.last_name;
             setFullName(`${first_name} ${last_name}`);
 
-            const all_agents = await getAgentsPerLevel();
+            const all_agents = await getAgentsPerLevel(browserLanguage);
             if (all_agents) {
                 setAgents(all_agents);
 
@@ -528,7 +526,7 @@ export default function ChatPage() {
                 setIsSuccessModalOpen(true);
             }
         }
-    }, [isAuthenticatedClient]);
+    }, [isAuthenticatedClient, language]);
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {

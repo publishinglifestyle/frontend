@@ -46,6 +46,21 @@ let columns: Column[] = [
 
 const n_buttons = [0, 1, 2, 3, 4]
 
+const agent_languages = [
+    {
+        value: "both",
+        label: "Both"
+    },
+    {
+        value: "en",
+        label: "English"
+    },
+    {
+        value: "it",
+        label: "Italian"
+    }
+]
+
 const agent_types = [
     {
         value: 'text',
@@ -107,6 +122,7 @@ export default function AgentsPage() {
     const [agentLevel, setAgentLevel] = useState(1);
     const [agentNButtons, setAgentNButtons] = useState(0);
     const [agentButtons, setAgentButtons] = useState<Button[]>([]);
+    const [agentLanguage, setAgentLanguage] = useState("");
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -187,6 +203,7 @@ export default function AgentsPage() {
             setAgentType(current_agent.type);
             setAgentNButtons(current_agent.n_buttons);
             setAgentButtons(current_agent.buttons || []);
+            setAgentLanguage(current_agent.language)
         } catch (error) {
             console.error("Failed to load agent:", error);
         } finally {
@@ -223,6 +240,25 @@ export default function AgentsPage() {
                     <Card>
                         <Spacer y={4} />
                         <CardBody>
+                            <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-4 gap-4">
+                                <Select
+                                    isRequired
+                                    size="sm"
+                                    label="Language"
+                                    placeholder="Select a language"
+                                    defaultSelectedKeys={[agentLanguage]}
+                                    onChange={(e) => {
+                                        console.log(e.target.value)
+                                        setAgentLanguage(e.target.value)
+                                    }}
+                                >
+                                    {agent_languages.map((agent_type) => (
+                                        <SelectItem key={agent_type.value} value={agent_type.value}>
+                                            {agent_type.label}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                            </div>
                             <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-4">
                                 <Select
                                     isRequired
@@ -420,10 +456,10 @@ export default function AgentsPage() {
                                         }
 
                                         if (selectedAgentId == "new") {
-                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel, agentNButtons, agentButtons)
+                                            await createAgent(agentName, agentType, agentPrompt, agentTemperature, agentLevel, agentModel, agentNButtons, agentButtons, agentLanguage)
                                         } else {
                                             console.log("update")
-                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel, agentNButtons, agentButtons)
+                                            await updateAgent(selectedAgentId, agentName, agentTemperature, agentType, agentLevel, agentPrompt, agentModel, agentNButtons, agentButtons, agentLanguage)
                                         }
                                         const all_agents = await getAllAgents()
                                         setAgents(all_agents)

@@ -8,9 +8,9 @@ const headers = {
     'Authorization': Cookie.get('authToken')
 }
 
-export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons) {
+export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons, language) {
     let response = await axios.post(endpoint + "create_agent",
-        { name, temperature, type, level, prompt, model, n_buttons, buttons }, {
+        { name, temperature, type, level, prompt, model, n_buttons, buttons, language }, {
         headers: headers
     });
 
@@ -19,10 +19,10 @@ export async function createAgent(name, type, prompt, temperature, level, model,
     }
 }
 
-export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons) {
-    console.log(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons)
+export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language) {
+    console.log(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language)
     let response = await axios.post(endpoint + "update_agent",
-        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons }, {
+        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language }, {
         headers: headers
     });
 
@@ -41,8 +41,8 @@ export async function getAllAgents() {
     }
 }
 
-export async function getAgentsPerLevel() {
-    let response = await axios.get(endpoint + "get_agents_per_level",
+export async function getAgentsPerLevel(language) {
+    let response = await axios.get(endpoint + "get_agents_per_level?language=" + language,
         { headers: headers });
 
     if (response) {
