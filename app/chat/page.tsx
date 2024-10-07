@@ -432,6 +432,7 @@ export default function ChatPage() {
         let browserLanguage = '';
         const detectLanguage = async () => {
             browserLanguage = navigator.language;
+            browserLanguage = browserLanguage.slice(0, 2);
             setLanguage(browserLanguage);
 
             const translations = await getTranslations(browserLanguage);
@@ -455,6 +456,7 @@ export default function ChatPage() {
             const last_name = current_user.last_name;
             setFullName(`${first_name} ${last_name}`);
 
+            console.log("browserLanguage: ", browserLanguage);
             const all_agents = await getAgentsPerLevel(browserLanguage);
             if (all_agents) {
                 setAgents(all_agents);
@@ -526,7 +528,7 @@ export default function ChatPage() {
                 setIsSuccessModalOpen(true);
             }
         }
-    }, [isAuthenticatedClient, language]);
+    }, []);
 
     const renderCell = (item: Conversation, columnKey: keyof Conversation) => {
         if (columnKey === "id") {
