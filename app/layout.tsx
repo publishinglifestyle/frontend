@@ -99,7 +99,7 @@ export default function RootLayout({
                 title="Terms of Service"
               >
                 <span className="text-default-600">Copyright @</span>
-                <p><span className="text-secondary">Magnet Success LTD</span>, 41 Devonshire Street, Ground Floor, London, United Kingdom, W1G 7AJ</p>
+                <p><span className="text-secondary">Wealthy Magnet LTD</span>, 27 Old Gloucester Street, London, United Kingdom, WC1N 3AX</p>
               </Link>
             </footer>
           </div>
