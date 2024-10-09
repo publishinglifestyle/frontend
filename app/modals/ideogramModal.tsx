@@ -136,8 +136,8 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({ isOpen, onClose, onSucces
     const handleConfirm = () => {
         onSuccess(selectedTab, styleType, aspectRatio, negativePrompt, remixPrompt, uploadedImageUrl);
         setActiveTab('configuration');
-        setStyleType('GENERAL');
-        setAspectRatio('ASPECT_10_16');
+        /*setStyleType('GENERAL');
+        setAspectRatio('ASPECT_10_16');*/
         setNegativePrompt('');
         setRemixPrompt('');
         setSelectedImage(null);
@@ -175,6 +175,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({ isOpen, onClose, onSucces
                                             size="sm"
                                             value={styleType}
                                             onChange={handleStyleTypeChange}
+                                            defaultSelectedKeys={[styleType]}
                                         >
                                             {styleTypes.map((style) => (
                                                 <SelectItem key={style.key} value={style.key}>
@@ -190,6 +191,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({ isOpen, onClose, onSucces
                                             size="sm"
                                             value={aspectRatio}
                                             onChange={handleAspectRatioChange}
+                                            defaultSelectedKeys={[aspectRatio]}
                                         >
                                             {aspectRatios.map((ratio) => (
                                                 <SelectItem key={ratio.key} value={ratio.key}>

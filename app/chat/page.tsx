@@ -285,7 +285,7 @@ export default function ChatPage() {
                     console.log("Conversation", currentConversation);
                     setMessageText('');
                     image_response = await generateImage(text, selectedAgentId, currentConversation, save_user_prompt, commands, socket?.id);
-                    setPromptCommands([]);
+                    //setPromptCommands([]);
                 }
 
                 setImageResponse(image_response);
@@ -960,7 +960,7 @@ export default function ChatPage() {
                             setIsGeneratingResponse(true);
                             setMessageText(remixPrompt);
                             const image_response = await remixImage(currentConversation, remixPrompt, uploadedImageUrl, promptCommands, selectedAgent?.id);
-                            setPromptCommands([]);
+                            //setPromptCommands([]);
                             setImageResponse(image_response);
 
                         } else if (selectedTab == 'describe') {
@@ -1006,7 +1006,7 @@ export default function ChatPage() {
 
                         setMessageText(prompt);
                         const image_response = await remixImage(currentConversation, prompt, ideogramImageUrl, promptCommands, selectedAgent?.id);
-                        setPromptCommands([]);
+                        //setPromptCommands([]);
                         setImageResponse(image_response);
                     }}
                 />
