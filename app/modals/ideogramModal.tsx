@@ -17,6 +17,7 @@ interface IdeogramModalProps {
 }
 
 const styleTypes = [
+    { key: 'AUTO', label: 'Automatic' },
     { key: 'GENERAL', label: 'General' },
     { key: 'REALISTIC', label: 'Realistic' },
     { key: 'DESIGN', label: 'Design' },
@@ -43,7 +44,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({ isOpen, onClose, onSucces
     const [translations, setTranslations] = useState<Translations | null>(null);
 
     // States for form data
-    const [styleType, setStyleType] = useState<string>('GENERAL');
+    const [styleType, setStyleType] = useState<string>('AUTO');
     const [aspectRatio, setAspectRatio] = useState<string>('ASPECT_10_16');
     const [negativePrompt, setNegativePrompt] = useState<string>('');
     const [remixPrompt, setRemixPrompt] = useState<string>('');

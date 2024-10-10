@@ -589,7 +589,6 @@ export default function ChatPage() {
                 Start a Conversation and Create Low-Content Books with AI
             </h2>
 
-
             <div className='flex flex-col md:flex-row justify-between gap-2'>
                 <div className='flex flex-col md:w-1/4' style={{ height: '750px' }}>
                     <Button
