@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 
 export default function ChatLayout({
   children,
@@ -14,7 +14,7 @@ export default function ChatLayout({
   }, []);
 
   return (
-    <>
+    <Suspense>
       {/* Conditionally render SEO meta tags only on the client side */}
       {isClient && (
         <head>
@@ -80,6 +80,6 @@ export default function ChatLayout({
       <section className="gap-4">
         <div>{children}</div>
       </section>
-    </>
+    </Suspense>
   );
 }

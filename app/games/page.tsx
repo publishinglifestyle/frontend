@@ -1,35 +1,36 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Card, CardBody, CardFooter, CardHeader } from "@nextui-org/card";
 import { Input } from "@nextui-org/input";
-import dynamic from "next/dynamic";
+import { Select, SelectItem } from "@nextui-org/select";
 import jsPDF from "jspdf";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
-import { generateMaze } from "@/managers/gamesManager";
 import ErrorModal from "@/app/modals/errorModal";
+import { generateMaze } from "@/managers/gamesManager";
 
 // Dynamically import the game components
-const Sudoku = dynamic(() => import("./sudoku"));
-const Crossword = dynamic(() => import("./crossword"));
-const WordSearch = dynamic(() => import("./wordsearch"));
-const Hangman = dynamic(() => import("./hangman"));
-const ScrambleWords = dynamic(() => import("./wordscrumble"));
-const Cryptogram = dynamic(() => import("./cryptogram"));
-const MineFinder = dynamic(() => import("./mineFinder"));
-const DotsToDots = dynamic(() => import("./dots"));
+const Sudoku = dynamic(() => import("./sudoku"), {
+  ssr: false,
+}) as React.FC<any>;
+const Crossword = dynamic(() => import("./crossword"), { ssr: false });
+const WordSearch = dynamic(() => import("./wordsearch"), { ssr: false });
+const Hangman = dynamic(() => import("./hangman"), { ssr: false });
+const ScrambleWords = dynamic(() => import("./wordscrumble"), { ssr: false });
+const Cryptogram = dynamic(() => import("./cryptogram"), { ssr: false });
+const MineFinder = dynamic(() => import("./mineFinder"), { ssr: false });
+const DotsToDots = dynamic(() => import("./dots"), { ssr: false });
 
 // Custom Fonts
-import { dancingScriptFont } from "./fonts/dancing_script";
-import { caveatVariableFont } from "./fonts/caveat_variable";
-import { abrilFatfaceFont } from "./fonts/abril_fatface";
-import { shadowsIntoLightFont } from "./fonts/shadows_into_light";
 import { getSubscription } from "@/managers/subscriptionManager";
-import { IUser } from "@/types/user.types";
 import { getUser } from "@/managers/userManager";
-import SubscriptionModal from "../modals/subscriptionModal";
 import { useAuth } from "../auth-context";
+import SubscriptionModal from "../modals/subscriptionModal";
+import { abrilFatfaceFont } from "./fonts/abril_fatface";
+import { caveatVariableFont } from "./fonts/caveat_variable";
+import { dancingScriptFont } from "./fonts/dancing_script";
+import { shadowsIntoLightFont } from "./fonts/shadows_into_light";
 
 const games = [
   { id: "1", name: "Sudoku", component: Sudoku },

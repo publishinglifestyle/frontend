@@ -142,7 +142,8 @@ export async function logInGoogle(access_token, req_type) {
             access_token, req_type
         });
 
-    if (response) {
-        return response.data;
-    }
+    return {
+        token: response.data.token,
+        userExists: response.data.userExists ?? false
+    };
 }

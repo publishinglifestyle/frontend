@@ -27,7 +27,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const [language, setLanguage] = useState("");
   const [translations, setTranslations] = useState<Translations | null>(null);
 
-  const { isAuthenticated: isAuthenticatedClient, login } = useAuth();
+  const { isAuthenticated: isAuthenticatedClient } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,6 +42,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   //   const [isAnnual, setIsAnnual] = useState(true);
   const [step, setStep] = useState(1);
   const [googleAuthToken, setGoogleAuthToken] = useState("");
+  const { login } = useAuth();
 
   const validateEmail = (email: string): boolean =>
     /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(email);
@@ -117,17 +118,17 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const signInWithGoogle = async (access_token: string) => {
     try {
       setIsLoading(true);
-      const googleResult = await logInGoogle(access_token, "sign_up");
-      setGoogleAuthToken(googleResult.token);
-      login(googleResult.token);
+      const { token, userExists } = await logInGoogle(access_token, "sign_up");
 
-      if (googleResult.userExists) {
+      if (userExists) {
+        login(token);
         router.push("/chat");
-      } else {
-        setStep(2);
-        setIsLoading(false);
-      }
 
+        return;
+      }
+      setGoogleAuthToken(token);
+      setStep(2);
+      setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
       const error = e as any;

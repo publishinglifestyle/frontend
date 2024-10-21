@@ -73,11 +73,8 @@ const Login: React.FC<LoginProps> = ({
   const signInWithGoogle = async (access_token: string) => {
     try {
       setIsLoading(true);
-
-      const googleResult = await logInGoogle(access_token, "login");
-
-      login(googleResult.token);
-
+      const { token } = await logInGoogle(access_token, "login");
+      login(token);
       router.push("/chat");
     } catch (e) {
       setIsLoading(false);
