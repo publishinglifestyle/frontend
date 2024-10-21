@@ -1,16 +1,8 @@
-import Cookie from 'js-cookie';
-import axios from 'axios'
-
-const endpoint = process.env.NEXT_PUBLIC_BASE_URL + "/"
-
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': Cookie.get('authToken')
-}
+import { BACKEND_URLS } from "@/constant/urls";
+import { axiosInstance } from "@/utils/axios";
 
 export async function startSubscription(token, price_id) {
-    let response = await axios.post(endpoint + "start_subscription",
+    const response = await axiosInstance.post(BACKEND_URLS.stripe.startSubscription,
         { price_id }, {
         headers: {
             'Content-Type': 'application/json',
@@ -24,9 +16,7 @@ export async function startSubscription(token, price_id) {
 }
 
 export async function getSubscriptions() {
-    let response = await axios.get(endpoint + "get_subscriptions", {
-        headers: headers
-    });
+    const response = await axiosInstance.get(BACKEND_URLS.subscription.getSubscriptions)
 
     if (response) {
         return response.data.response;
@@ -34,8 +24,7 @@ export async function getSubscriptions() {
 }
 
 export async function getSubscription() {
-    let response = await axios.get(endpoint + "get_subscription",
-        { headers: headers });
+    const response = await axiosInstance.get(BACKEND_URLS.subscription.getSubscription)
 
     if (response) {
         return response.data.response;
@@ -43,8 +32,7 @@ export async function getSubscription() {
 }
 
 export async function getPortal() {
-    let response = await axios.get(endpoint + "get_stripe_portal",
-        { headers: headers });
+    const response = await axiosInstance.get(BACKEND_URLS.stripe.getStripePortal);
 
     if (response) {
         return response.data.response;

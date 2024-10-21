@@ -1,17 +1,9 @@
-import Cookie from 'js-cookie';
-import axios from 'axios'
-
-const endpoint = process.env.NEXT_PUBLIC_BASE_URL + "/"
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': Cookie.get('authToken')
-}
+import { BACKEND_URLS } from "@/constant/urls";
+import { axiosInstance } from "@/utils/axios";
 
 export async function buyCredits(package_number) {
-    let response = await axios.post(endpoint + "purchase_credits",
-        { package_number },
-        { headers: headers });
+    const response = await axiosInstance.post(BACKEND_URLS.stripe.purchaseCredits,
+        { package_number })
 
     if (response) {
         return response.data.response;

@@ -1,18 +1,10 @@
-import Cookie from 'js-cookie';
-import axios from 'axios'
+import { axiosInstance } from '@/utils/axios';
+import { BACKEND_URLS } from '@/constant/urls';
 
-const endpoint = process.env.NEXT_PUBLIC_BASE_URL + "/"
-
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': Cookie.get('authToken')
-}
 
 export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons, language) {
-    let response = await axios.post(endpoint + "create_agent",
-        { name, temperature, type, level, prompt, model, n_buttons, buttons, language }, {
-        headers: headers
-    });
+    const response = await axiosInstance.post(BACKEND_URLS.agent.createAgent,
+        { name, temperature, type, level, prompt, model, n_buttons, buttons, language });
 
     if (response) {
         return response.data.response;
@@ -20,11 +12,8 @@ export async function createAgent(name, type, prompt, temperature, level, model,
 }
 
 export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language) {
-    console.log(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language)
-    let response = await axios.post(endpoint + "update_agent",
-        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language }, {
-        headers: headers
-    });
+    const response = await axiosInstance.post(BACKEND_URLS.agent.updateAgent,
+        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language });
 
     if (response) {
         return response.data.response;
@@ -32,9 +21,7 @@ export async function updateAgent(agent_id, name, temperature, type, level, prom
 }
 
 export async function getAllAgents() {
-    let response = await axios.get(endpoint + "get_all_agents", {
-        headers: headers
-    });
+    const response = await axiosInstance.get(BACKEND_URLS.agent.getAllAgents)
 
     if (response) {
         return response.data.response;
@@ -42,8 +29,7 @@ export async function getAllAgents() {
 }
 
 export async function getAgentsPerLevel(language) {
-    let response = await axios.get(endpoint + "get_agents_per_level?language=" + language,
-        { headers: headers });
+    const response = await axiosInstance.get(BACKEND_URLS.agent.getAgentsPerLevel + "?language=" + language)
 
     if (response) {
         return response.data.response;
@@ -51,9 +37,9 @@ export async function getAgentsPerLevel(language) {
 }
 
 export async function deleteAgent(agent_id) {
-    let response = await axios.post(endpoint + "delete_agent",
+    const response = await axiosInstance.post(BACKEND_URLS.agent.deleteAgent,
         { agent_id },
-        { headers: headers });
+        );
 
     if (response) {
         return response.data.response;
@@ -61,9 +47,8 @@ export async function deleteAgent(agent_id) {
 }
 
 export async function getAgent(agent_id) {
-    let response = await axios.post(endpoint + "get_agent",
-        { agent_id },
-        { headers: headers });
+    const response = await axiosInstance.post(BACKEND_URLS.agent.getAgent,
+        { agent_id });
 
     if (response) {
         return response.data.response;

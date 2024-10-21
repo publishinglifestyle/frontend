@@ -12,14 +12,15 @@ import { Navbar } from "@/components/navbar";
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "Low Content AI",
-  "url": "https://www.lowcontent.ai",
-  "description": "AI-driven platform to create low-content books such as journals, planners, and activity books.",
-  "potentialAction": {
+  name: "Low Content AI",
+  url: "https://www.lowcontent.ai",
+  description:
+    "AI-driven platform to create low-content books such as journals, planners, and activity books.",
+  potentialAction: {
     "@type": "SearchAction",
-    "target": "https://www.lowcontent.ai/search?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+    target: "https://www.lowcontent.ai/search?q={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
 };
 
 export const metadata: Metadata = {
@@ -31,12 +32,26 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
-  keywords: ["Low Content AI", "Low Content Books", "AI Book Creator", "KDP Tools", "Journal Design", "Activity Books"],
+  keywords: [
+    "Low Content AI",
+    "Low Content Books",
+    "AI Book Creator",
+    "KDP Tools",
+    "Journal Design",
+    "Activity Books",
+  ],
   openGraph: {
     title: "Low Content AI - AI-Powered Low-Content Book Creator",
     description: siteConfig.description,
     url: "https://www.lowcontent.ai",
-    images: [{ url: "/og-image.jpg", width: 800, height: 600, alt: "Low Content AI Platform" }],
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 800,
+        height: 600,
+        alt: "Low Content AI Platform",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -99,7 +114,10 @@ export default function RootLayout({
                 title="Terms of Service"
               >
                 <span className="text-default-600">Copyright @</span>
-                <p><span className="text-secondary">Wealthy Magnet LTD</span>, 27 Old Gloucester Street, London, United Kingdom, WC1N 3AX</p>
+                <p>
+                  <span className="text-secondary">Wealthy Magnet LTD</span>, 27
+                  Old Gloucester Street, London, United Kingdom, WC1N 3AX
+                </p>
               </Link>
             </footer>
           </div>

@@ -1,97 +1,109 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import {
-  Navbar as NextUINavbar,
-  NavbarContent,
-  NavbarMenu,
-  NavbarMenuToggle,
-  NavbarBrand,
-  NavbarItem,
-  NavbarMenuItem,
-} from "@nextui-org/navbar";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/dropdown";
-import { User } from "@nextui-org/user";
-import { Spacer } from "@nextui-org/spacer";
-import { Divider } from "@nextui-org/divider";
-import { Link } from "@nextui-org/link";
-import NextLink from "next/link";
+import { useAuth } from "@/app/auth-context";
 import { siteConfig } from "@/config/site";
-import { Logo } from "@/components/icons";
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/app/auth-context';
-import { getUser, getProfilePic } from '@/managers/userManager';
-import { getTranslations } from '../managers/languageManager';
-import { Translations } from '../translations.d';
+import { Divider } from "@nextui-org/divider";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@nextui-org/dropdown";
+import { Link } from "@nextui-org/link";
+import {
+  NavbarBrand,
+  NavbarContent,
+  NavbarItem,
+  NavbarMenu,
+  NavbarMenuItem,
+  NavbarMenuToggle,
+  Navbar as NextUINavbar,
+} from "@nextui-org/navbar";
+import { Spacer } from "@nextui-org/spacer";
+import { User } from "@nextui-org/user";
+import NextLink from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { getTranslations } from "../managers/languageManager";
+import { Translations } from "../translations.d";
 
-const defaultPic = "./profile.png";
 const logo = "./logo.jpg";
 
 export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated: isAuthenticatedClient, logout } = useAuth();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [currentPage, setCurrentPage] = useState('');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [profileImage, setProfileImage] = useState(defaultPic);
-  const [language, setLanguage] = useState('');
+  const [currentPage, setCurrentPage] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [language, setLanguage] = useState("");
   const [translations, setTranslations] = useState<Translations | null>(null);
+  const pageLoadedRef = useRef(false);
+  const { user, profilePic } = useAuth();
 
   useEffect(() => {
     const detectLanguage = async () => {
-      let browserLanguage = navigator.language;
-      browserLanguage = browserLanguage.slice(0, 2);
+      const browserLanguage = navigator.language.slice(0, 2);
+
       setLanguage(browserLanguage);
       const all_translations = await getTranslations(browserLanguage);
+
       setTranslations(all_translations);
     };
 
     detectLanguage();
+    pageLoadedRef.current = true;
   }, []);
 
   useEffect(() => {
-    console.log("isAuthenticatedClient:", isAuthenticatedClient);
-    console.log("pathname:", pathname);
+    if (!user) {
+      setName("");
+      setEmail("");
+      setUserRole("");
+      return;
+    }
+    setEmail(user.email);
+    setUserRole(user.role);
+    setName(`${user.first_name || ""} ${user.last_name || ""}`.trim());
+  }, [user]);
 
+  useEffect(() => {
     switch (pathname) {
-      case '/': setShowMenu(false); break;
-      case '/chat': setCurrentPage('chat'); setShowMenu(true); break;
-      case '/games': setCurrentPage('games'); setShowMenu(true); break;
-      case '/agents': setCurrentPage('agents'); setShowMenu(true); break;
-      case '/profile': setCurrentPage('profile'); setShowMenu(true); break;
-      default: setShowMenu(false); break;
+      case "/":
+        setShowMenu(false);
+        break;
+      case "/chat":
+        setCurrentPage("chat");
+        setShowMenu(true);
+        break;
+      case "/games":
+        setCurrentPage("games");
+        setShowMenu(true);
+        break;
+      case "/agents":
+        setCurrentPage("agents");
+        setShowMenu(true);
+        break;
+      case "/profile":
+        setCurrentPage("profile");
+        setShowMenu(true);
+        break;
+      default:
+        setShowMenu(false);
+        break;
     }
 
-    const fetchData = async () => {
-      const result = await getUser();
-      setName(`${result.first_name || ''} ${result.last_name || ''}`.trim());
-      setEmail(result.email);
-      setUserRole(result.role);
-      try {
-        const logo_img = await getProfilePic();
-        setProfileImage(logo_img || defaultPic);
-      } catch {
-        setProfileImage(defaultPic);
-      }
-    };
-
-    if (isAuthenticatedClient) {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      setShowMenu(false)
+    if (!isAuthenticatedClient) {
+      setShowMenu(false);
     }
   }, [isAuthenticatedClient, pathname]);
 
-  const logOut = async () => {
+  const signoutUser = () => {
     logout();
-    // window.location.href = '/';
-  }
+    router.push("/");
+  };
 
   return (
     <NextUINavbar maxWidth="2xl" position="sticky">
@@ -100,35 +112,47 @@ export const Navbar = () => {
           <NextLink className="flex justify-start items-center gap-1" href="/">
             {/*<Logo />*/}
             <img src={logo} alt="logo" width="50" height="50" />
-            <p className="font-bold text-inherit" style={{ fontSize: "25px" }}>Low Content AI</p>
+            <p className="font-bold text-inherit" style={{ fontSize: "25px" }}>
+              Low Content AI
+            </p>
           </NextLink>
         </NavbarBrand>
         <ul className="hidden lg:flex gap-4 justify-start ml-2">
           {siteConfig.navItems.map((item) => {
-            console.log("item.language:", item.language);
-            console.log("language:", language);
-            return isAuthenticated && (
-              (userRole == 'user' && item.allow_user) || userRole != 'user' ? (
-                (!item.language || item.language == language) &&
-                <NavbarItem key={item.href}>
-                  <NextLink
-                    style={{
-                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
-                    }}
-                    href={item.href}
-                    // Correct condition for internal and external links
-                    target={item.value === 'feedback' || item.value === 'help' ? '_blank' : undefined}
-                  >
-                    {item.label}
-                  </NextLink>
-                </NavbarItem>
-              ) : null
-            )
+            return (
+              isAuthenticatedClient &&
+              ((userRole == "user" && item.allow_user) || userRole != "user"
+                ? (!item.language || item.language == language) && (
+                    <NavbarItem key={item.href}>
+                      <NextLink
+                        style={{
+                          color:
+                            currentPage === item.value.toLowerCase()
+                              ? "#9353D3"
+                              : "white",
+                        }}
+                        href={item.href}
+                        // Correct condition for internal and external links
+                        target={
+                          item.value === "feedback" || item.value === "help"
+                            ? "_blank"
+                            : undefined
+                        }
+                      >
+                        {item.label}
+                      </NextLink>
+                    </NavbarItem>
+                  )
+                : null)
+            );
           })}
         </ul>
       </NavbarContent>
 
-      <NavbarContent className="hidden sm:flex basis-1/5 sm:basis-full" justify="end">
+      <NavbarContent
+        className="hidden sm:flex basis-1/5 sm:basis-full"
+        justify="end"
+      >
         <NavbarItem className="hidden md:flex">
           {name && (
             <Dropdown placement="bottom-start">
@@ -137,18 +161,23 @@ export const Navbar = () => {
                   as="button"
                   avatarProps={{
                     isBordered: true,
-                    src: profileImage,
+                    src: profilePic ?? "",
                   }}
                   className="transition-transform"
-                  description={<span style={{ color: "#9353D3" }}>{email}</span>}
+                  description={
+                    <span style={{ color: "#9353D3" }}>{email}</span>
+                  }
                   name={name}
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="User Actions" variant="flat">
-                <DropdownItem key="profile" onClick={() => router.push('/profile')}>
+                <DropdownItem
+                  key="profile"
+                  onClick={() => router.push("/profile")}
+                >
                   {translations?.my_profile}
                 </DropdownItem>
-                <DropdownItem key="logout" color="danger" onClick={logOut}>
+                <DropdownItem key="logout" color="danger" onClick={signoutUser}>
                   Log Out
                 </DropdownItem>
               </DropdownMenu>
@@ -158,52 +187,51 @@ export const Navbar = () => {
       </NavbarContent>
 
       <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        {
-          showMenu && <NavbarMenuToggle />
-        }
+        {showMenu && <NavbarMenuToggle />}
       </NavbarContent>
 
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {showMenu && siteConfig.navMenuItems
-            .filter(item => (userRole === 'user' && item.allow_user) || userRole !== 'user')
-            .filter(item => !item.language || item.language === language)
-            .map((item, index) => (
-              name && (
-                <NavbarMenuItem key={`${item}-${index}`}>
-                  <NextLink
-                    style={{
-                      color: currentPage === item.value.toLowerCase() ? '#9353D3' : 'white'
-                    }}
-                    href={item.href}
-                    target={item.value === 'feedback' || item.value === 'help' ? '_blank' : undefined}
-                  >
-                    {item.label}
-                  </NextLink>
-                </NavbarMenuItem>
+          {showMenu &&
+            siteConfig.navMenuItems
+              .filter(
+                (item) =>
+                  (userRole === "user" && item.allow_user) ||
+                  userRole !== "user"
               )
-            ))}
+              .filter((item) => !item.language || item.language === language)
+              .map(
+                (item, index) =>
+                  name && (
+                    <NavbarMenuItem key={`${item}-${index}`}>
+                      <NextLink
+                        style={{
+                          color:
+                            currentPage === item.value.toLowerCase()
+                              ? "#9353D3"
+                              : "white",
+                        }}
+                        href={item.href}
+                        target={
+                          item.value === "feedback" || item.value === "help"
+                            ? "_blank"
+                            : undefined
+                        }
+                      >
+                        {item.label}
+                      </NextLink>
+                    </NavbarMenuItem>
+                  )
+              )}
           <Spacer y={4} />
           <Divider />
           <NavbarMenuItem key="profile">
-            <NextLink
-              href="/profile"
-              color='foreground'
-              onClick={() => setIsMenuOpen(false)}
-            >
+            <NextLink href="/profile" color="foreground">
               {translations?.my_profile}
             </NextLink>
           </NavbarMenuItem>
           <NavbarMenuItem key="logout">
-            <Link
-              href="#"
-              size="lg"
-              color="danger"
-              onClick={() => {
-                logOut();
-                setIsMenuOpen(false);
-              }}
-            >
+            <Link href="#" size="lg" color="danger" onClick={logout}>
               Logout
             </Link>
           </NavbarMenuItem>

@@ -1,62 +1,110 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
-import Cookies from 'js-cookie';
+import { getProfilePic, getUser } from "@/managers/userManager";
+import { IUser } from "@/types/user.types";
+import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
+import React, {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface AuthContextType {
-    isAuthenticated: boolean;
-    login: (token: string, expirationTime: number) => void;
-    logout: () => void;
+  isAuthenticated: boolean;
+  user?: IUser | null;
+  profilePic?: string | null;
+  login: (token: string) => void;
+  logout: () => void;
+  setProfilePic: Dispatch<SetStateAction<string | undefined>>;
 }
+
+const defaultPic = "./profile.png";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
 };
 
 interface AuthProviderProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!Cookies.get('authToken'));
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    !!Cookies.get("authToken")
+  );
+  const [user, setUser] = useState<IUser | null>(null);
+  const [profilePic, setProfilePic] = useState<string | undefined>(defaultPic);
+  const router = useRouter();
 
-    useEffect(() => {
-        // Set up an interval to check the cookie every minute
-        const interval = setInterval(() => {
-            const token = Cookies.get('authToken');
-            if (!token && isAuthenticated) {
-                // If the cookie doesn't exist and the user is marked as authenticated, reload the page
-                console.log('Auth token expired, reloading page');
-                window.location.reload();
-            }
-        }, 60000); // 60000ms = 1 minute
+  useEffect(() => {
+    const token = Cookies.get("authToken");
 
-        return () => {
-            // Clear the interval when the component is unmounted or when isAuthenticated changes
-            clearInterval(interval);
-        };
-    }, [isAuthenticated]);
+    if (token) {
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      const currentTime = Date.now() / 1000;
 
-    const login = (token: string, expirationTime: number) => {
-        Cookies.set('authToken', token, { expires: expirationTime });
-        setIsAuthenticated(true);
-    };
+      if (exp < currentTime) {
+        logout();
+        router.push("/");
+      } else {
+        (async () => {
+          try {
+            const user = await getUser();
+            setUser(user);
+          } catch (error) {
+            console.error(error);
+          }
 
-    const logout = () => {
-        Cookies.remove('authToken');
-        Cookies.remove('user_id');
-        Cookies.remove('user_name');
-        setIsAuthenticated(false);
-        localStorage.clear();
-    };
+          try {
+            const logo = await getProfilePic();
+            setProfilePic(logo);
+          } catch (error) {
+            console.error(error);
+          }
+        })();
+      }
+    }
+  }, [isAuthenticated]);
 
-    return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  const login = (token: string) => {
+    Cookies.set("authToken", token);
+    setIsAuthenticated(true);
+  };
+
+  const logout = () => {
+    setUser(null);
+    setProfilePic(defaultPic);
+    Cookies.remove("authToken");
+    Cookies.remove("user_id");
+    Cookies.remove("user_name");
+    setIsAuthenticated(false);
+    localStorage.clear();
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        login,
+        logout,
+        user,
+        profilePic,
+        setProfilePic,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
