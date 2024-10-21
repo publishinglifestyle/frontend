@@ -74,9 +74,9 @@ const Login: React.FC<LoginProps> = ({
     try {
       setIsLoading(true);
 
-      const authToken = await logInGoogle(access_token, "login");
+      const googleResult = await logInGoogle(access_token, "login");
 
-      login(authToken);
+      login(googleResult.token);
 
       router.push("/chat");
     } catch (e) {
@@ -149,8 +149,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidEmail == null
                   ? undefined
                   : isInvalidEmail
-                  ? "danger"
-                  : "success"
+                    ? "danger"
+                    : "success"
               }
             />
             <Input
@@ -172,8 +172,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidPassword == null
                   ? undefined
                   : isInvalidPassword
-                  ? "danger"
-                  : "success"
+                    ? "danger"
+                    : "success"
               }
             />
             <a

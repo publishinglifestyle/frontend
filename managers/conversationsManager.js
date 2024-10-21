@@ -113,6 +113,7 @@ export async function uploadImage(file) {
                     BACKEND_URLS.imageGen.uploadImage,
                     { base64String }, {
                 });
+
                 resolve(response.data.url);
             } catch (error) {
                 reject(error);

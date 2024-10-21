@@ -63,10 +63,11 @@ export async function getProfilePic() {
     try {
         const response = await axiosInstance.get(BACKEND_URLS.auth.getProfilePic,
             {
-            responseType: 'blob'
-        });
-    
+                responseType: 'blob'
+            });
+
         const url = URL.createObjectURL(response.data);
+
         return url;
     }
     catch {
@@ -83,6 +84,7 @@ export async function uploadProfilePic(file) {
 
             try {
                 const response = await axiosInstance.post(BACKEND_URLS.auth.uploadProflePic, { base64String });
+
                 resolve(response.data);
             } catch (error) {
                 reject(error);
@@ -141,6 +143,6 @@ export async function logInGoogle(access_token, req_type) {
         });
 
     if (response) {
-        return response.data.token;
+        return response.data;
     }
 }

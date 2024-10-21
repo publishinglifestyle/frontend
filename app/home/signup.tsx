@@ -15,6 +15,7 @@ import {
 import { logInGoogle, signUp } from "../../managers/userManager";
 import { Translations } from "../../translations.d";
 import { useAuth } from "../auth-context";
+import { useRouter } from "next/navigation";
 
 import SubscriptionOptions from "@/components/subscription-options";
 import { Subscription } from "@/types/user.types";
@@ -22,10 +23,11 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { FaGoogle } from "react-icons/fa";
 
 const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
+  const router = useRouter();
   const [language, setLanguage] = useState("");
   const [translations, setTranslations] = useState<Translations | null>(null);
 
-  const { isAuthenticated: isAuthenticatedClient } = useAuth();
+  const { isAuthenticated: isAuthenticatedClient, login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -115,10 +117,17 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const signInWithGoogle = async (access_token: string) => {
     try {
       setIsLoading(true);
-      const authToken = await logInGoogle(access_token, "sign_up");
-      setGoogleAuthToken(authToken);
-      setStep(2);
-      setIsLoading(false);
+      const googleResult = await logInGoogle(access_token, "sign_up");
+      setGoogleAuthToken(googleResult.token);
+      login(googleResult.token);
+
+      if (googleResult.userExists) {
+        router.push("/chat");
+      } else {
+        setStep(2);
+        setIsLoading(false);
+      }
+
     } catch (e) {
       setIsLoading(false);
       const error = e as any;

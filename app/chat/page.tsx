@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, Suspense } from "react";
 import { io, Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import { useSearchParams } from "next/navigation";
@@ -40,6 +40,14 @@ let socket: Socket | null = null;
 const aiPic = "./ai.png";
 
 export default function ChatPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ChatPageContent />
+    </Suspense>
+  );
+}
+
+function ChatPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
 
@@ -406,7 +414,7 @@ export default function ChatPage() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2">
           <ChatSidebar
