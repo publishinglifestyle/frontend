@@ -8,7 +8,6 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import ErrorModal from "@/app/modals/errorModal";
-import { generateMaze } from "@/managers/gamesManager";
 
 // Dynamically import the game components
 const Sudoku = dynamic(() => import("./sudoku"), {
@@ -240,14 +239,7 @@ export default function GamesPage() {
                 setInvertWords(0); // Reset inversion setting
 
                 if (e.target.value === "7") {
-                  const is_maze_allowed = await generateMaze();
-                  if (!is_maze_allowed.allowed) {
-                    setErrorModalMessage(is_maze_allowed.error);
-                    setIsErrorModalOpen(true);
-                    setSelectedGame(null);
-                  } else {
-                    setIsMazeAllowed(true);
-                  }
+                  setIsMazeAllowed(true);
                 }
               }}
             >
@@ -307,21 +299,21 @@ export default function GamesPage() {
               selectedGame === "2" ||
               selectedGame === "3" ||
               selectedGame === "8") && (
-              <>
-                <Input
-                  type="number"
-                  min={1}
-                  max={10}
-                  step={1}
-                  isRequired={true}
-                  size="sm"
-                  label="Number of Puzzles to Generate"
-                  placeholder="Enter number of puzzles"
-                  onChange={(e) => setNumPuzzles(Number(e.target.value))}
-                  value={numPuzzles.toString()}
-                />
-              </>
-            )}
+                <>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={10}
+                    step={1}
+                    isRequired={true}
+                    size="sm"
+                    label="Number of Puzzles to Generate"
+                    placeholder="Enter number of puzzles"
+                    onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                    value={numPuzzles.toString()}
+                  />
+                </>
+              )}
 
             {/* Crossword specific input */}
             {selectedGame === "2" && numPuzzles > 1 && (
@@ -534,7 +526,7 @@ export default function GamesPage() {
         message={errorModalMessage}
       />
 
-      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
+      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
     </>
   );
 }

@@ -3,7 +3,7 @@ import { axiosInstance } from "@/utils/axios";
 
 export async function generateSudoku(difficulty, num_puzzles) {
     const response = await axiosInstance.post(BACKEND_URLS.game.generateSudoku,
-        { difficulty, num_puzzles }, 
+        { difficulty, num_puzzles },
     );
 
     if (response) {
@@ -50,7 +50,7 @@ export async function generateHangman(words) {
 }
 
 export async function scrambleWords(words) {
-        const response = await axiosInstance.post(BACKEND_URLS.game.generateScrambleWord,
+    const response = await axiosInstance.post(BACKEND_URLS.game.generateScrambleWord,
         { words });
 
     if (response) {
@@ -64,14 +64,6 @@ export async function generateCryptogram(phrases) {
 
     if (response) {
         return response.data.response;
-    }
-}
-
-export async function generateMaze() {
-    const response = await axiosInstance.post(BACKEND_URLS.game.generateMaze)
-
-    if (response) {
-        return response.data;
     }
 }
 
