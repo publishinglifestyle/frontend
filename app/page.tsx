@@ -9,8 +9,8 @@ import ForgotPassword from "./home/forgot";
 export default function Home() {
   const { isAuthenticated: isAuthenticatedClient } = useAuth();
 
-  const [isSignUp, setIsSignUp] = useState(true);
-  const [isLogin, setIsLogin] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [isForgot, setIsForgot] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
