@@ -55,24 +55,26 @@ const ChatSidebar = ({
     const conversation = await getConversation(newConversation.id);
     let conversation_messages = [];
 
-    for (let i = 0; i < conversation.context.length; i++) {
-      const textMessage = i === 0 ? greeting : conversation.context[i].content;
-      const conversation_message: Message = {
-        id: i.toString(),
-        text: textMessage,
-        username:
-          conversation.context[i].role === "user" ? fullName : "LowContent AI",
-        conversation_id: newConversation.id,
-        complete: false,
-        title: "",
-        buttons: conversation.context[i].buttons,
-        ideogram_buttons: conversation.context[i].ideogram_buttons,
-        messageId: conversation.context[i].messageId,
-        flags: conversation.context[i].flags,
-        prompt: conversation.context[i].prompt,
-      };
+    if (conversation) {
+      for (let i = 0; i < conversation.context.length; i++) {
+        const textMessage = i === 0 ? greeting : conversation.context[i].content;
+        const conversation_message: Message = {
+          id: i.toString(),
+          text: textMessage,
+          username:
+            conversation.context[i].role === "user" ? fullName : "LowContent AI",
+          conversation_id: newConversation.id,
+          complete: false,
+          title: "",
+          buttons: conversation.context[i].buttons,
+          ideogram_buttons: conversation.context[i].ideogram_buttons,
+          messageId: conversation.context[i].messageId,
+          flags: conversation.context[i].flags,
+          prompt: conversation.context[i].prompt,
+        };
 
-      conversation_messages.push(conversation_message);
+        conversation_messages.push(conversation_message);
+      }
     }
     setMessages(conversation_messages.map((message) => ({ ...message })));
   };
@@ -93,6 +95,37 @@ const ChatSidebar = ({
     changeConversationMessages(newConversation);
     setIsLoading(false);
   };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    setIsLoading(true);
+
+    // Delete the conversation from the backend
+    await deleteConversation(conversationId);
+
+    // Update the conversations state to remove the deleted conversation
+    setConversations((prevConversations) =>
+      prevConversations.filter((conv) => conv.id !== conversationId)
+    );
+
+    // If the deleted conversation was the current conversation, update the current conversation to the first available one
+    if (currentConversation === conversationId) {
+      const remainingConversations = conversations.filter(
+        (conv) => conv.id !== conversationId
+      );
+
+      if (remainingConversations.length > 0) {
+        const newCurrent = remainingConversations[0];
+        setCurrentConversation(newCurrent.id);
+        changeConversationMessages(newCurrent); // Load messages for the new current conversation
+      } else {
+        // If no remaining conversations, create a new one
+        await handleCreateNewMessage();
+      }
+    }
+
+    setIsLoading(false);
+  };
+
 
   return (
     <div className="flex flex-col md:w-1/4" style={{ height: "750px" }}>
@@ -167,28 +200,7 @@ const ChatSidebar = ({
                   <TableCell key={column.key}>
                     <SingleConversationRow
                       columnKey={column.key as keyof Conversation}
-                      handleDeleteConversation={async () => {
-                        setIsLoading(true);
-                        await deleteConversation(item.id);
-                        const newConversations = conversations.filter(
-                          (conversation) => conversation.id !== item.id
-                        );
-
-                        setConversations(newConversations);
-
-                        if (
-                          currentConversation === item.id &&
-                          newConversations.length > 0
-                        ) {
-                          setCurrentConversation(newConversations[0].id);
-                          await changeConversationMessages(newConversations[0]);
-                        } else {
-                          // Create a new conversaion by default if there is none
-                          await handleCreateNewMessage();
-                        }
-
-                        setIsLoading(false);
-                      }}
+                      handleDeleteConversation={handleDeleteConversation}
                       handleEditConversation={(value) => {
                         setIsConversationNameModalOpen(value);
                       }}

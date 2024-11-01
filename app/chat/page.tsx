@@ -414,7 +414,7 @@ function ChatPageContent() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2">
           <ChatSidebar
