@@ -241,6 +241,40 @@ function ChatPageContent() {
 
     // Listen for the midjourneyCallback event
     socket.on("midjourneyCallback", async (response) => {
+      if (response?.status === "failed" || !response.result) {
+        const messageText = response?.failMessage
+          ? response.failMessage
+          : "Failed to generate image";
+        const message = {
+          id: uuidv4(),
+          username: "LowContent AI",
+          text: messageText,
+          conversation_id: currentConversation,
+          complete: true,
+          buttons: [],
+          ideogram_buttons: [],
+          messageId: "",
+          flags: 0,
+          prompt: "",
+        };
+
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.filter(
+            (m) => !m?.id?.startsWith("typing-")
+          );
+
+          return [
+            ...updatedMessages,
+            {
+              ...message,
+              title: "",
+            },
+          ];
+        });
+
+        setIsGeneratingResponse(false); // Stop the loading bubble
+        return;
+      }
       const message = {
         id: uuidv4(),
         username: "LowContent AI",
@@ -414,7 +448,7 @@ function ChatPageContent() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2">
           <ChatSidebar

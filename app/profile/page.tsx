@@ -295,6 +295,23 @@ export default function ProfilePage() {
               )}
             </p>
             <Spacer y={4} />
+            <p style={{ fontSize: "14px" }}>
+              <b style={{ fontSize: "14px" }}>Email</b>
+              <Spacer y={2} />
+              {isEdit ? (
+                <Input
+                  size="sm"
+                  value={email}
+                  disabled
+                  className="cursor-not-allowed "
+                  type="email"
+                  placeholder="Enter your email"
+                />
+              ) : (
+                <span style={{ fontSize: "14px" }}>{email}</span>
+              )}
+            </p>
+            <Spacer y={2} />
           </CardBody>
           <CardFooter className="pl-6 justify-end">
             {isEdit && (
@@ -428,6 +445,8 @@ export default function ProfilePage() {
                 </span>
               </p>
               <Spacer y={4} />
+
+              <Spacer y={2} />
             </CardBody>
             <Divider />
           </Card>

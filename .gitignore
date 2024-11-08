@@ -33,5 +33,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-.git-new
+.git-personal
 .git-prod
