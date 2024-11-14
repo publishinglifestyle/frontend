@@ -182,12 +182,12 @@ const ChatMessageList = ({
     }
   };
 
-  const createNewMessage = () => {
+  const createNewMessage = (text = messageText) => {
     const userMessageId = `${Date.now()}`;
     const userMessage = {
       id: userMessageId,
       username: fullName,
-      text: messageText,
+      text,
       conversation_id: currentConversation,
       complete: true,
       title: "",
@@ -339,7 +339,7 @@ const ChatMessageList = ({
                                       );
                                       setImageResponse(image_response);
                                     } else if (button == "Describe") {
-                                      createNewMessage();
+                                      createNewMessage(message.text);
                                       const description = await describeImage(
                                         currentConversation,
                                         message.text,

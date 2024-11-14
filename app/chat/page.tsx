@@ -534,6 +534,9 @@ function ChatPageContent() {
             setPromptCommands={setPromptCommands}
             setUploadedImageUrl={setUploadedImageUrl}
             uploadedImageUrl={uploadedImageUrl}
+            fullName={fullName}
+            messages={messages}
+            setMessages={setMessages}
           />
         </div>
       </div>

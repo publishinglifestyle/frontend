@@ -6,8 +6,8 @@ import {
   remixImage,
 } from "@/managers/conversationsManager";
 
-import { Agent, Command, Conversation } from "@/types/chat.types";
-import React from "react";
+import { Agent, Command, Conversation, Message } from "@/types/chat.types";
+import React, { Dispatch, SetStateAction } from "react";
 import CommandsModal from "./commandsModal";
 import ConversationNameModal from "./conversationName";
 import ErrorModal from "./errorModal";
@@ -50,6 +50,9 @@ interface ChatModals {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   isActiveMessage: string;
   promptCommands: Command[];
+  fullName: string;
+  messages: Message[];
+  setMessages: Dispatch<SetStateAction<Message[]>>;
 }
 
 const ChatModals = ({
@@ -83,7 +86,45 @@ const ChatModals = ({
   setIsLoading,
   isActiveMessage,
   promptCommands,
+  fullName,
+  messages,
+  setMessages,
 }: ChatModals) => {
+  const createMessageText = (text: string) => {
+    const userMessageId = `${Date.now()}`;
+    const userMessage = {
+      id: userMessageId,
+      username: fullName,
+      text,
+      conversation_id: currentConversation,
+      complete: true,
+      title: "",
+      buttons: [],
+      ideogram_buttons: [],
+      messageId: "",
+      flags: 0,
+      prompt: "",
+    };
+
+    const typingMessageId = `typing-${Date.now()}`;
+    const typingMessage = {
+      id: typingMessageId,
+      username: "LowContent AI",
+      text: '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>',
+      conversation_id: currentConversation,
+      complete: false,
+      title: "",
+      buttons: [],
+      ideogram_buttons: [],
+      messageId: "",
+      flags: 0,
+      prompt: "",
+    };
+
+    const allMessages = [...messages, userMessage, typingMessage];
+    setMessages(allMessages);
+  };
+
   return (
     <>
       <SuccessModal
@@ -130,7 +171,8 @@ const ChatModals = ({
 
           if (selectedTab == "remix") {
             setIsGeneratingResponse(true);
-            setMessageText(remixPrompt);
+            createMessageText(remixPrompt);
+            // setMessageText(remixPrompt);
             const image_response = await remixImage(
               currentConversation,
               remixPrompt,
@@ -185,8 +227,7 @@ const ChatModals = ({
         onSuccess={async (prompt) => {
           setIsPromptModalOpen(false);
           setIsGeneratingResponse(true);
-
-          setMessageText(prompt);
+          createMessageText(prompt);
           const image_response = await remixImage(
             currentConversation,
             prompt,
