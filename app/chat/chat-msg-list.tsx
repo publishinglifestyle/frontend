@@ -7,7 +7,7 @@ import {
 } from "@/managers/conversationsManager";
 import { Translations } from "@/translations";
 import { Agent, Conversation, Message } from "@/types/chat.types";
-import { PaperClipIcon, StopIcon } from "@heroicons/react/24/outline";
+import { PaperClipIcon, StopIcon, ClipboardIcon } from "@heroicons/react/24/outline";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import {
   Avatar,
@@ -18,10 +18,11 @@ import {
   Textarea,
 } from "@nextui-org/react";
 import Cookies from "js-cookie";
-import React, { Dispatch, SetStateAction, useRef } from "react";
+import React, { Dispatch, SetStateAction, useRef, useEffect } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../auth-context";
+import { useClipboard } from "@nextui-org/use-clipboard";
 
 interface ChatMessageListProps {
   agents: Agent[];
@@ -84,11 +85,19 @@ const ChatMessageList = ({
   fullName,
   setMessages,
 }: ChatMessageListProps) => {
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isSocketConnected = false;
-
+  const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
+
+  useEffect(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -99,6 +108,12 @@ const ChatMessageList = ({
 
   const handleIconClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleCopy = (message: string) => {
+    if (message) {
+      copy(message);
+    }
   };
 
   const sendChatMessage = async (
@@ -228,17 +243,17 @@ const ChatMessageList = ({
           <CardBody>
             {messages
               .filter((message) => message.text && message.text !== "NaN")
-              .map((message) => (
+              .map((message, index) => (
                 <div
                   key={message.id}
-                  className={`mt-4 message flex ${
-                    message.username === Cookies.get("user_name")
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
+                  ref={index === messages.length - 1 ? lastMessageRef : null}
+                  className={`mt-4 message flex ${message.username === Cookies.get("user_name")
+                    ? "justify-end"
+                    : "justify-start"
+                    }`}
                 >
                   <div
-                    className="flex items-start rounded-lg"
+                    className="flex items-start rounded-lg relative"
                     style={{
                       backgroundColor:
                         message.username === Cookies.get("user_name")
@@ -261,7 +276,7 @@ const ChatMessageList = ({
                       />
                     )}
                     <div
-                      className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg`}
+                      className={`text-small max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-lg relative`}
                       style={{
                         backgroundColor:
                           message.username === Cookies.get("user_name")
@@ -273,12 +288,7 @@ const ChatMessageList = ({
                             : "black",
                       }}
                     >
-                      {message.username !== Cookies.get("user_name") && (
-                        <p className="font-semibold">LowContent AI</p>
-                      )}
-                      {message.username === Cookies.get("user_name") && (
-                        <p className="font-semibold">{fullName}</p>
-                      )}
+                      {/* Message content */}
                       {message.text.startsWith("http") ? (
                         <>
                           <img
@@ -307,14 +317,11 @@ const ChatMessageList = ({
                                     );
                                   }}
                                 >
-                                  <span style={{ fontSize: "8px" }}>
-                                    {button.label}
-                                  </span>
+                                  <span style={{ fontSize: "8px" }}>{button.label}</span>
                                 </Button>
                               ))}
                             </div>
                           )}
-
                           {message.ideogram_buttons?.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
                               {message.ideogram_buttons.map((button, index) => (
@@ -332,7 +339,7 @@ const ChatMessageList = ({
                                       setIsPromptModalOpen(true);
                                     } else if (button == "Upscale") {
                                       createNewMessage();
-                                      const image_response = upscaleImage(
+                                      const image_response = await upscaleImage(
                                         currentConversation,
                                         message.text,
                                         message.prompt
@@ -363,9 +370,7 @@ const ChatMessageList = ({
                                     }
                                   }}
                                 >
-                                  <span style={{ fontSize: "8px" }}>
-                                    {button}
-                                  </span>
+                                  <span style={{ fontSize: "8px" }}>{button}</span>
                                 </Button>
                               ))}
                             </div>
@@ -378,6 +383,24 @@ const ChatMessageList = ({
                           }}
                         />
                       )}
+
+                      {
+                        message.username != Cookies.get("user_name") && !message.text.startsWith("http") &&
+                        <Button
+                          isIconOnly
+                          size="sm"
+                          radius="full"
+                          className="absolute -top-2 -right-4"
+                          onClick={() => handleCopy(message.text)}
+                        >
+                          {copied ? (
+                            <span className="text-md">✔</span>
+                          ) : (
+                            <ClipboardIcon width={15} height={15} />
+                          )}
+                        </Button>
+                      }
+
                     </div>
                   </div>
                 </div>
@@ -440,6 +463,9 @@ const ChatMessageList = ({
                     );
                   }
                 }}
+                minRows={1}
+                maxRows={3}
+                style={{ overflowY: "auto" }}
               />
               <div className="flex flex-col md:w-1/3">
                 <Select
@@ -473,16 +499,27 @@ const ChatMessageList = ({
                   </Button>
                 )}
 
-                {selectedAgent?.model == "ideogram" && (
-                  <Button
-                    variant={promptCommands.length > 0 ? "ghost" : "flat"}
-                    color={promptCommands.length > 0 ? "secondary" : "default"}
-                    className="mt-2"
-                    onClick={() => setIsIdeogramModalOpen(true)}
-                  >
-                    {translations?.commands}
-                  </Button>
-                )}
+                {selectedAgent?.model == "ideogram" &&
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      fullWidth
+                      variant={promptCommands.length > 0 ? "ghost" : "flat"}
+                      color={promptCommands.length > 0 ? "secondary" : "default"}
+                      className="mt-2"
+                      onClick={() => setIsIdeogramModalOpen(true)}
+                    >
+                      {translations?.commands}
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="ghost"
+                      color="secondary"
+                      className="mt-2"
+                      onClick={() => window.open("https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt", "_blank")}
+                    >
+                      Prompts
+                    </Button>
+                  </div>}
               </div>
             </div>
 
