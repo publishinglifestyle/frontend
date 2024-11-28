@@ -92,12 +92,6 @@ const ChatMessageList = ({
   const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
 
-  useEffect(() => {
-    if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
-
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -263,6 +257,7 @@ const ChatMessageList = ({
                   >
                     {message.username === Cookies.get("user_name") && (
                       <Avatar
+                        size="sm"
                         alt="Profile Picture"
                         className="transition-transform mr-2 mt-2 ml-2"
                         src={profilePic ?? ""}
@@ -270,6 +265,7 @@ const ChatMessageList = ({
                     )}
                     {message.username !== Cookies.get("user_name") && (
                       <Avatar
+                        size="sm"
                         alt="Profile Picture"
                         className="transition-transform mr-2 mt-2 ml-2"
                         src={aiPic}
