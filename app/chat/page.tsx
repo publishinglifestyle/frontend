@@ -275,21 +275,9 @@ function ChatPageContent() {
         setIsGeneratingResponse(false); // Stop the loading bubble
         return;
       }
-      const message = {
-        id: uuidv4(),
-        username: "LowContent AI",
-        text: response.result.url,
-        conversation_id: response.conversation_id,
-        complete: true,
-        buttons: response.result.options || [],
-        ideogram_buttons: [],
-        messageId: response.result.message_id,
-        flags: response.result.flags,
-        prompt: response.result.prompt,
-      };
 
       // Store conversation context
-      await saveMjImage(
+      const save_image_response = await saveMjImage(
         response.result.prompt,
         response.result.message_id,
         response.conversation_id,
@@ -299,6 +287,19 @@ function ChatPageContent() {
         response.result.flags,
         selectedAgent?.id
       );
+
+      const message = {
+        id: uuidv4(),
+        username: "LowContent AI",
+        text: save_image_response.imageUrl,
+        conversation_id: response.conversation_id,
+        complete: true,
+        buttons: response.result.options || [],
+        ideogram_buttons: [],
+        messageId: response.result.message_id,
+        flags: response.result.flags,
+        prompt: response.result.prompt,
+      };
 
       setMessages((prevMessages) => {
         const updatedMessages = prevMessages.filter(
@@ -448,7 +449,7 @@ function ChatPageContent() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2">
           <ChatSidebar
