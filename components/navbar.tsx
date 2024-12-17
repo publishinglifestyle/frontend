@@ -123,26 +123,26 @@ export const Navbar = () => {
               isAuthenticatedClient &&
               ((userRole == "user" && item.allow_user) || userRole != "user"
                 ? (!item.language || item.language == language) && (
-                    <NavbarItem key={item.href}>
-                      <NextLink
-                        style={{
-                          color:
-                            currentPage === item.value.toLowerCase()
-                              ? "#9353D3"
-                              : "white",
-                        }}
-                        href={item.href}
-                        // Correct condition for internal and external links
-                        target={
-                          item.value === "feedback" || item.value === "help"
-                            ? "_blank"
-                            : undefined
-                        }
-                      >
-                        {item.label}
-                      </NextLink>
-                    </NavbarItem>
-                  )
+                  <NavbarItem key={item.href}>
+                    <NextLink
+                      style={{
+                        color:
+                          currentPage === item.value.toLowerCase()
+                            ? "#9353D3"
+                            : "white",
+                      }}
+                      href={item.href}
+                      // Correct condition for internal and external links
+                      target={
+                        item.value === "feedback" || item.value === "help"
+                          ? "_blank"
+                          : undefined
+                      }
+                    >
+                      {item.label}
+                    </NextLink>
+                  </NavbarItem>
+                )
                 : null)
             );
           })}

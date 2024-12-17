@@ -93,32 +93,37 @@ export default function RootLayout({
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable,
           "bg-cover bg-center",
-          "bg-no-repeat",
-          "relative"
+          "bg-no-repeat"
         )}
         style={{
           backgroundImage: `url("/background.jpg")`,
         }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col">
+          {/* Flex container to ensure the footer sticks to the bottom */}
+          <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="w-full max-w-screen-4xl mx-auto pt-16 px-6 flex-grow">
+            {/* Main Content */}
+            <main className="w-full flex-grow pt-16">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-3">
-              <Link
-                isExternal
-                className="flex items-center gap-1 text-current"
-                href="/terms"
-                title="Terms of Service"
-              >
-                <span className="text-default-600">Copyright @</span>
-                <p>
-                  <span className="text-secondary">Wealthy Magnet LTD</span>, 27
-                  Old Gloucester Street, London, United Kingdom, WC1N 3AX
-                </p>
-              </Link>
+
+            {/* Footer inside a black div */}
+            <footer className="w-full bg-black text-white">
+              <div className="container mx-auto flex items-center justify-center py-4">
+                <Link
+                  isExternal
+                  className="flex items-center gap-1 text-current"
+                  href="/terms"
+                  title="Terms of Service"
+                >
+                  <span className="text-default-600">Copyright @</span>
+                  <p>
+                    <span className="text-secondary">Wealthy Magnet LTD</span>, 27
+                    Old Gloucester Street, London, United Kingdom, WC1N 3AX
+                  </p>
+                </Link>
+              </div>
             </footer>
           </div>
         </Providers>
