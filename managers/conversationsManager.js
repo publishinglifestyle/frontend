@@ -62,9 +62,9 @@ export async function upscaleImage(conversation_id, image_url, prompt) {
     }
 }
 
-export async function describeImage(conversation_id, image_url, agent_id) {
+export async function describeImage(conversation_id, image_url, agent_id,no_append=false) {
     const response = await axiosInstance.post(BACKEND_URLS.imageGen.describeIdiogram,
-        { conversation_id, image_url, agent_id })
+        { conversation_id, image_url, agent_id,no_append })
 
     if (response) {
         return response.data;

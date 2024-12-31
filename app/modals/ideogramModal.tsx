@@ -22,7 +22,7 @@ import {
 import { Select, SelectItem } from "@nextui-org/react";
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
-import { uploadImage } from "@/managers/conversationsManager";
+import { describeImage, uploadImage } from "@/managers/conversationsManager";
 
 interface IdeogramModalProps {
   isOpen: boolean;
@@ -138,6 +138,8 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
         setIsLoading(true);
 
         const uploadedImageUrl = await uploadImage(file);
+        const description = await describeImage("", uploadedImageUrl, "", true);
+        setRemixPrompt(description.response);
         setUploadedImageUrl(uploadedImageUrl);
 
         // Stop loading state and show modal with the uploaded image

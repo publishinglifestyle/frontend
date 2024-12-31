@@ -68,6 +68,7 @@ const ChatModals = ({
   setIsImageModalOpen,
   isPromptModalOpen,
   setIsPromptModalOpen,
+  setIdeogramInitialPrompt,
   isConversationNameModalOpen,
   setIsConversationNameModalOpen,
   ideogramInitialPrompt,
@@ -77,7 +78,6 @@ const ChatModals = ({
   currentConversation,
   setConversations,
   conversations,
-  setMessageText,
   setImageResponse,
   setIsGeneratingResponse,
   setPromptCommands,
@@ -171,8 +171,8 @@ const ChatModals = ({
 
           if (selectedTab == "remix") {
             setIsGeneratingResponse(true);
+
             createMessageText(remixPrompt);
-            // setMessageText(remixPrompt);
             const image_response = await remixImage(
               currentConversation,
               remixPrompt,
@@ -202,7 +202,6 @@ const ChatModals = ({
               flags: 0,
               prompt: "",
             };
-
             messageListener(description_message);
           }
         }}

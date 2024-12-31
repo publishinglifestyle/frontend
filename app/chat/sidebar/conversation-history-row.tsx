@@ -7,15 +7,21 @@ const SingleConversationRow = ({
   columnKey,
   handleDeleteConversation,
   handleEditConversation,
+  handleClick,
 }: {
   item: Conversation;
   columnKey: keyof Conversation;
   handleDeleteConversation: (conversationId: string) => void;
   handleEditConversation: (value: boolean) => void;
+  handleClick: () => void;
 }) => {
   if (columnKey === "id") {
     return (
-      <div className="flex justify-between items-center">
+      <div
+        className="flex justify-between items-center"
+        onClick={handleClick}
+        onTouchEnd={handleClick}
+      >
         <div className="flex-1 text-start">
           <span>{item.name}</span>
         </div>

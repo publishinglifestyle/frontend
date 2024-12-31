@@ -57,12 +57,15 @@ const ChatSidebar = ({
 
     if (conversation) {
       for (let i = 0; i < conversation.context.length; i++) {
-        const textMessage = i === 0 ? greeting : conversation.context[i].content;
+        const textMessage =
+          i === 0 ? greeting : conversation.context[i].content;
         const conversation_message: Message = {
           id: i.toString(),
           text: textMessage,
           username:
-            conversation.context[i].role === "user" ? fullName : "LowContent AI",
+            conversation.context[i].role === "user"
+              ? fullName
+              : "LowContent AI",
           conversation_id: newConversation.id,
           complete: false,
           title: "",
@@ -126,9 +129,8 @@ const ChatSidebar = ({
     setIsLoading(false);
   };
 
-
   return (
-    <div className="flex flex-col md:w-1/4" style={{ height: "750px" }}>
+    <div className="flex flex-col md:w-1/4 md:h-[750px]">
       <Button
         className="mb-4"
         color="secondary"
@@ -154,48 +156,7 @@ const ChatSidebar = ({
           </TableHeader>
           <TableBody items={conversations}>
             {(item: Conversation) => (
-              <TableRow
-                key={item.id.toString()}
-                onClick={async () => {
-                  setIsLoading(true);
-                  setCurrentConversation(item.id);
-                  setSelectedAgentId("");
-                  setSelectedAgent(undefined);
-
-                  const conversation = await getConversation(item.id);
-
-                  let conversation_messages = [];
-
-                  for (let i = 0; i < conversation.context.length; i++) {
-                    const textMessage =
-                      i == 0 ? greeting : conversation.context[i].content;
-                    const conversation_message: Message = {
-                      id: i.toString(),
-                      text: textMessage,
-                      username:
-                        conversation.context[i].role === "user"
-                          ? fullName
-                          : "LowContent AI",
-                      conversation_id: item.id,
-                      complete: false,
-                      title: "",
-                      buttons: conversation.context[i].buttons,
-                      ideogram_buttons:
-                        conversation.context[i].ideogram_buttons,
-                      messageId: conversation.context[i].messageId,
-                      flags: conversation.context[i].flags,
-                      prompt: conversation.context[i].prompt,
-                    };
-
-                    conversation_messages.push(conversation_message);
-                  }
-                  setMessages(
-                    conversation_messages.map((message) => ({ ...message }))
-                  );
-
-                  setIsLoading(false);
-                }}
-              >
+              <TableRow key={item.id.toString()}>
                 {columns.map((column) => (
                   <TableCell key={column.key}>
                     <SingleConversationRow
@@ -205,6 +166,47 @@ const ChatSidebar = ({
                         setIsConversationNameModalOpen(value);
                       }}
                       item={item}
+                      handleClick={async () => {
+                        setIsLoading(true);
+                        setCurrentConversation(item.id);
+                        setSelectedAgentId("");
+                        setSelectedAgent(undefined);
+
+                        const conversation = await getConversation(item.id);
+
+                        let conversation_messages = [];
+
+                        for (let i = 0; i < conversation.context.length; i++) {
+                          const textMessage =
+                            i == 0 ? greeting : conversation.context[i].content;
+                          const conversation_message: Message = {
+                            id: i.toString(),
+                            text: textMessage,
+                            username:
+                              conversation.context[i].role === "user"
+                                ? fullName
+                                : "LowContent AI",
+                            conversation_id: item.id,
+                            complete: false,
+                            title: "",
+                            buttons: conversation.context[i].buttons,
+                            ideogram_buttons:
+                              conversation.context[i].ideogram_buttons,
+                            messageId: conversation.context[i].messageId,
+                            flags: conversation.context[i].flags,
+                            prompt: conversation.context[i].prompt,
+                          };
+
+                          conversation_messages.push(conversation_message);
+                        }
+                        setMessages(
+                          conversation_messages.map((message) => ({
+                            ...message,
+                          }))
+                        );
+
+                        setIsLoading(false);
+                      }}
                     />
                   </TableCell>
                 ))}

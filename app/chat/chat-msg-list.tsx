@@ -7,7 +7,11 @@ import {
 } from "@/managers/conversationsManager";
 import { Translations } from "@/translations";
 import { Agent, Conversation, Message } from "@/types/chat.types";
-import { PaperClipIcon, StopIcon, ClipboardIcon } from "@heroicons/react/24/outline";
+import {
+  PaperClipIcon,
+  StopIcon,
+  ClipboardIcon,
+} from "@heroicons/react/24/outline";
 import { Card, CardBody, CardFooter } from "@nextui-org/card";
 import {
   Avatar,
@@ -18,7 +22,13 @@ import {
   Textarea,
 } from "@nextui-org/react";
 import Cookies from "js-cookie";
-import React, { Dispatch, SetStateAction, useRef, useEffect } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useRef,
+  useEffect,
+  useState,
+} from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import { useAuth } from "../auth-context";
@@ -91,7 +101,8 @@ const ChatMessageList = ({
   const isSocketConnected = false;
   const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
-
+  const [isGeneratingImageDescription, setIsGeneratingImageDescription] =
+    useState(false);
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -241,10 +252,11 @@ const ChatMessageList = ({
                 <div
                   key={message.id}
                   ref={index === messages.length - 1 ? lastMessageRef : null}
-                  className={`mt-4 message flex ${message.username === Cookies.get("user_name")
-                    ? "justify-end"
-                    : "justify-start"
-                    }`}
+                  className={`mt-4 message flex ${
+                    message.username === Cookies.get("user_name")
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
                 >
                   <div
                     className="flex items-start rounded-lg relative"
@@ -313,7 +325,9 @@ const ChatMessageList = ({
                                     );
                                   }}
                                 >
-                                  <span style={{ fontSize: "8px" }}>{button.label}</span>
+                                  <span style={{ fontSize: "8px" }}>
+                                    {button.label}
+                                  </span>
                                 </Button>
                               ))}
                             </div>
@@ -326,12 +340,24 @@ const ChatMessageList = ({
                                   className="w-full"
                                   color="secondary"
                                   size="sm"
+                                  isLoading={isGeneratingImageDescription}
                                   onClick={async (e) => {
                                     e.preventDefault();
 
                                     if (button == "Remix") {
-                                      setIdeogramInitialPrompt(message.prompt);
                                       setIdeogramImageUrl(message.text);
+                                      setIsGeneratingImageDescription(true);
+                                      const description = await describeImage(
+                                        currentConversation,
+                                        message.text,
+                                        selectedAgent?.id,
+                                        true
+                                      );
+                                      setIsGeneratingImageDescription(false);
+                                      setIdeogramInitialPrompt(
+                                        description.response
+                                      );
+
                                       setIsPromptModalOpen(true);
                                     } else if (button == "Upscale") {
                                       createNewMessage();
@@ -366,7 +392,9 @@ const ChatMessageList = ({
                                     }
                                   }}
                                 >
-                                  <span style={{ fontSize: "8px" }}>{button}</span>
+                                  <span style={{ fontSize: "8px" }}>
+                                    {button}
+                                  </span>
                                 </Button>
                               ))}
                             </div>
@@ -380,23 +408,22 @@ const ChatMessageList = ({
                         />
                       )}
 
-                      {
-                        message.username != Cookies.get("user_name") && !message.text.startsWith("http") &&
-                        <Button
-                          isIconOnly
-                          size="sm"
-                          radius="full"
-                          className="absolute -top-2 -right-4"
-                          onClick={() => handleCopy(message.text)}
-                        >
-                          {copied ? (
-                            <span className="text-md">✔</span>
-                          ) : (
-                            <ClipboardIcon width={15} height={15} />
-                          )}
-                        </Button>
-                      }
-
+                      {message.username != Cookies.get("user_name") &&
+                        !message.text.startsWith("http") && (
+                          <Button
+                            isIconOnly
+                            size="sm"
+                            radius="full"
+                            className="absolute -top-2 -right-4"
+                            onClick={() => handleCopy(message.text)}
+                          >
+                            {copied ? (
+                              <span className="text-md">✔</span>
+                            ) : (
+                              <ClipboardIcon width={15} height={15} />
+                            )}
+                          </Button>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -495,12 +522,14 @@ const ChatMessageList = ({
                   </Button>
                 )}
 
-                {selectedAgent?.model == "ideogram" &&
+                {selectedAgent?.model == "ideogram" && (
                   <div className="flex flex-row gap-2">
                     <Button
                       fullWidth
                       variant={promptCommands.length > 0 ? "ghost" : "flat"}
-                      color={promptCommands.length > 0 ? "secondary" : "default"}
+                      color={
+                        promptCommands.length > 0 ? "secondary" : "default"
+                      }
                       className="mt-2"
                       onClick={() => setIsIdeogramModalOpen(true)}
                     >
@@ -511,11 +540,17 @@ const ChatMessageList = ({
                       variant="ghost"
                       color="secondary"
                       className="mt-2"
-                      onClick={() => window.open("https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt", "_blank")}
+                      onClick={() =>
+                        window.open(
+                          "https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt",
+                          "_blank"
+                        )
+                      }
                     >
                       Prompts
                     </Button>
-                  </div>}
+                  </div>
+                )}
               </div>
             </div>
 

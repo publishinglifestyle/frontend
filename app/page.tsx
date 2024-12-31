@@ -7,7 +7,6 @@ import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-
 const frequencies = [
   { key: "yearly", label: "Pay Yearly", priceSuffix: "year", discount: "Save 20%" },
   { key: "monthly", label: "Pay Monthly", priceSuffix: "monthly" },
