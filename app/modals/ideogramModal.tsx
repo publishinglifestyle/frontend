@@ -33,6 +33,7 @@ interface IdeogramModalProps {
     aspectRatio: string,
     negativePrompt: string,
     remixPrompt: string,
+    remixSimilarity: number,
     uploadedImageUrl: string
   ) => void;
 }
@@ -73,6 +74,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
   const [aspectRatio, setAspectRatio] = useState<string>("ASPECT_10_16");
   const [negativePrompt, setNegativePrompt] = useState<string>("");
   const [remixPrompt, setRemixPrompt] = useState<string>("");
+  const [remixSimilarity, setRemixSimilarity] = useState<number>(70);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [selectedTab, setSelectedTab] = useState<string>("configuration");
 
@@ -164,6 +166,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
       aspectRatio,
       negativePrompt,
       remixPrompt,
+      remixSimilarity,
       uploadedImageUrl
     );
     setActiveTab("configuration");
@@ -276,6 +279,21 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                       radius="lg"
                       variant="bordered"
                     />
+                    <Input
+                      className="mb-2"
+                      label="Similarity Prompt"
+                      placeholder="Enter percentage similarity prompt"
+                      fullWidth
+                      type="number" // Set type to "number"
+                      value={remixSimilarity.toString()} // Ensure the value is a string representation of the number
+                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                        setRemixSimilarity(Number(e.target.value)) // Parse input as a number
+                      }
+                      size="sm"
+                      radius="lg"
+                      variant="bordered"
+                    />
+
                     <input
                       type="file"
                       accept="image/*"

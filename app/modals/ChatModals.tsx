@@ -158,12 +158,14 @@ const ChatModals = ({
           aspectRatio,
           negativePrompt,
           remixPrompt,
+          remixSimilarity,
           uploadedImageUrl
         ) => {
           const selected_commands = [
             { command: "styleType", value: styleType },
             { command: "aspectRatio", value: aspectRatio },
             { command: "negativePrompt", value: negativePrompt },
+            { command: "similarity", value: remixSimilarity },
           ];
 
           setPromptCommands(selected_commands);
