@@ -47,9 +47,6 @@ export default function Crossword({
         num_puzzles
       );
 
-      console.log({ cross_words, clues, wordsPerPuzzle, num_puzzles });
-      console.log(crosswordResponse);
-
       if (crosswordResponse) {
         generatePDF(crosswordResponse.response);
       }
@@ -99,6 +96,38 @@ export default function Crossword({
       const letterFontSize = cellSize * 1.1;
 
       const drawGrid = (isSolution = false) => {
+        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+          for (let colIndex = 0; colIndex < cols; colIndex++) {
+            const x = gridOffsetX + colIndex * cellSize;
+            const y = gridOffsetY + rowIndex * cellSize;
+
+            // Check if the current cell is part of any word
+            const wordInCell = placedWords.some((word: any) => {
+              const { startx, starty, answer, orientation } = word;
+              for (let i = 0; i < answer.length; i++) {
+                const currentCol =
+                  orientation === "across" ? startx + i : startx;
+                const currentRow = orientation === "down" ? starty + i : starty;
+                if (currentCol === colIndex && currentRow === rowIndex) {
+                  return true;
+                }
+              }
+              return false;
+            });
+
+            // Set fill color based on whether the cell is part of a word
+            if (wordInCell) {
+              doc.setFillColor(255, 255, 255); // White for cells with text
+            } else {
+              doc.setFillColor(200, 200, 200); // Gray for empty cells
+            }
+
+            doc.rect(x, y, cellSize, cellSize, "F"); // 'F' for filled rectangle
+            doc.setDrawColor(0, 0, 0); // Black for border
+            doc.rect(x, y, cellSize, cellSize); // Draw border
+          }
+        }
+
         for (const word of placedWords) {
           const { startx, starty, answer, orientation, position } = word;
 
@@ -108,8 +137,6 @@ export default function Crossword({
 
             const x = gridOffsetX + colIndex * cellSize;
             const y = gridOffsetY + rowIndex * cellSize;
-
-            doc.rect(x, y, cellSize, cellSize);
 
             const number = i === 0 ? position.toString() : ""; // Only add the number at the start of the word
 
@@ -162,6 +189,9 @@ export default function Crossword({
         xPosition: number,
         yPosition: number
       ) => {
+        doc.setFontSize(10); // Increase font size for clues
+        doc.setFont(font || "times", "italic");
+
         clues.forEach((wordInfo: any) => {
           const clueText = `${wordInfo.position}. ${wordInfo.clue}`;
           const splitText = doc.splitTextToSize(clueText, clueColumnWidth);
