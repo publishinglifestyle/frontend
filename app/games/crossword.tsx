@@ -96,8 +96,9 @@ export default function Crossword({
       const letterFontSize = cellSize * 1.1;
 
       const drawGrid = (isSolution = false) => {
-        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
-          for (let colIndex = 0; colIndex < cols; colIndex++) {
+        const maxRowOrCol = Math.max(rows, cols);
+        for (let rowIndex = 0; rowIndex < maxRowOrCol; rowIndex++) {
+          for (let colIndex = 0; colIndex < maxRowOrCol; colIndex++) {
             const x = gridOffsetX + colIndex * cellSize;
             const y = gridOffsetY + rowIndex * cellSize;
 
@@ -141,9 +142,9 @@ export default function Crossword({
             const number = i === 0 ? position.toString() : ""; // Only add the number at the start of the word
 
             if (number) {
-              doc.setFontSize(numberFontSize);
+              doc.setFontSize(numberFontSize * 0.8);
               doc.setFont(font || "times", "normal");
-              doc.text(number, x + 2, y + 4);
+              doc.text(number, x + cellSize * 0.1, y + cellSize * 0.2);
             }
 
             if (isSolution) {
