@@ -151,7 +151,10 @@ const ChatModals = ({
 
       <IdeogramModal
         isOpen={isIdeogramModalOpen}
-        onClose={() => setIsIdeogramModalOpen(false)}
+        onClose={() => {
+          setIsIdeogramModalOpen(false);
+          document.body.style.overflow = "auto";
+        }}
         onSuccess={async (
           selectedTab,
           styleType,
@@ -168,6 +171,7 @@ const ChatModals = ({
             { command: "similarity", value: remixSimilarity },
           ];
 
+          document.body.style.overflow = "auto";
           setPromptCommands(selected_commands);
           setIsIdeogramModalOpen(false);
 
