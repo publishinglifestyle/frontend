@@ -68,7 +68,6 @@ const ChatModals = ({
   setIsImageModalOpen,
   isPromptModalOpen,
   setIsPromptModalOpen,
-  setIdeogramInitialPrompt,
   isConversationNameModalOpen,
   setIsConversationNameModalOpen,
   ideogramInitialPrompt,
@@ -149,69 +148,67 @@ const ChatModals = ({
         }}
       />
 
-      <IdeogramModal
-        isOpen={isIdeogramModalOpen}
-        onClose={() => {
-          setIsIdeogramModalOpen(false);
-          document.body.style.overflow = "auto";
-        }}
-        onSuccess={async (
-          selectedTab,
-          styleType,
-          aspectRatio,
-          negativePrompt,
-          remixPrompt,
-          remixSimilarity,
-          uploadedImageUrl
-        ) => {
-          const selected_commands = [
-            { command: "styleType", value: styleType },
-            { command: "aspectRatio", value: aspectRatio },
-            { command: "negativePrompt", value: negativePrompt },
-            { command: "similarity", value: remixSimilarity },
-          ];
+      {isIdeogramModalOpen && (
+        <IdeogramModal
+          isOpen={isIdeogramModalOpen}
+          onClose={() => setIsIdeogramModalOpen(false)}
+          onSuccess={async (
+            selectedTab,
+            styleType,
+            aspectRatio,
+            negativePrompt,
+            remixPrompt,
+            remixSimilarity,
+            uploadedImageUrl
+          ) => {
+            const selected_commands = [
+              { command: "styleType", value: styleType },
+              { command: "aspectRatio", value: aspectRatio },
+              { command: "negativePrompt", value: negativePrompt },
+              { command: "similarity", value: remixSimilarity },
+            ];
 
-          document.body.style.overflow = "auto";
-          setPromptCommands(selected_commands);
-          setIsIdeogramModalOpen(false);
+            setPromptCommands(selected_commands);
+            setIsIdeogramModalOpen(false);
 
-          if (selectedTab == "remix") {
-            setIsGeneratingResponse(true);
+            if (selectedTab == "remix") {
+              setIsGeneratingResponse(true);
 
-            createMessageText(remixPrompt);
-            const image_response = await remixImage(
-              currentConversation,
-              remixPrompt,
-              uploadedImageUrl,
-              selected_commands,
-              selectedAgent?.id
-            );
+              createMessageText(remixPrompt);
+              const image_response = await remixImage(
+                currentConversation,
+                remixPrompt,
+                uploadedImageUrl,
+                selected_commands,
+                selectedAgent?.id
+              );
 
-            setImageResponse(image_response);
-          } else if (selectedTab == "describe") {
-            setIsGeneratingResponse(true);
-            const description = await describeImage(
-              currentConversation,
-              uploadedImageUrl,
-              selectedAgent?.id
-            );
-            const description_message = {
-              id: uuidv4(),
-              username: "LowContent AI",
-              text: description.response,
-              conversation_id: currentConversation,
-              complete: true,
-              title: "",
-              buttons: [],
-              ideogram_buttons: [],
-              messageId: "",
-              flags: 0,
-              prompt: "",
-            };
-            messageListener(description_message);
-          }
-        }}
-      />
+              setImageResponse(image_response);
+            } else if (selectedTab == "describe") {
+              setIsGeneratingResponse(true);
+              const description = await describeImage(
+                currentConversation,
+                uploadedImageUrl,
+                selectedAgent?.id
+              );
+              const description_message = {
+                id: uuidv4(),
+                username: "LowContent AI",
+                text: description.response,
+                conversation_id: currentConversation,
+                complete: true,
+                title: "",
+                buttons: [],
+                ideogram_buttons: [],
+                messageId: "",
+                flags: 0,
+                prompt: "",
+              };
+              messageListener(description_message);
+            }
+          }}
+        />
+      )}
 
       <ErrorModal
         isOpen={isErrorModalOpen}

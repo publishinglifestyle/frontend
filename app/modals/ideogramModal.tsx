@@ -89,18 +89,6 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
   const [activeTab, setActiveTab] = useState<string>("configuration");
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       setLanguage(browserLanguage);
@@ -120,9 +108,10 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
   };
 
   const handleTabChange = (key: Key) => {
-    const tabKey = key.toString();
+    const tabKey = key.toString(); // Convert Key to string for consistent logic
     setActiveTab(tabKey);
 
+    // Reset values when the tab changes
     if (tabKey === "configuration") {
       setStyleType("GENERAL");
       setAspectRatio("ASPECT_10_16");
@@ -130,32 +119,14 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
     } else if (tabKey === "remix") {
       setRemixPrompt("");
       setSelectedImage(null);
-      setUploadedImageUrl("");
-      setIsLoading(false);
     } else if (tabKey === "describe") {
       setSelectedImage(null);
-      setUploadedImageUrl("");
-      setIsLoading(false);
     }
 
     setSelectedTab(tabKey);
   };
 
-  const handleModalClose = () => {
-    console.log("Modal closing...");
-    setStyleType("AUTO");
-    setAspectRatio("ASPECT_10_16");
-    setNegativePrompt("");
-    setRemixPrompt("");
-    setRemixSimilarity(70);
-    setSelectedImage(null);
-    setUploadedImageUrl("");
-    setIsLoading(false); // Reset loading state
-    document.body.style.overflow = "auto"; // Restore scroll behavior
-    onClose(); // Call parent close handler
-  };
-
-  /*const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setSelectedImage(file);
@@ -186,40 +157,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
         }
       }
     }
-  };*/
-
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setSelectedImage(file);
-
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-
-      try {
-        setIsLoading(true);
-
-        const uploadedImageUrl = await uploadImage(file);
-        const description = await describeImage("", uploadedImageUrl, "", true);
-        setRemixPrompt(description.response);
-        setUploadedImageUrl(uploadedImageUrl);
-
-        setIsLoading(false);
-        setIsImageModalOpen(true);
-      } catch (error) {
-        setIsLoading(false);
-        const err = error as any;
-        setErrorMessage(err.response?.data || "Error processing the image.");
-        setIsErrorModalOpen(true);
-      }
-
-      // Ensure cleanup after the operation
-      return () => {
-        reader.abort();
-      };
-    }
   };
-
 
   const handleConfirm = () => {
     onSuccess(
@@ -244,12 +182,12 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
 
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={handleModalClose}
-      size="3xl"
       isDismissable={false}
       isKeyboardDismissDisabled={true}
+      isOpen={isOpen}
       scrollBehavior="inside"
+      size="3xl"
+      onClose={onClose}
     >
       <ModalContent>
         <ModalHeader className="modal-header justify-center">
@@ -348,8 +286,9 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                       fullWidth
                       type="number" // Set type to "number"
                       value={remixSimilarity.toString()} // Ensure the value is a string representation of the number
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setRemixSimilarity(Number(e.target.value)) // Parse input as a number
+                      onChange={
+                        (e: ChangeEvent<HTMLInputElement>) =>
+                          setRemixSimilarity(Number(e.target.value)) // Parse input as a number
                       }
                       size="sm"
                       radius="lg"
