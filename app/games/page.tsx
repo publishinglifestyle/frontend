@@ -8,6 +8,14 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 
 import ErrorModal from "@/app/modals/errorModal";
+import { getSubscription } from "@/managers/subscriptionManager";
+import { getUser } from "@/managers/userManager";
+import { useAuth } from "../auth-context";
+import SubscriptionModal from "../modals/subscriptionModal";
+import { abrilFatfaceFont } from "./fonts/abril_fatface";
+import { caveatVariableFont } from "./fonts/caveat_variable";
+import { dancingScriptFont } from "./fonts/dancing_script";
+import { shadowsIntoLightFont } from "./fonts/shadows_into_light";
 
 // Dynamically import the game components
 const Sudoku = dynamic(() => import("./sudoku"), {
@@ -22,14 +30,6 @@ const MineFinder = dynamic(() => import("./mineFinder"), { ssr: false });
 const DotsToDots = dynamic(() => import("./dots"), { ssr: false });
 
 // Custom Fonts
-import { getSubscription } from "@/managers/subscriptionManager";
-import { getUser } from "@/managers/userManager";
-import { useAuth } from "../auth-context";
-import SubscriptionModal from "../modals/subscriptionModal";
-import { abrilFatfaceFont } from "./fonts/abril_fatface";
-import { caveatVariableFont } from "./fonts/caveat_variable";
-import { dancingScriptFont } from "./fonts/dancing_script";
-import { shadowsIntoLightFont } from "./fonts/shadows_into_light";
 
 const games = [
   { id: "1", name: "Sudoku", component: Sudoku },
@@ -76,6 +76,8 @@ export default function GamesPage() {
   const [invertWords, setInvertWords] = useState<number>(0);
   const [isMazeAllowed, setIsMazeAllowed] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [crosswordGrids, setCrosswordGrids] = useState<number>(10);
+  const [wordSearchFontSize, setWordSearchFontSize] = useState<number>(8);
 
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
@@ -156,12 +158,17 @@ export default function GamesPage() {
             cross_words={crosswordWords.split(",")}
             clues={crosswordClues.split(",")}
             wordsPerPuzzle={wordsPerPuzzle}
+            crosswordGrids={crosswordGrids}
             {...commonProps}
           />
         );
       } else if (selectedGame === "3") {
         return (
-          <GameComponent words={wordSearchWords.split(",")} {...commonProps} />
+          <GameComponent
+            words={wordSearchWords.split(",")}
+            fontSize={wordSearchFontSize}
+            {...commonProps}
+          />
         );
       } else if (selectedGame === "4") {
         return (
@@ -299,21 +306,21 @@ export default function GamesPage() {
               selectedGame === "2" ||
               selectedGame === "3" ||
               selectedGame === "8") && (
-                <>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={10}
-                    step={1}
-                    isRequired={true}
-                    size="sm"
-                    label="Number of Puzzles to Generate"
-                    placeholder="Enter number of puzzles"
-                    onChange={(e) => setNumPuzzles(Number(e.target.value))}
-                    value={numPuzzles.toString()}
-                  />
-                </>
-              )}
+              <>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={1}
+                  isRequired={true}
+                  size="sm"
+                  label="Number of Puzzles to Generate"
+                  placeholder="Enter number of puzzles"
+                  onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                  value={numPuzzles.toString()}
+                />
+              </>
+            )}
 
             {/* Crossword specific input */}
             {selectedGame === "2" && numPuzzles > 1 && (
@@ -384,6 +391,19 @@ export default function GamesPage() {
                   onChange={(e) => setWordSearchWords(e.target.value)}
                   value={wordSearchWords}
                 />
+
+                <Input
+                  isRequired={true}
+                  size="sm"
+                  label="Font Size"
+                  placeholder="Enter font size"
+                  onChange={(e) =>
+                    setWordSearchFontSize(Number(e.target.value))
+                  }
+                  max={20}
+                  min={1}
+                  value={wordSearchFontSize?.toString() || ""}
+                />
                 {/* Inversion Option for Word Search */}
                 <Select
                   isRequired
@@ -420,6 +440,14 @@ export default function GamesPage() {
                   placeholder="Enter clues separated by commas"
                   onChange={(e) => setCrosswordClues(e.target.value)}
                   value={crosswordClues}
+                />
+                <Input
+                  size="sm"
+                  label="Number of grids"
+                  placeholder="Enter number of grids"
+                  type="number"
+                  onChange={(e) => setCrosswordGrids(Number(e.target.value))}
+                  value={crosswordGrids.toString()}
                 />
               </>
             )}
@@ -526,7 +554,7 @@ export default function GamesPage() {
         message={errorModalMessage}
       />
 
-      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
+      <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
     </>
   );
 }

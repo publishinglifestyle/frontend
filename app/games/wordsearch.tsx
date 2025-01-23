@@ -24,6 +24,7 @@ interface WordSearchProps {
   invert_words?: number;
   custom_name?: string;
   custom_solution_name?: string;
+  fontSize?: number;
 }
 
 export default function WordSearch({
@@ -35,6 +36,7 @@ export default function WordSearch({
   invert_words,
   custom_name,
   custom_solution_name,
+  fontSize = 8,
 }: WordSearchProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const margin = 10; // Margin for the page
@@ -59,6 +61,8 @@ export default function WordSearch({
     console.log(JSON.stringify(wordSearchData));
     const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
+
+    let fontSizeToUse = 8;
 
     wordSearchData.forEach((wordSearch, index) => {
       const { grid, words } = wordSearch;
@@ -85,6 +89,11 @@ export default function WordSearch({
       doc.setFontSize(20);
       doc.text(puzzleTitle, pageWidth / 2, margin + 10, { align: "center" });
 
+      fontSizeToUse =
+        fontSize && !isNaN(fontSize) && fontSize > 0
+          ? fontSize
+          : 8 * (adjustedCellSize / baseCellSize);
+
       // Draw the puzzle grid
       drawWordSearchGrid({
         doc,
@@ -93,6 +102,7 @@ export default function WordSearch({
         offsetY,
         cellSize: adjustedCellSize,
         showWords: false,
+        fontSize: fontSizeToUse,
       });
 
       // Draw the words to find below the grid, aligned to the left of the centered grid
@@ -130,6 +140,7 @@ export default function WordSearch({
           cellSize: adjustedCellSize,
           showWords: true,
           words,
+          fontSize: fontSizeToUse,
         });
       }
     });
@@ -184,6 +195,7 @@ export default function WordSearch({
             cellSize: adjustedSolutionCellSize,
             showWords: true,
             words: wordSearch.words,
+            fontSize: fontSizeToUse,
           });
         });
       }
@@ -201,6 +213,7 @@ export default function WordSearch({
     cellSize,
     showWords,
     words,
+    fontSize,
   }: {
     doc: jsPDF;
     grid: Cell[][];
@@ -208,6 +221,7 @@ export default function WordSearch({
     offsetY: number;
     cellSize: number;
     showWords: boolean;
+    fontSize: number;
     words?: Word[];
   }) => {
     const gridSize = grid.length;
@@ -257,7 +271,7 @@ export default function WordSearch({
 
           // Draw the letter inside the cell
           doc.setFont(font || "times", "bold");
-          doc.setFontSize(8 * (cellSize / baseCellSize)); // Adjust font size based on cell size
+          doc.setFontSize(fontSize); // Adjust font size based on cell size
           doc.text(letter, x + cellSize / 4, y);
         }
       }

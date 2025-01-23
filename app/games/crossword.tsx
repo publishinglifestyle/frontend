@@ -19,6 +19,7 @@ interface CrosswordProps {
   num_puzzles?: number;
   solutions_per_page?: number;
   is_sequential?: boolean;
+  crosswordGrids?: number;
 }
 
 export default function Crossword({
@@ -31,6 +32,7 @@ export default function Crossword({
   num_puzzles = 1,
   solutions_per_page = 1,
   is_sequential = true,
+  crosswordGrids = 10,
 }: CrosswordProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +98,7 @@ export default function Crossword({
       const letterFontSize = cellSize * 1.1;
 
       const drawGrid = (isSolution = false) => {
-        const maxRowOrCol = Math.max(rows, cols);
+        const maxRowOrCol = Math.max(rows, cols, crosswordGrids);
         for (let rowIndex = 0; rowIndex < maxRowOrCol; rowIndex++) {
           for (let colIndex = 0; colIndex < maxRowOrCol; colIndex++) {
             const x = gridOffsetX + colIndex * cellSize;
