@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 const frequencies = [
-  { key: "yearly", label: "Pay Yearly", priceSuffix: "year", discount: "Save 20%" },
+  { key: "yearly", label: "Pay Yearly", priceSuffix: "year", discount: "Save 16,6%" },
   { key: "monthly", label: "Pay Monthly", priceSuffix: "monthly" },
 ];
 
@@ -25,14 +25,14 @@ const tiers: Tier[] = [
   {
     key: "basic",
     title: "Basic",
-    price: { yearly: "€292.50", monthly: "€29.250" },
+    price: { yearly: "€390", monthly: "€39" },
     description_month: "40,000,000 credits per month",
     description_year: "480,000,000 credits per year",
   },
   {
     key: "pro",
     title: "Pro",
-    price: { yearly: "€367.50", monthly: "€36.75" },
+    price: { yearly: "€490", monthly: "€49" },
     description_month: "60,000,000 credits per month",
     description_year: "720,000,000 credits per year",
     mostPopular: true,
@@ -40,7 +40,7 @@ const tiers: Tier[] = [
   {
     key: "star",
     title: "Star",
-    price: { yearly: "€742.50", monthly: "€74.25" },
+    price: { yearly: "€990", monthly: "€99" },
     description_month: "110,000,000 credits per month",
     description_year: "1,320,000,000 credits per year",
   },
