@@ -25,6 +25,7 @@ import { Translations } from "../../translations.d";
 import { describeImage, uploadImage } from "@/managers/conversationsManager";
 
 interface IdeogramModalProps {
+  selectedAspectRatio: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (
@@ -62,6 +63,7 @@ const aspectRatios = [
 ];
 
 const IdeogramModal: React.FC<IdeogramModalProps> = ({
+  selectedAspectRatio,
   isOpen,
   onClose,
   onSuccess,
@@ -71,7 +73,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
 
   // States for form data
   const [styleType, setStyleType] = useState<string>("AUTO");
-  const [aspectRatio, setAspectRatio] = useState<string>("ASPECT_10_16");
+  const [aspectRatio, setAspectRatio] = useState<string>(selectedAspectRatio);
   const [negativePrompt, setNegativePrompt] = useState<string>("");
   const [remixPrompt, setRemixPrompt] = useState<string>("");
   const [remixSimilarity, setRemixSimilarity] = useState<number>(70);

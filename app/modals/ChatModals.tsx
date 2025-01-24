@@ -89,6 +89,7 @@ const ChatModals = ({
   messages,
   setMessages,
 }: ChatModals) => {
+  const [selectedAspectRatio, setSelectedAspectRatio] = React.useState("");
   const createMessageText = (text: string) => {
     const userMessageId = `${Date.now()}`;
     const userMessage = {
@@ -150,6 +151,7 @@ const ChatModals = ({
 
       {isIdeogramModalOpen && (
         <IdeogramModal
+          selectedAspectRatio={selectedAspectRatio}
           isOpen={isIdeogramModalOpen}
           onClose={() => setIsIdeogramModalOpen(false)}
           onSuccess={async (
@@ -168,6 +170,7 @@ const ChatModals = ({
               { command: "similarity", value: remixSimilarity },
             ];
 
+            setSelectedAspectRatio(aspectRatio);
             setPromptCommands(selected_commands);
             setIsIdeogramModalOpen(false);
 
