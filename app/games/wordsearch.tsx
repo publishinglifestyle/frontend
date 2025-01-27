@@ -112,18 +112,18 @@ export default function WordSearch({
       const wordsStartY = offsetY + gridSize * adjustedCellSize + 10;
       doc.setFontSize(10);
 
-      const wordsX = offsetX; // Align words to the left of the centered grid
-      const maxColumns = 3;
-      const wordsPerColumn = Math.ceil(words.length / maxColumns);
-      const columnWidth = (pageWidth - 2 * margin) / maxColumns;
+      const wordsPerLine = 3; // Number of words per line
+      const columnWidth = pageWidth / wordsPerLine; // Width of each column
 
       for (let i = 0; i < words.length; i++) {
-        const column = Math.floor(i / wordsPerColumn);
-        const row = i % wordsPerColumn;
-        const x = wordsX + column * columnWidth;
-        const y = wordsStartY + row * 5;
+        const columnCenterX =
+          (i % wordsPerLine) * columnWidth + columnWidth / 4; // Center of the current column
+        const y =
+          wordsStartY + Math.floor(i / wordsPerLine) * (fontSizeToUse + 2); // Adjusted Y spacing
 
-        doc.text(words[i].clean.toUpperCase(), x, y);
+        doc.text(words[i].clean.toUpperCase(), columnCenterX, y, {
+          align: "left",
+        });
       }
 
       if (num_puzzles === 1 || solutions_per_page === 1) {

@@ -98,9 +98,6 @@ export default function Crossword({
       const numberFontSize = cellSize * 0.7;
       const letterFontSize = cellSize * 1.1;
 
-      const paddedRows = Math.max(rows, crosswordGrids);
-      const paddedCols = Math.max(cols, crosswordGrids);
-
       const drawGrid = (isSolution = false) => {
         for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
           for (let colIndex = 0; colIndex < cols; colIndex++) {
@@ -121,6 +118,13 @@ export default function Crossword({
               return false;
             });
 
+            // Debugging: Log the cell and whether it contains a word
+            console.log(
+              `Cell (${rowIndex}, ${colIndex}): ${
+                wordInCell ? "Contains word" : "Empty"
+              }`
+            );
+
             // Set fill color based on whether the cell is part of a word
             if (wordInCell) {
               doc.setFillColor(255, 255, 255); // White for cells with text
@@ -136,6 +140,11 @@ export default function Crossword({
 
         for (const word of placedWords) {
           const { startx, starty, answer, orientation, position } = word;
+
+          // Debugging: Log the word being placed
+          console.log(
+            `Placing word: ${answer}, Start: (${startx}, ${starty}), Orientation: ${orientation}`
+          );
 
           for (let i = 0; i < answer.length; i++) {
             const colIndex = orientation === "across" ? startx + i : startx;
