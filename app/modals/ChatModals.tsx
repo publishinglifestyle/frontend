@@ -29,8 +29,10 @@ interface ChatModals {
   setIsImageModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isPromptModalOpen: boolean;
   setIsPromptModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isConversationNameModalOpen: boolean;
-  setIsConversationNameModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isConversationNameModalOpen: Conversation | null;
+  setIsConversationNameModalOpen: React.Dispatch<
+    React.SetStateAction<Conversation | null>
+  >;
   ideogramInitialPrompt: string;
   setIdeogramInitialPrompt: React.Dispatch<React.SetStateAction<string>>;
   ideogramImageUrl: string;
@@ -246,17 +248,21 @@ const ChatModals = ({
       />
 
       <ConversationNameModal
-        isOpen={isConversationNameModalOpen}
+        isOpen={Boolean(isConversationNameModalOpen)}
+        conversation={isConversationNameModalOpen}
         onClose={async (new_name) => {
           if (new_name) {
-            // Ensure new_name is not undefined
-            setIsConversationNameModalOpen(false);
+            setIsConversationNameModalOpen(null);
             setIsLoading(true);
-            await changeName(currentConversation, new_name, selectedAgent?.id);
+            await changeName(
+              isConversationNameModalOpen?.id,
+              new_name,
+              selectedAgent?.id
+            );
             setIsLoading(false);
             setConversations(
               conversations.map((conversation) => {
-                if (conversation.id === currentConversation) {
+                if (conversation.id === isConversationNameModalOpen?.id) {
                   return {
                     ...conversation,
                     name: new_name,
@@ -267,7 +273,7 @@ const ChatModals = ({
               })
             );
           } else {
-            setIsConversationNameModalOpen(false);
+            setIsConversationNameModalOpen(null);
           }
         }}
       />

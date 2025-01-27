@@ -71,7 +71,7 @@ function ChatPageContent() {
   const [conversations, setConversations] = useState<Array<Conversation>>([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [isConversationNameModalOpen, setIsConversationNameModalOpen] =
-    useState(false);
+    useState<null | Conversation>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [promptCommands, setPromptCommands] = useState<Command[]>([]);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");

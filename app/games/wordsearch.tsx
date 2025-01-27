@@ -39,8 +39,8 @@ export default function WordSearch({
   fontSize = 8,
 }: WordSearchProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const margin = 10; // Margin for the page
-  const baseCellSize = 6; // Base cell size for the letters inside the puzzle
+  const margin = 10;
+  const baseCellSize = 6;
 
   const handleGenerateWordSearch = async () => {
     setIsGenerating(true);

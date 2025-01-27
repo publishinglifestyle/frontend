@@ -23,7 +23,7 @@ interface ChatSidebarProps {
   conversations: Conversation[];
   currentConversation: string;
   setCurrentConversation: (id: string) => void;
-  setIsConversationNameModalOpen: Dispatch<SetStateAction<boolean>>;
+  setIsConversationNameModalOpen: Dispatch<SetStateAction<null | Conversation>>;
   setMessages: (messages: Message[]) => void;
   setConversations: Dispatch<SetStateAction<Conversation[]>>;
   setSelectedAgentId: (id: string) => void;
@@ -204,8 +204,8 @@ const ChatSidebar = ({
                         setIsLoading(false);
                       }}
                       handleDeleteConversation={handleDeleteConversation}
-                      handleEditConversation={(value) => {
-                        setIsConversationNameModalOpen(value);
+                      handleEditConversation={() => {
+                        setIsConversationNameModalOpen(item);
                       }}
                       item={item}
                     />
