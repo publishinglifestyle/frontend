@@ -46,7 +46,8 @@ export default function Crossword({
         cross_words,
         clues,
         wordsPerPuzzle,
-        num_puzzles
+        num_puzzles,
+        crosswordGrids
       );
 
       if (crosswordResponse) {
@@ -87,20 +88,22 @@ export default function Crossword({
       }
 
       const cellSize = Math.min(
-        (pageWidth - margin * 2) / cols,
-        (pageHeight / 2 - margin * 2) / rows
+        (pageWidth - margin * 2) / rows,
+        (pageHeight / 2 - margin * 2) / cols
       );
 
       const gridOffsetX = (pageWidth - cellSize * cols) / 2;
-      const gridOffsetY = margin + 20;
+      const gridOffsetY = (pageHeight / 2 - cellSize * rows) / 2 + margin;
 
       const numberFontSize = cellSize * 0.7;
       const letterFontSize = cellSize * 1.1;
 
+      const paddedRows = Math.max(rows, crosswordGrids);
+      const paddedCols = Math.max(cols, crosswordGrids);
+
       const drawGrid = (isSolution = false) => {
-        const maxRowOrCol = Math.max(rows, cols, crosswordGrids);
-        for (let rowIndex = 0; rowIndex < maxRowOrCol; rowIndex++) {
-          for (let colIndex = 0; colIndex < maxRowOrCol; colIndex++) {
+        for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
+          for (let colIndex = 0; colIndex < cols; colIndex++) {
             const x = gridOffsetX + colIndex * cellSize;
             const y = gridOffsetY + rowIndex * cellSize;
 

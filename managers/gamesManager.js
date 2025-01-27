@@ -11,9 +11,10 @@ export async function generateSudoku(difficulty, num_puzzles) {
     }
 }
 
-export async function generateCrossword(words, clues, words_per_puzzle, num_puzzles) {
+export async function generateCrossword(words, clues, words_per_puzzle, num_puzzles,grid_size) {
     const response = await axiosInstance.post(BACKEND_URLS.game.generateCrossword,
-        { words, clues, words_per_puzzle, num_puzzles });
+        { words, clues, words_per_puzzle, num_puzzles,grid_size });
+
 
     if (response) {
         return response.data;
@@ -29,10 +30,10 @@ export async function generateNurikabe(size) {
     }
 }
 
-export async function generateWordSearch(words, num_puzzles, backwards_probability) {
+export async function generateWordSearch(words, num_puzzles, backwards_probability,grid_size) {
 
     const response = await axiosInstance.post(BACKEND_URLS.game.generateWordSearch,
-        { words, num_puzzles, backwards_probability }, {
+        { words, num_puzzles, backwards_probability,grid_size }, {
     });
 
     if (response) {

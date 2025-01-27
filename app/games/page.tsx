@@ -78,7 +78,7 @@ export default function GamesPage() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [crosswordGrids, setCrosswordGrids] = useState<number>(10);
   const [wordSearchFontSize, setWordSearchFontSize] = useState<number>(8);
-
+  const [wordSearchGridSize, setWordSearchGridSize] = useState<number>(25);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
   const { isAuthenticated } = useAuth();
@@ -167,6 +167,7 @@ export default function GamesPage() {
           <GameComponent
             words={wordSearchWords.split(",")}
             fontSize={wordSearchFontSize}
+            grid_size={wordSearchGridSize}
             {...commonProps}
           />
         );
@@ -403,6 +404,18 @@ export default function GamesPage() {
                   max={20}
                   min={1}
                   value={wordSearchFontSize?.toString() || ""}
+                />
+                <Input
+                  isRequired={true}
+                  size="sm"
+                  label="Grid Size"
+                  placeholder="Enter grid size"
+                  onChange={(e) =>
+                    setWordSearchGridSize(Number(e.target.value))
+                  }
+                  max={20}
+                  min={1}
+                  value={wordSearchGridSize?.toString() || ""}
                 />
                 {/* Inversion Option for Word Search */}
                 <Select

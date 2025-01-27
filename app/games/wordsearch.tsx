@@ -25,6 +25,7 @@ interface WordSearchProps {
   custom_name?: string;
   custom_solution_name?: string;
   fontSize?: number;
+  grid_size?: number;
 }
 
 export default function WordSearch({
@@ -37,6 +38,7 @@ export default function WordSearch({
   custom_name,
   custom_solution_name,
   fontSize = 8,
+  grid_size = 25,
 }: WordSearchProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const margin = 10;
@@ -47,7 +49,8 @@ export default function WordSearch({
     const wordSearchResponses = await generateWordSearch(
       words,
       num_puzzles,
-      invert_words
+      invert_words,
+      grid_size
     );
 
     if (wordSearchResponses) {
