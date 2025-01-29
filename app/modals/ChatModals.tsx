@@ -153,6 +153,7 @@ const ChatModals = ({
 
       {isIdeogramModalOpen && (
         <IdeogramModal
+          agentId={selectedAgent?.id}
           selectedAspectRatio={selectedAspectRatio}
           isOpen={isIdeogramModalOpen}
           onClose={() => setIsIdeogramModalOpen(false)}

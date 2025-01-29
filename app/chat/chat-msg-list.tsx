@@ -261,8 +261,8 @@ const ChatMessageList = ({
                   key={message.id}
                   ref={index === messages.length - 1 ? lastMessageRef : null}
                   className={`mt-4 message flex ${message.username === Cookies.get("user_name")
-                      ? "justify-end"
-                      : "justify-start"
+                    ? "justify-end"
+                    : "justify-start"
                     }`}
                 >
                   <div

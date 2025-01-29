@@ -25,6 +25,7 @@ import { Translations } from "../../translations.d";
 import { describeImage, uploadImage } from "@/managers/conversationsManager";
 
 interface IdeogramModalProps {
+  agentId?: string;
   selectedAspectRatio: string;
   isOpen: boolean;
   onClose: () => void;
@@ -63,6 +64,7 @@ const aspectRatios = [
 ];
 
 const IdeogramModal: React.FC<IdeogramModalProps> = ({
+  agentId,
   selectedAspectRatio,
   isOpen,
   onClose,
@@ -73,7 +75,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
 
   // States for form data
   const [styleType, setStyleType] = useState<string>("AUTO");
-  const [aspectRatio, setAspectRatio] = useState<string>(selectedAspectRatio);
+  const [aspectRatio, setAspectRatio] = useState<string>(selectedAspectRatio ? selectedAspectRatio : "ASPECT_1_1");
   const [negativePrompt, setNegativePrompt] = useState<string>("");
   const [remixPrompt, setRemixPrompt] = useState<string>("");
   const [remixSimilarity, setRemixSimilarity] = useState<number>(70);
@@ -99,6 +101,11 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
     };
 
     detectLanguage();
+
+    if (agentId == "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5" || agentId == "10280eaa-370c-4456-a6f6-a182f3605d67" || agentId == "e2c5ee2c-3130-4603-85ab-e2a2f88d9470") {
+      let negative_prompt = (agentId == "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5") ? "No thin lines. No fine details. No intricate textures. No delicate strokes. No light or faint outlines. No shading. No complex patterns. No background elements. No realism. No soft edges." : "no details"
+      setNegativePrompt(negative_prompt)
+    }
   }, []);
 
   const handleStyleTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {

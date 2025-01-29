@@ -354,7 +354,7 @@ export default function AgentsPage() {
                             <Spacer y={8} />
                             <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-4">
                                 <Textarea
-                                    isRequired
+                                    //isRequired
                                     label="Prompt"
                                     value={agentPrompt}
                                     onChange={e => {

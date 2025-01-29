@@ -150,53 +150,58 @@ function ChatPageContent() {
   };
 
   function setImageResponse(image_response: any) {
-    if (
-      image_response.error ||
-      (image_response && image_response.image_ready)
-    ) {
-      const message = {
-        id: image_response.messageId,
-        username: "LowContent AI",
-        text: image_response.response,
-        conversation_id: currentConversation,
-        title: image_response.conversation_name,
-        complete: true,
-        buttons: [],
-        ideogram_buttons: image_response.ideogram_buttons || [],
-        messageId: "",
-        flags: 0,
-        prompt: image_response.prompt || "",
-      };
+    if (!image_response) return;
 
-      setMessages((prevMessages) => {
-        const existingMessageIndex = prevMessages.findIndex(
-          (m) => m.id === message.id
-        );
-        const updatedMessages = prevMessages.filter(
-          (m) => !m?.id?.startsWith("typing-")
-        );
+    setMessages((prevMessages) => {
+      const updatedMessages = prevMessages.filter(
+        (m) => !m?.id?.startsWith("typing-")
+      );
 
-        if (existingMessageIndex !== -1) {
-          updatedMessages[existingMessageIndex] = {
-            ...updatedMessages[existingMessageIndex],
-            text: updatedMessages[existingMessageIndex].text + message.text,
-            id: message.id,
-          };
+      if (Array.isArray(image_response)) {
+        // Handle multiple images (Ideogram case)
+        const newMessages = image_response.map((imgResponse) => ({
+          id: imgResponse.messageId,
+          username: "LowContent AI",
+          text: imgResponse.response, // Image URL
+          conversation_id: currentConversation,
+          title: imgResponse.conversation_name,
+          complete: true,
+          buttons: [],
+          ideogram_buttons: imgResponse.ideogram_buttons ?? [],
+          messageId: imgResponse.messageId,
+          flags: 0,
+          prompt: imgResponse.prompt || "",
+        }));
 
-          return updatedMessages;
-        } else {
-          return [...updatedMessages, message];
-        }
-      });
+        return [...updatedMessages, ...newMessages];
+      } else {
+        // Handle single-image responses (DALL-E, Midjourney, etc.)
+        const message = {
+          id: image_response.messageId,
+          username: "LowContent AI",
+          text: image_response.response,
+          conversation_id: currentConversation,
+          title: image_response.conversation_name,
+          complete: true,
+          buttons: [],
+          ideogram_buttons: image_response.ideogram_buttons || [],
+          messageId: "",
+          flags: 0,
+          prompt: image_response.prompt || "",
+        };
 
-      setIsGeneratingResponse(false);
-    }
+        return [...updatedMessages, message];
+      }
+    });
+
+    setIsGeneratingResponse(false); // Stop loading spinner
 
     if (image_response.error) {
       setErrorMessage(image_response.error);
       setIsErrorModalOpen(true);
     }
   }
+
 
   useEffect(() => {
     if (!pageLoadedRef.current) {
@@ -450,7 +455,7 @@ function ChatPageContent() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2 px-2 md:px-4 lg:px-8">
           <ChatSidebar
