@@ -113,7 +113,7 @@ function ChatPageContent() {
   };
 
   const messageListener = (message: Message) => {
-    setMessages((prevMessages) => {
+    setMessages((prevMessages): Message[] => {
       const existingMessageIndex = prevMessages.findIndex(
         (m) => m.id === message.id
       );
@@ -152,13 +152,13 @@ function ChatPageContent() {
   function setImageResponse(image_response: any) {
     if (!image_response) return;
 
-    setMessages((prevMessages) => {
-      const updatedMessages = prevMessages.filter(
-        (m) => !m?.id?.startsWith("typing-")
-      );
+    if (Array.isArray(image_response)) {
+      // Handle multiple images (Ideogram case)
+      setMessages((prevMessages) => {
+        const updatedMessages = prevMessages.filter(
+          (m) => !m?.id?.startsWith("typing-")
+        );
 
-      if (Array.isArray(image_response)) {
-        // Handle multiple images (Ideogram case)
         const newMessages = image_response.map((imgResponse) => ({
           id: imgResponse.messageId,
           username: "LowContent AI",
@@ -174,34 +174,56 @@ function ChatPageContent() {
         }));
 
         return [...updatedMessages, ...newMessages];
-      } else {
-        // Handle single-image responses (DALL-E, Midjourney, etc.)
-        const message = {
-          id: image_response.messageId,
-          username: "LowContent AI",
-          text: image_response.response,
-          conversation_id: currentConversation,
-          title: image_response.conversation_name,
-          complete: true,
-          buttons: [],
-          ideogram_buttons: image_response.ideogram_buttons || [],
-          messageId: "",
-          flags: 0,
-          prompt: image_response.prompt || "",
-        };
+      });
 
-        return [...updatedMessages, message];
-      }
-    });
+      setIsGeneratingResponse(false);
+      return;
+    }
 
-    setIsGeneratingResponse(false); // Stop loading spinner
+    if (image_response.error || image_response.image_ready) {
+      // Handle single image response (DALL-E, Midjourney, etc.)
+      const message = {
+        id: image_response.messageId,
+        username: "LowContent AI",
+        text: image_response.response,
+        conversation_id: currentConversation,
+        title: image_response.conversation_name,
+        complete: true,
+        buttons: [],
+        ideogram_buttons: image_response.ideogram_buttons || [],
+        messageId: "",
+        flags: 0,
+        prompt: image_response.prompt || "",
+      };
+
+      setMessages((prevMessages) => {
+        const existingMessageIndex = prevMessages.findIndex(
+          (m) => m.id === message.id
+        );
+        const updatedMessages = prevMessages.filter(
+          (m) => !m?.id?.startsWith("typing-")
+        );
+
+        if (existingMessageIndex !== -1) {
+          updatedMessages[existingMessageIndex] = {
+            ...updatedMessages[existingMessageIndex],
+            text: updatedMessages[existingMessageIndex].text + message.text,
+            id: message.id,
+          };
+          return updatedMessages;
+        } else {
+          return [...updatedMessages, message];
+        }
+      });
+
+      setIsGeneratingResponse(false);
+    }
 
     if (image_response.error) {
       setErrorMessage(image_response.error);
       setIsErrorModalOpen(true);
     }
   }
-
 
   useEffect(() => {
     if (!pageLoadedRef.current) {
