@@ -9,6 +9,7 @@ import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
 interface CommandsModalProps {
+    agentId: string;
     isOpen: boolean;
     onClose: () => void;
     onSuccess: (selectedCommands: Array<{ command: string, value: string }>) => void;
@@ -92,7 +93,7 @@ const commands = [
     }
 ];
 
-const CommandsModal: React.FC<CommandsModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const CommandsModal: React.FC<CommandsModalProps> = ({ agentId, isOpen, onClose, onSuccess }) => {
     const [language, setLanguage] = useState('');
     const [translations, setTranslations] = useState<Translations | null>(null);
     const [selectedCommands, setSelectedCommands] = useState<{ [key: string]: boolean }>({});
@@ -108,6 +109,22 @@ const CommandsModal: React.FC<CommandsModalProps> = ({ isOpen, onClose, onSucces
 
         detectLanguage();
     }, []);
+
+    useEffect(() => {
+        if (agentId === "041acc6b-18df-4567-91f0-0f3684e1188c") {
+            setSelectedCommands(prev => ({
+                ...prev,
+                '--aspect': true,
+                '--style': true,
+            }));
+            setCommandValues(prev => ({
+                ...prev,
+                '--aspect': '4:3',
+                '--style': 'raw',
+            }));
+        }
+    }, [agentId]);
+
 
     const handleCheckboxChange = (commandValue: string) => {
         setSelectedCommands(prevState => ({

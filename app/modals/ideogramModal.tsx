@@ -102,10 +102,11 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
 
     detectLanguage();
 
-    if (agentId == "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5" || agentId == "10280eaa-370c-4456-a6f6-a182f3605d67" || agentId == "e2c5ee2c-3130-4603-85ab-e2a2f88d9470" || agentId == "73afdc60-c72f-458d-a5fa-af9ceeeeb761" || agentId == "35563d6e-da4c-4042-a793-ec68e1812dbe") {
+    if (agentId == "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5" || agentId == "10280eaa-370c-4456-a6f6-a182f3605d67" || agentId == "e2c5ee2c-3130-4603-85ab-e2a2f88d9470" || agentId == "73afdc60-c72f-458d-a5fa-af9ceeeeb761" || agentId == "35563d6e-da4c-4042-a793-ec68e1812dbe" || agentId == "644d46a0-33eb-4c37-ab04-d58fd3d5ea6b" || agentId == "6eabf9e5-79b3-4aff-9325-52d4305f95f5") {
       let negative_prompt = (agentId == "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5") ? "No thin lines. No fine details. No intricate textures. No delicate strokes. No light or faint outlines. No shading. No complex patterns. No background elements. No realism. No soft edges." : "no details"
       setNegativePrompt(negative_prompt)
     }
+
   }, []);
 
   const handleStyleTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {

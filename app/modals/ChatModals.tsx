@@ -143,6 +143,7 @@ const ChatModals = ({
       />
 
       <CommandsModal
+        agentId={selectedAgent?.id}
         isOpen={isCommandsModalOpen}
         onClose={() => setIsCommandsModalOpen(false)}
         onSuccess={(selected_commands) => {
