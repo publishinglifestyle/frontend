@@ -119,7 +119,7 @@ const CommandsModal: React.FC<CommandsModalProps> = ({ agentId, isOpen, onClose,
             }));
             setCommandValues(prev => ({
                 ...prev,
-                '--aspect': '4:3',
+                '--aspect': '3:4',
                 '--style': 'raw',
             }));
         }
