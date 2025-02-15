@@ -72,4 +72,7 @@ export interface Translations {
     edit_image: string;
     enter_your_prompt_here: string;
     edit_prompt: string;
+    selectNumberOfPictures: string;
+    numberOfPictures: string;
+    select: string;
 }

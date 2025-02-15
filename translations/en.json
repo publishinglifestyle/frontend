@@ -72,5 +72,8 @@
     "credits_purchased": "Credits purchased successfully",
     "edit_image": "Edit Image",
     "enter_your_prompt_here": "Enter your prompt here",
-    "edit_prompt": "Edit Prompt"
+    "edit_prompt": "Edit Prompt",
+    "selectNumberOfPictures": "Select number of pictures",
+    "numberOfPictures": "Number of pictures",
+    "select": "Select"
 }

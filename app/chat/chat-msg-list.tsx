@@ -34,6 +34,7 @@ import {
   upscaleImage,
 } from "@/managers/conversationsManager";
 import { getAgent } from "@/managers/agentsManager";
+import PictureGenerationModal from "../modals/pictureGenerationModal";
 
 interface ChatMessageListProps {
   agents: Agent[];
@@ -102,8 +103,8 @@ const ChatMessageList = ({
   const isSocketConnected = false;
   const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
-  const [isGeneratingImageDescription, setIsGeneratingImageDescription] =
-    useState(false);
+  const [isGeneratingImageDescription, setIsGeneratingImageDescription] = useState(false);
+  const [isPictureGenerationModalOpen, setIsPictureGenerationModalOpen] = useState(false);
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -122,6 +123,20 @@ const ChatMessageList = ({
     }
   };
 
+  const handleSendMessage = async () => {
+    if (selectedAgent?.model === "ideogram") {
+      setIsPictureGenerationModalOpen(true);
+    } else {
+      sendChatMessage(messageText, false, "", true, promptCommands, 0, "", 1);
+    }
+  };
+
+  const handleConfirmNumberOfPictures = (numberOfPictures: number) => {
+    console.log(`User selected ${numberOfPictures} pictures to generate`);
+    sendChatMessage(messageText, false, "", true, promptCommands, 0, "", numberOfPictures);
+    setIsPictureGenerationModalOpen(false);
+  };
+
   const sendChatMessage = async (
     text = messageText,
     isButtonPressed: boolean,
@@ -129,7 +144,8 @@ const ChatMessageList = ({
     save_user_prompt: boolean,
     commands = promptCommands,
     flags: number,
-    customId: string
+    customId: string,
+    n_images: number
   ) => {
     if (text.trim()) {
       if (!isSocketConnected) {
@@ -187,7 +203,8 @@ const ChatMessageList = ({
             currentConversation,
             save_user_prompt,
             commands,
-            socket?.id
+            socket?.id,
+            n_images
           );
         }
 
@@ -328,7 +345,8 @@ const ChatMessageList = ({
                                       true,
                                       promptCommands,
                                       message.flags,
-                                      button.custom
+                                      button.custom,
+                                      1
                                     );
                                   }}
                                 >
@@ -459,7 +477,8 @@ const ChatMessageList = ({
                       false,
                       promptCommands,
                       0,
-                      ""
+                      "",
+                      1
                     );
                   }}
                 >
@@ -487,15 +506,17 @@ const ChatMessageList = ({
                 onKeyDown={async (e) => {
                   if (e.key === "Enter" && !e.shiftKey && messageText) {
                     e.preventDefault();
-                    sendChatMessage(
+                    /*sendChatMessage(
                       messageText,
                       false,
                       "",
                       true,
                       promptCommands,
                       0,
-                      ""
-                    );
+                      "",
+                      1
+                    );*/
+                    handleSendMessage();
                   }
                 }}
               />
@@ -575,7 +596,8 @@ const ChatMessageList = ({
                 style={{ color: "white" }}
                 onClick={async (e) => {
                   e.preventDefault();
-                  sendChatMessage(
+                  handleSendMessage();
+                  /*sendChatMessage(
                     messageText,
                     false,
                     "",
@@ -583,7 +605,7 @@ const ChatMessageList = ({
                     promptCommands,
                     0,
                     ""
-                  );
+                  );*/
                 }}
               >
                 {translations?.send}
@@ -612,6 +634,13 @@ const ChatMessageList = ({
           </div>
         </CardFooter>
       </Card>
+
+      <PictureGenerationModal
+        isOpen={isPictureGenerationModalOpen}
+        onClose={() => setIsPictureGenerationModalOpen(false)}
+        onConfirm={handleConfirmNumberOfPictures}
+      />
+
     </div>
   );
 };

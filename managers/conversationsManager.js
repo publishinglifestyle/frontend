@@ -34,9 +34,9 @@ export async function deleteConversation(conversation_id) {
     }
 }
 
-export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id) {
+export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images) {
     const response = await axiosInstance.post(BACKEND_URLS.imageGen.generateImage,
-        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id })
+        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images })
 
     if (response) {
         return response.data;
@@ -62,9 +62,9 @@ export async function upscaleImage(conversation_id, image_url, prompt) {
     }
 }
 
-export async function describeImage(conversation_id, image_url, agent_id,no_append=false) {
+export async function describeImage(conversation_id, image_url, agent_id, no_append = false) {
     const response = await axiosInstance.post(BACKEND_URLS.imageGen.describeIdiogram,
-        { conversation_id, image_url, agent_id,no_append })
+        { conversation_id, image_url, agent_id, no_append })
 
     if (response) {
         return response.data;

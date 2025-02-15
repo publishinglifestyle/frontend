@@ -72,5 +72,8 @@
     "credits_purchased": "Crediti acquistati con success",
     "edit_image": "Modifica immagine",
     "enter_your_prompt_here": "Inserisci il tuo prompt qui",
-    "edit_prompt": "Modifica prompt"
+    "edit_prompt": "Modifica prompt",
+    "selectNumberOfPictures": "Seleziona il numero di immagini",
+    "numberOfPictures": "Numero di immagini",
+    "select": "Seleziona"
 }
