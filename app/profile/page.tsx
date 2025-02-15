@@ -379,7 +379,8 @@ export default function ProfilePage() {
                       setIsLoading(true);
                       const url = await getPortal();
                       if (url) {
-                        window.open(url, "_blank");
+                        //window.open(url, "_blank");
+                        window.location.href = url;
                       }
                       setIsLoading(false);
                     }}
