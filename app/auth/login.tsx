@@ -203,7 +203,8 @@ const Login: React.FC<LoginProps> = ({
               onPress={() => {
                 googleLogin();
               }}
-              startContent={<FaGoogle className="text-red-500" />}
+              startContent={FaGoogle({ className: "text-red-500" })}
+
             >
               Continue with Google
             </Button>

@@ -330,9 +330,9 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                   onPress={() => setStep(2)}
                   isDisabled={Boolean(
                     !validateEmail(email) ||
-                      !validatePassword(password) ||
-                      !validatePassword(password_2) ||
-                      password !== password_2
+                    !validatePassword(password) ||
+                    !validatePassword(password_2) ||
+                    password !== password_2
                   )}
                 >
                   {translations?.next}
@@ -348,7 +348,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                   onPress={() => {
                     googleLogin();
                   }}
-                  startContent={<FaGoogle className="text-red-500" />}
+                  startContent={FaGoogle({ className: "text-red-500" })}
                 >
                   Continue with Google
                 </Button>
