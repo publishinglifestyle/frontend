@@ -7,8 +7,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-} from "@nextui-org/modal";
-import { Button, Input } from "@nextui-org/react";
+} from "@heroui/modal";
+import { Button, Input } from "@heroui/react";
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 

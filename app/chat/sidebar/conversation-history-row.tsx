@@ -1,5 +1,5 @@
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { Conversation } from "@/types/chat.types";
 
@@ -30,8 +30,7 @@ const SingleConversationRow = ({
           <Button
             color="danger"
             variant="light"
-            onClick={async (e) => {
-              e.preventDefault();
+            onPress={async () => {
               handleDeleteConversation(item.id);
             }}
           >
@@ -41,7 +40,7 @@ const SingleConversationRow = ({
             className="-ml-8"
             color="secondary"
             variant="light"
-            onClick={() => {
+            onPress={() => {
               handleEditConversation(true);
             }}
           >

@@ -11,13 +11,13 @@ import {
   updateProfile,
   uploadProfilePic,
 } from "@/managers/userManager";
-import { Button } from "@nextui-org/button";
-import { Card, CardBody, CardFooter, CardHeader } from "@nextui-org/card";
-import { Divider } from "@nextui-org/divider";
-import { Image } from "@nextui-org/image";
-import { Input } from "@nextui-org/input";
-import { Spacer } from "@nextui-org/spacer";
-import { Spinner } from "@nextui-org/spinner";
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Image } from "@heroui/image";
+import { Input } from "@heroui/input";
+import { Spacer } from "@heroui/spacer";
+import { Spinner } from "@heroui/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth-context";
@@ -223,7 +223,7 @@ export default function ProfilePage() {
                 variant="light"
                 color="primary"
                 size="sm"
-                onClick={() => setIsEdit(true)}
+                onPress={() => setIsEdit(true)}
               >
                 <PencilSquareIcon style={{ width: "70%", color: "#9353D3" }} />
               </Button>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
                   style={{ width: "150px" }}
                   radius="lg"
                   size="md"
-                  onClick={handleCancel}
+                  onPress={handleCancel}
                 >
                   {translations?.cancel}
                 </Button>
@@ -331,7 +331,7 @@ export default function ProfilePage() {
                   style={{ color: "white", width: "150px" }}
                   radius="lg"
                   size="md"
-                  onClick={async () => await updateUserProfile()}
+                  onPress={async () => await updateUserProfile()}
                 >
                   {translations?.update}
                 </Button>
@@ -375,7 +375,7 @@ export default function ProfilePage() {
                   <Button
                     color="secondary"
                     style={{ color: "white" }}
-                    onClick={async () => {
+                    onPress={async () => {
                       setIsLoading(true);
                       const url = await getPortal();
                       if (url) {
@@ -390,7 +390,7 @@ export default function ProfilePage() {
                   <Button
                     color="secondary"
                     variant="ghost"
-                    onClick={async () => {
+                    onPress={async () => {
                       setIsCreditsModalOpen(true);
                     }}
                   >
@@ -401,7 +401,7 @@ export default function ProfilePage() {
                 <Button
                   color="secondary"
                   style={{ color: "white" }}
-                  onClick={async () => {
+                  onPress={async () => {
                     setIsSubscriptionModalOpen(true);
                   }}
                 >
@@ -425,7 +425,7 @@ export default function ProfilePage() {
                 variant="light"
                 color="primary"
                 size="sm"
-                onClick={() => setIsModalOpen(true)}
+                onPress={() => setIsModalOpen(true)}
               >
                 <PencilSquareIcon style={{ width: "70%", color: "#9353D3" }} />
               </Button>

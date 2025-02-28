@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { NextUIProvider } from "@nextui-org/system";
+import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProviderProps } from "next-themes/dist/types";
@@ -76,7 +76,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   }, []);
 
   return (
-    <NextUIProvider navigate={router.push}>
+    <HeroUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <AuthProvider>
           <GoogleOAuthProvider clientId="385572472945-folnm365fm1gr3nooesejvc7ceh16s5i.apps.googleusercontent.com">
@@ -84,6 +84,6 @@ export function Providers({ children, themeProps }: ProvidersProps) {
           </GoogleOAuthProvider>
         </AuthProvider>
       </NextThemesProvider>
-    </NextUIProvider>
+    </HeroUIProvider>
   );
 }

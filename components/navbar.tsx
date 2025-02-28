@@ -1,13 +1,13 @@
 "use client";
 
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-} from "@nextui-org/dropdown";
-import { Link } from "@nextui-org/link";
+} from "@heroui/dropdown";
+import { Link } from "@heroui/link";
 import {
   NavbarBrand,
   NavbarContent,
@@ -16,9 +16,9 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
   Navbar as NextUINavbar,
-} from "@nextui-org/navbar";
-import { Spacer } from "@nextui-org/spacer";
-import { User } from "@nextui-org/user";
+} from "@heroui/navbar";
+import { Spacer } from "@heroui/spacer";
+import { User } from "@heroui/user";
 import NextLink from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -126,36 +126,33 @@ export const Navbar = () => {
               isAuthenticatedClient &&
               ((userRole == "user" && item.allow_user) || userRole != "user"
                 ? (!item.language || item.language == language) && (
-                  <NavbarItem key={item.href}>
-                    <NextLink
-                      style={{
-                        color:
-                          currentPage === item.value.toLowerCase()
-                            ? "#9353D3"
-                            : "white",
-                      }}
-                      href={item.href}
-                      // Correct condition for internal and external links
-                      target={
-                        item.value === "feedback" || item.value === "help"
-                          ? "_blank"
-                          : undefined
-                      }
-                    >
-                      {item.label}
-                    </NextLink>
-                  </NavbarItem>
-                )
+                    <NavbarItem key={item.href}>
+                      <NextLink
+                        style={{
+                          color:
+                            currentPage === item.value.toLowerCase()
+                              ? "#9353D3"
+                              : "white",
+                        }}
+                        href={item.href}
+                        // Correct condition for internal and external links
+                        target={
+                          item.value === "feedback" || item.value === "help"
+                            ? "_blank"
+                            : undefined
+                        }
+                      >
+                        {item.label}
+                      </NextLink>
+                    </NavbarItem>
+                  )
                 : null)
             );
           })}
         </ul>
       </NavbarContent>
 
-      <NavbarContent
-        className="hidden lg:flex max-w-fit"
-        justify="end"
-      >
+      <NavbarContent className="hidden lg:flex max-w-fit" justify="end">
         <NavbarItem className="hidden lg:flex">
           {name && (
             <Dropdown placement="bottom-start">
@@ -176,11 +173,11 @@ export const Navbar = () => {
               <DropdownMenu aria-label="User Actions" variant="flat">
                 <DropdownItem
                   key="profile"
-                  onClick={() => router.push("/profile")}
+                  onPress={() => router.push("/profile")}
                 >
                   {translations?.my_profile}
                 </DropdownItem>
-                <DropdownItem key="logout" color="danger" onClick={signoutUser}>
+                <DropdownItem key="logout" color="danger" onPress={signoutUser}>
                   Log Out
                 </DropdownItem>
               </DropdownMenu>
@@ -234,7 +231,7 @@ export const Navbar = () => {
             </NextLink>
           </NavbarMenuItem>
           <NavbarMenuItem key="logout">
-            <Link color="danger" href="#" size="lg" onClick={logout}>
+            <Link color="danger" href="#" size="lg" onPress={logout}>
               Logout
             </Link>
           </NavbarMenuItem>

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@nextui-org/button";
 import { generateWordSearch } from "@/managers/gamesManager";
+import { Button } from "@heroui/button";
 import jsPDF from "jspdf";
+import { useState } from "react";
 
 interface Word {
   clean: string;
@@ -286,7 +286,7 @@ export default function WordSearch({
       <Button
         isDisabled={!words || words[0] === "" || isGenerating}
         color="secondary"
-        onClick={handleGenerateWordSearch}
+        onPress={handleGenerateWordSearch}
       >
         {isGenerating ? "Generating..." : "Generate Word Search PDF"}
       </Button>

@@ -7,9 +7,9 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-} from "@nextui-org/modal";
-import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
+} from "@heroui/modal";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 import { Conversation } from "@/types/chat.types";

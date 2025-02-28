@@ -374,6 +374,7 @@ function ChatPageContent() {
     if (!pageLoadedRef.current || !user?.id) return;
 
     let browserLanguage = "";
+
     const detectLanguage = async () => {
       browserLanguage = navigator.language;
       browserLanguage = browserLanguage.slice(0, 2);
@@ -477,7 +478,7 @@ function ChatPageContent() {
           Start a Conversation and Create Low-Content Books with AI
         </h2>
 
-        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => { }} />
+        <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />
 
         <div className="flex flex-col md:flex-row justify-between gap-2 px-2 md:px-4 lg:px-8">
           <ChatSidebar

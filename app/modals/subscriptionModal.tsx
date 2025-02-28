@@ -1,15 +1,15 @@
 "use client";
 
-import { Button } from "@nextui-org/button";
-import { Card, CardHeader } from "@nextui-org/card";
+import { Button } from "@heroui/button";
+import { Card, CardHeader } from "@heroui/card";
 import {
   Modal,
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from "@nextui-org/modal";
-import { Switch } from "@nextui-org/switch";
+} from "@heroui/modal";
+import { Switch } from "@heroui/switch";
 import Cookie from "js-cookie";
 import React, { useEffect, useState } from "react";
 import { getTranslations } from "../../managers/languageManager";

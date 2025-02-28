@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardBody, CardFooter, CardHeader } from "@nextui-org/card";
-import { Input } from "@nextui-org/input";
-import { Select, SelectItem } from "@nextui-org/select";
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
+import { Input } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
 import jsPDF from "jspdf";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -252,9 +252,7 @@ export default function GamesPage() {
               }}
             >
               {games.map((game) => (
-                <SelectItem key={game.id} value={game.id}>
-                  {game.name}
-                </SelectItem>
+                <SelectItem key={game.id}>{game.name}</SelectItem>
               ))}
             </Select>
 
@@ -269,12 +267,8 @@ export default function GamesPage() {
                   setIsSequential(e.target.value === "sequential")
                 }
               >
-                <SelectItem key="sequential" value="sequential">
-                  Sequential Name
-                </SelectItem>
-                <SelectItem key="custom" value="custom">
-                  Custom Name
-                </SelectItem>
+                <SelectItem key="sequential">Sequential Name</SelectItem>
+                <SelectItem key="custom">Custom Name</SelectItem>
               </Select>
             )}
 
@@ -351,9 +345,7 @@ export default function GamesPage() {
                   value={selectedDifficulty}
                 >
                   {sudoku_difficulty.map((difficulty) => (
-                    <SelectItem key={difficulty} value={difficulty}>
-                      {difficulty}
-                    </SelectItem>
+                    <SelectItem key={difficulty}>{difficulty}</SelectItem>
                   ))}
                 </Select>
               </>
@@ -374,9 +366,7 @@ export default function GamesPage() {
                   value={solutionsPerPage.toString()}
                 >
                   {[1, 2, 3, 4].map((option) => (
-                    <SelectItem key={option} value={option.toString()}>
-                      {option.toString()}
-                    </SelectItem>
+                    <SelectItem key={option}>{option.toString()}</SelectItem>
                   ))}
                 </Select>
               )}
@@ -426,12 +416,8 @@ export default function GamesPage() {
                   onChange={(e) => setInvertWords(Number(e.target.value))}
                   value={invertWords.toString()}
                 >
-                  <SelectItem key="0" value="0">
-                    No
-                  </SelectItem>
-                  <SelectItem key="0.5" value="0.5">
-                    Yes
-                  </SelectItem>
+                  <SelectItem key="0">No</SelectItem>
+                  <SelectItem key="0.5">Yes</SelectItem>
                 </Select>
               </>
             )}
@@ -551,9 +537,7 @@ export default function GamesPage() {
                 value={selectedFont}
               >
                 {fonts.map((font) => (
-                  <SelectItem key={font} value={font}>
-                    {font}
-                  </SelectItem>
+                  <SelectItem key={font}>{font}</SelectItem>
                 ))}
               </Select>
             )}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
-import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
-import { Checkbox } from "@nextui-org/checkbox";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { Checkbox } from "@heroui/checkbox";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 

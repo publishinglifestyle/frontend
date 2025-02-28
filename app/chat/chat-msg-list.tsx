@@ -2,8 +2,9 @@ import {
   PaperClipIcon,
   StopIcon,
   ClipboardIcon,
+  MicrophoneIcon
 } from "@heroicons/react/24/outline";
-import { Card, CardBody, CardFooter } from "@nextui-org/card";
+import { Card, CardBody, CardFooter } from "@heroui/card";
 import {
   Avatar,
   Button,
@@ -11,17 +12,12 @@ import {
   SelectItem,
   Spacer,
   Textarea,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import Cookies from "js-cookie";
-import React, {
-  Dispatch,
-  SetStateAction,
-  useRef,
-  useState,
-} from "react";
+import React, { Dispatch, SetStateAction, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
-import { useClipboard } from "@nextui-org/use-clipboard";
+import { useClipboard } from "@heroui/use-clipboard";
 
 import { useAuth } from "../auth-context";
 
@@ -33,6 +29,7 @@ import {
   sendAction,
   upscaleImage,
 } from "@/managers/conversationsManager";
+import { transcribeAudio } from "@/managers/audioManager";
 import { getAgent } from "@/managers/agentsManager";
 import PictureGenerationModal from "../modals/pictureGenerationModal";
 
@@ -103,8 +100,56 @@ const ChatMessageList = ({
   const isSocketConnected = false;
   const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
-  const [isGeneratingImageDescription, setIsGeneratingImageDescription] = useState(false);
-  const [isPictureGenerationModalOpen, setIsPictureGenerationModalOpen] = useState(false);
+  const [isGeneratingImageDescription, setIsGeneratingImageDescription] =
+    useState(false);
+  const [isPictureGenerationModalOpen, setIsPictureGenerationModalOpen] =
+    useState(false);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("audio", audioBlob, "recording.webm");
+
+        try {
+          const data = await transcribeAudio(formData);
+          setMessageText(data.text);
+          handleSendMessage(data.text);
+        } catch (err) {
+          console.error("Error transcribing audio:", err);
+        }
+        audioChunksRef.current = [];
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -123,17 +168,25 @@ const ChatMessageList = ({
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (text: string) => {
     if (selectedAgent?.model === "ideogram") {
       setIsPictureGenerationModalOpen(true);
     } else {
-      sendChatMessage(messageText, false, "", true, promptCommands, 0, "", 1);
+      sendChatMessage(text, false, "", true, promptCommands, 0, "", 1);
     }
   };
 
   const handleConfirmNumberOfPictures = (numberOfPictures: number) => {
-    console.log(`User selected ${numberOfPictures} pictures to generate`);
-    sendChatMessage(messageText, false, "", true, promptCommands, 0, "", numberOfPictures);
+    sendChatMessage(
+      messageText,
+      false,
+      "",
+      true,
+      promptCommands,
+      0,
+      "",
+      numberOfPictures
+    );
     setIsPictureGenerationModalOpen(false);
   };
 
@@ -277,10 +330,11 @@ const ChatMessageList = ({
                 <div
                   key={message.id}
                   ref={index === messages.length - 1 ? lastMessageRef : null}
-                  className={`mt-4 message flex ${message.username === Cookies.get("user_name")
-                    ? "justify-end"
-                    : "justify-start"
-                    }`}
+                  className={`mt-4 message flex ${
+                    message.username === Cookies.get("user_name")
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
                 >
                   <div
                     className="flex items-start rounded-lg relative"
@@ -336,8 +390,7 @@ const ChatMessageList = ({
                                   className="w-full"
                                   color="secondary"
                                   size="sm"
-                                  onClick={(e) => {
-                                    e.preventDefault();
+                                  onPress={() => {
                                     sendChatMessage(
                                       button.label,
                                       true,
@@ -366,9 +419,7 @@ const ChatMessageList = ({
                                   color="secondary"
                                   isLoading={isGeneratingImageDescription}
                                   size="sm"
-                                  onClick={async (e) => {
-                                    e.preventDefault();
-
+                                  onPress={async () => {
                                     if (button == "Remix") {
                                       setIdeogramImageUrl(message.text);
                                       setIsGeneratingImageDescription(true);
@@ -442,7 +493,7 @@ const ChatMessageList = ({
                             className="absolute -top-2 -right-4"
                             radius="full"
                             size="sm"
-                            onClick={() => handleCopy(message.text)}
+                            onPress={() => handleCopy(message.text)}
                           >
                             {copied ? (
                               <span className="text-md">✔</span>
@@ -468,8 +519,7 @@ const ChatMessageList = ({
                   color="secondary"
                   size="sm"
                   variant="ghost"
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onPress={() => {
                     sendChatMessage(
                       agent_button.prompt,
                       false,
@@ -506,17 +556,7 @@ const ChatMessageList = ({
                 onKeyDown={async (e) => {
                   if (e.key === "Enter" && !e.shiftKey && messageText) {
                     e.preventDefault();
-                    /*sendChatMessage(
-                      messageText,
-                      false,
-                      "",
-                      true,
-                      promptCommands,
-                      0,
-                      "",
-                      1
-                    );*/
-                    handleSendMessage();
+                    handleSendMessage(messageText);
                   }
                 }}
               />
@@ -538,9 +578,7 @@ const ChatMessageList = ({
                   }}
                 >
                   {agents.map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id}>
-                      {agent.name}
-                    </SelectItem>
+                    <SelectItem key={agent.id}>{agent.name}</SelectItem>
                   ))}
                 </Select>
                 {selectedAgent?.model == "midjourney" && (
@@ -548,7 +586,7 @@ const ChatMessageList = ({
                     className="mt-2"
                     color={promptCommands.length > 0 ? "secondary" : "default"}
                     variant={promptCommands.length > 0 ? "ghost" : "flat"}
-                    onClick={() => setIsCommandsModalOpen(true)}
+                    onPress={() => setIsCommandsModalOpen(true)}
                   >
                     {translations?.commands}
                   </Button>
@@ -563,7 +601,7 @@ const ChatMessageList = ({
                         promptCommands.length > 0 ? "secondary" : "default"
                       }
                       variant={promptCommands.length > 0 ? "ghost" : "flat"}
-                      onClick={() => setIsIdeogramModalOpen(true)}
+                      onPress={() => setIsIdeogramModalOpen(true)}
                     >
                       {translations?.commands}
                     </Button>
@@ -572,7 +610,7 @@ const ChatMessageList = ({
                       className="mt-2"
                       color="secondary"
                       variant="ghost"
-                      onClick={() =>
+                      onPress={() =>
                         window.open(
                           "https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt",
                           "_blank"
@@ -596,23 +634,19 @@ const ChatMessageList = ({
                 style={{ color: "white" }}
                 onClick={async (e) => {
                   e.preventDefault();
-                  handleSendMessage();
-                  /*sendChatMessage(
-                    messageText,
-                    false,
-                    "",
-                    true,
-                    promptCommands,
-                    0,
-                    ""
-                  );*/
+                  handleSendMessage(messageText);
                 }}
               >
                 {translations?.send}
               </Button>
-              <Button size="sm" onClick={handleIconClick}>
+              <Button size="sm" onPress={handleIconClick}>
                 <PaperClipIcon height={20} width={20} />
               </Button>
+
+              <Button size="sm" onClick={isRecording ? handleStopRecording : handleStartRecording}>
+                <MicrophoneIcon height={20} width={20} className={isRecording ? "text-red-500" : ""} />
+              </Button>
+
               <input
                 ref={fileInputRef}
                 accept="image/*"
@@ -623,7 +657,7 @@ const ChatMessageList = ({
               <Button
                 isDisabled={!isGeneratingResponse}
                 size="sm"
-                onClick={async () => {
+                onPress={async () => {
                   setIsGeneratingResponse(false);
                   socket?.disconnect();
                 }}
@@ -640,7 +674,6 @@ const ChatMessageList = ({
         onClose={() => setIsPictureGenerationModalOpen(false)}
         onConfirm={handleConfirmNumberOfPictures}
       />
-
     </div>
   );
 };

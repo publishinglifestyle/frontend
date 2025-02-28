@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import jsPDF from "jspdf";
 
 import ErrorModal from "../modals/errorModal";
@@ -331,7 +331,7 @@ export default function Crossword({
       <Button
         color="secondary"
         isDisabled={!cross_words || cross_words.length === 0 || isGenerating}
-        onClick={handleGenerateCrossword}
+        onPress={handleGenerateCrossword}
       >
         {isGenerating ? "Generating..." : "Generate Crossword PDF"}
       </Button>

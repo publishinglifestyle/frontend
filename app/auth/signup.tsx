@@ -1,10 +1,10 @@
 "use client";
 
 import ErrorModal from "@/app/modals/errorModal";
-import { Button } from "@nextui-org/button";
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Input } from "@nextui-org/input";
-import { Spinner } from "@nextui-org/spinner";
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Input } from "@heroui/input";
+import { Spinner } from "@heroui/spinner";
 import Cookies from "js-cookie";
 import { useEffect, useMemo, useState } from "react";
 
@@ -33,7 +33,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const router = useRouter();
   const [language, setLanguage] = useState("");
   const [translations, setTranslations] = useState<Translations | null>(null);
-  const [affiliateId, setAffiliateId] = useState('');
+  const [affiliateId, setAffiliateId] = useState("");
 
   const { isAuthenticated: isAuthenticatedClient } = useAuth();
 
@@ -104,12 +104,14 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     script.onload = () => {
       if (window.PostAffTracker) {
         try {
-          window.PostAffTracker.setAccountId('default1');
+          window.PostAffTracker.setAccountId("default1");
           window.PostAffTracker.track();
-          const papCookie = window.PostAffTracker._getAccountId() + window.PostAffTracker._cmanager.getVisitorIdOrSaleCookieValue();
+          const papCookie =
+            window.PostAffTracker._getAccountId() +
+            window.PostAffTracker._cmanager.getVisitorIdOrSaleCookieValue();
 
           // Store papCookie in local storage
-          localStorage.setItem('affiliate_id', papCookie);
+          localStorage.setItem("affiliate_id", papCookie);
           setAffiliateId(papCookie);
         } catch (err) {
           console.error("Error capturing Post Affiliate Pro cookie:", err);
@@ -200,8 +202,8 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
 
       Cookies.set("authToken", token, { expires: 1 });
 
-      const affiliateId = localStorage.getItem('affiliate_id');
-      console.log('affiliateId', affiliateId);
+      const affiliateId = localStorage.getItem("affiliate_id");
+      console.log("affiliateId", affiliateId);
       const url = await startSubscription(token, price_id, affiliateId);
       window.location.href = url;
       // Add success modal logic if needed
@@ -325,12 +327,12 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                   style={{ color: "white" }}
                   radius="lg"
                   className="mt-12 mb-6"
-                  onClick={() => setStep(2)}
+                  onPress={() => setStep(2)}
                   isDisabled={Boolean(
                     !validateEmail(email) ||
-                    !validatePassword(password) ||
-                    !validatePassword(password_2) ||
-                    password !== password_2
+                      !validatePassword(password) ||
+                      !validatePassword(password_2) ||
+                      password !== password_2
                   )}
                 >
                   {translations?.next}
@@ -343,7 +345,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                     color: "black",
                   }}
                   className="rounded-lg mb-6"
-                  onClick={() => {
+                  onPress={() => {
                     googleLogin();
                   }}
                   startContent={<FaGoogle className="text-red-500" />}
@@ -384,7 +386,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
                   style={{ color: "white" }}
                   radius="lg"
                   className="mt-12 mb-6"
-                  onClick={() => setStep(3)}
+                  onPress={() => setStep(3)}
                   isDisabled={Boolean(firstName === "" || lastName === "")}
                 >
                   {translations?.next}

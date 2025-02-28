@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import {
   Table,
   TableBody,
@@ -7,7 +7,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
-} from "@nextui-org/table";
+} from "@heroui/table";
 
 import SingleConversationRow from "./conversation-history-row";
 
@@ -137,13 +137,12 @@ const ChatSidebar = ({
         color="secondary"
         isDisabled={!agents || agents.length === 0}
         size="sm"
-        onClick={async () => {
+        onPress={async () => {
           handleCreateNewMessage();
         }}
       >
         {translations?.new_conversation}
       </Button>
-
       <div style={{ flex: 1, overflowY: "auto" }}>
         <Table
           aria-label={translations?.conversations || ""}
@@ -160,11 +159,13 @@ const ChatSidebar = ({
               <TableRow key={item.id.toString()}>
                 {columns.map((column) => (
                   <TableCell key={column.key}>
+                    {column.name}
                     <SingleConversationRow
                       columnKey={column.key as keyof Conversation}
                       handleClick={async () => {
                         setIsLoading(true);
                         setCurrentConversation(item.id);
+
                         setSelectedAgentId("");
                         setSelectedAgent(undefined);
 
@@ -195,12 +196,17 @@ const ChatSidebar = ({
 
                           conversation_messages.push(conversation_message);
                         }
+
                         setMessages(
                           conversation_messages.map((message) => ({
                             ...message,
                           }))
                         );
-
+                        setSelectedAgentId(conversation?.agent_id);
+                        const s_agent = agents.find(
+                          (agent) => agent.id === conversation?.agent_id
+                        );
+                        setSelectedAgent(s_agent);
                         setIsLoading(false);
                       }}
                       handleDeleteConversation={handleDeleteConversation}

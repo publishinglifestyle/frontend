@@ -68,4 +68,7 @@ export const BACKEND_URLS = {
     getStripePortal: "/stripe/get-stripe-portal",
     purchaseCredits: "/stripe/purchase-credits",
   },
+  audio: {
+    transcribe: "/audio/transcribe",
+  }
 };

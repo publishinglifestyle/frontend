@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
-import { Button } from "@nextui-org/button";
-import { Tooltip } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
+import { Button } from "@heroui/button";
+import { Tooltip } from "@heroui/react";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 

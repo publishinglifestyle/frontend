@@ -1,10 +1,10 @@
 "use client";
 
 import ErrorModal from "@/app/modals/errorModal";
-import { Button } from "@nextui-org/button";
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Input } from "@nextui-org/input";
-import { Spinner } from "@nextui-org/spinner";
+import { Button } from "@heroui/button";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Input } from "@heroui/input";
+import { Spinner } from "@heroui/spinner";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { getTranslations } from "../../managers/languageManager";
@@ -144,8 +144,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidEmail == null
                   ? undefined
                   : isInvalidEmail
-                  ? "danger"
-                  : "success"
+                    ? "danger"
+                    : "success"
               }
             />
             <Input
@@ -167,8 +167,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidPassword == null
                   ? undefined
                   : isInvalidPassword
-                  ? "danger"
-                  : "success"
+                    ? "danger"
+                    : "success"
               }
             />
             <a
@@ -185,7 +185,7 @@ const Login: React.FC<LoginProps> = ({
               style={{ color: "white" }}
               radius="lg"
               className="mt-12 mb-4"
-              onClick={async () => await handleLogin()}
+              onPress={async () => await handleLogin()}
               isDisabled={Boolean(
                 !validateEmail(email) || !validatePassword(password)
               )}
@@ -200,7 +200,7 @@ const Login: React.FC<LoginProps> = ({
                 color: "black",
               }}
               className="rounded-lg mb-6"
-              onClick={() => {
+              onPress={() => {
                 googleLogin();
               }}
               startContent={<FaGoogle className="text-red-500" />}

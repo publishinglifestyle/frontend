@@ -1,6 +1,6 @@
-import { Button } from "@nextui-org/button";
-import { Card, CardHeader } from "@nextui-org/card";
-import { Switch } from "@nextui-org/switch";
+import { Button } from "@heroui/button";
+import { Card, CardHeader } from "@heroui/card";
+import { Switch } from "@heroui/switch";
 
 import { getTranslations } from "@/managers/languageManager";
 import { getSubscriptions } from "@/managers/subscriptionManager";
@@ -64,10 +64,11 @@ const SubscriptionOptions = ({
             isPressable
             isHoverable
             onPress={() => setSelectedSubscription(sub)}
-            className={`w-full md:w-1/3 mb-4 md:mb-0 ${selectedSubscription === sub
-              ? "border-4 border-purple-500 shadow-lg shadow-purple-500/50"
-              : ""
-              }`} // Full width on mobile, one-third width on desktop
+            className={`w-full md:w-1/3 mb-4 md:mb-0 ${
+              selectedSubscription === sub
+                ? "border-4 border-purple-500 shadow-lg shadow-purple-500/50"
+                : ""
+            }`} // Full width on mobile, one-third width on desktop
             style={{ height: "200px" }}
           >
             <CardHeader
@@ -77,8 +78,7 @@ const SubscriptionOptions = ({
               <h2 className="text-3xl">{sub.name}</h2>
               {isAnnual ? (
                 <p style={{ color: "#9353D3" }}>
-                  <del>€ {(sub.price * 1.20).toFixed(2)}</del> €{" "}
-                  {sub.price} /{" "}
+                  <del>€ {(sub.price * 1.2).toFixed(2)}</del> € {sub.price} /{" "}
                   {translations?.yearly}
                 </p>
               ) : (
@@ -107,7 +107,7 @@ const SubscriptionOptions = ({
           style={{ color: "white" }}
           radius="lg"
           className="mt-12 mb-6"
-          onClick={async () =>
+          onPress={async () =>
             onClickOnSelectedSubscription(selectedSubscription)
           }
         >

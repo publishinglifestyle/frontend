@@ -1,10 +1,10 @@
 "use client"
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
-import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
-import { Spacer } from "@nextui-org/spacer"
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { Spacer } from "@heroui/spacer"
 import { changePassword } from "@/managers/userManager";
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';

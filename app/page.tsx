@@ -2,13 +2,26 @@
 
 import React, { useState, useEffect, Key } from "react";
 import Head from "next/head";
-import { Button, Chip, Link, RadioGroup, Spacer, Tab, Tabs } from "@nextui-org/react";
+import {
+  Button,
+  Chip,
+  Link,
+  RadioGroup,
+  Spacer,
+  Tab,
+  Tabs,
+} from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 const frequencies = [
-  { key: "yearly", label: "Pay Yearly", priceSuffix: "year", discount: "Save 16,6%" },
+  {
+    key: "yearly",
+    label: "Pay Yearly",
+    priceSuffix: "year",
+    discount: "Save 16,6%",
+  },
   { key: "monthly", label: "Pay Monthly", priceSuffix: "monthly" },
 ];
 
@@ -49,7 +62,12 @@ const tiers: Tier[] = [
 export default function Home() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
-  const [selectedFrequency, setSelectedFrequency] = useState<{ key: string; label: string; priceSuffix: string; discount?: string }>(frequencies[0]);
+  const [selectedFrequency, setSelectedFrequency] = useState<{
+    key: string;
+    label: string;
+    priceSuffix: string;
+    discount?: string;
+  }>(frequencies[0]);
 
   useEffect(() => {
     setIsClient(true);
@@ -70,14 +88,23 @@ export default function Home() {
             name="description"
             content="Create low-content books like journals, planners, and coloring books using AI tools for Amazon publishing."
           />
-          <meta name="keywords" content="Low Content AI, AI book creator, Amazon KDP, low-content books" />
+          <meta
+            name="keywords"
+            content="Low Content AI, AI book creator, Amazon KDP, low-content books"
+          />
           <meta name="robots" content="index, follow" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          />
         </Head>
       )}
 
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center text-center gap-8 py-12 min-h-screen bg-[#1e1e2f] text-white" style={{ marginTop: "-5%" }}>
+      <section
+        className="flex flex-col items-center justify-center text-center gap-8 py-12 min-h-screen bg-[#1e1e2f] text-white"
+        style={{ marginTop: "-5%" }}
+      >
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -87,12 +114,13 @@ export default function Home() {
             Effortlessly Create Low-Content Books with AI
           </h1>
           <p className="text-lg text-gray-300 mt-6 sm:w-[600px] mx-auto">
-            Generate high-quality content, including images and text, for journals, planners, and coloring books, ready to publish on Amazon.
+            Generate high-quality content, including images and text, for
+            journals, planners, and coloring books, ready to publish on Amazon.
           </p>
           <Button
             size="lg"
             className="bg-purple-600 text-white px-8 py-4 mt-8 text-lg hover:bg-purple-500 transition-transform transform hover:scale-105"
-            onClick={() => router.push("/home")}
+            onPress={() => router.push("/home")}
           >
             Get Started Now
           </Button>
@@ -108,7 +136,9 @@ export default function Home() {
           viewport={{ once: true }}
           className="container mx-auto text-center"
         >
-          <h2 className="text-4xl font-semibold mb-12">Why Choose Low Content AI?</h2>
+          <h2 className="text-4xl font-semibold mb-12">
+            Why Choose Low Content AI?
+          </h2>
           <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
             {[
               {
@@ -119,7 +149,8 @@ export default function Home() {
               {
                 icon: "mdi:amazon",
                 title: "Amazon-Ready",
-                description: "Optimized content for direct publishing on Amazon.",
+                description:
+                  "Optimized content for direct publishing on Amazon.",
               },
               {
                 icon: "mdi:clock-fast",
@@ -132,7 +163,11 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 className="p-8 bg-[#1e1e2f] rounded-lg shadow-lg hover:shadow-2xl"
               >
-                <Icon icon={feature.icon} width={48} className="mb-6 mx-auto text-purple-400" />
+                <Icon
+                  icon={feature.icon}
+                  width={48}
+                  className="mb-6 mx-auto text-purple-400"
+                />
                 <h3 className="text-2xl font-semibold mb-4">{feature.title}</h3>
                 <p className="text-gray-300">{feature.description}</p>
               </motion.div>
@@ -174,14 +209,19 @@ export default function Home() {
         ${tier.mostPopular ? "bg-purple-700 border-2 border-yellow-400" : "bg-[#2a2a3c]"}`}
               >
                 {tier.mostPopular && (
-                  <Chip color="warning" className="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <Chip
+                    color="warning"
+                    className="absolute -top-4 left-1/2 -translate-x-1/2"
+                  >
                     Most Popular
                   </Chip>
                 )}
                 <h3 className="text-3xl font-semibold mb-4">{tier.title}</h3>
                 <p className="text-5xl font-bold text-yellow-300">
                   {tier.price[selectedFrequency.key as keyof typeof tier.price]}
-                  <span className="text-lg text-gray-400">/{selectedFrequency.priceSuffix}</span>
+                  <span className="text-lg text-gray-400">
+                    /{selectedFrequency.priceSuffix}
+                  </span>
                 </p>
                 <p className="text-gray-300 mt-6">
                   {selectedFrequency.key === "yearly"
@@ -191,7 +231,6 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-
         </div>
       </section>
 
@@ -200,23 +239,34 @@ export default function Home() {
         <div className="container mx-auto text-center">
           <h2 className="text-4xl font-semibold mb-12">What Our Users Say</h2>
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
-            {[{
-              name: "Sarah",
-              quote: "Low Content AI saved me hours of work! I created my first journal in minutes and published it on Amazon the same day."
-            }, {
-              name: "John",
-              quote: "The AI tools are amazing. My coloring books look professional, and I finally hit my first 100 sales on Amazon."
-            }, {
-              name: "Emma",
-              quote: "This platform is a game-changer for anyone in the low-content book business. Simple, fast, and effective!"
-            }].map((testimonial, index) => (
+            {[
+              {
+                name: "Sarah",
+                quote:
+                  "Low Content AI saved me hours of work! I created my first journal in minutes and published it on Amazon the same day.",
+              },
+              {
+                name: "John",
+                quote:
+                  "The AI tools are amazing. My coloring books look professional, and I finally hit my first 100 sales on Amazon.",
+              },
+              {
+                name: "Emma",
+                quote:
+                  "This platform is a game-changer for anyone in the low-content book business. Simple, fast, and effective!",
+              },
+            ].map((testimonial, index) => (
               <motion.div
                 key={index}
                 whileHover={{ scale: 1.05 }}
                 className="p-8 bg-[#1e1e2f] rounded-lg shadow-lg hover:shadow-2xl"
               >
-                <p className="italic text-gray-300 mb-6">"{testimonial.quote}"</p>
-                <h4 className="text-purple-400 font-semibold">- {testimonial.name}</h4>
+                <p className="italic text-gray-300 mb-6">
+                  "{testimonial.quote}"
+                </p>
+                <h4 className="text-purple-400 font-semibold">
+                  - {testimonial.name}
+                </h4>
               </motion.div>
             ))}
           </div>
@@ -235,7 +285,7 @@ export default function Home() {
         </motion.h2>
         <Button
           className="bg-white text-purple-600 px-8 py-4 text-lg hover:bg-gray-200 transition-transform transform hover:scale-105"
-          onClick={() => router.push("/home")}
+          onPress={() => router.push("/home")}
         >
           Get Started for Free
         </Button>
