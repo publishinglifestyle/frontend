@@ -2,7 +2,7 @@ import {
   PaperClipIcon,
   StopIcon,
   ClipboardIcon,
-  MicrophoneIcon
+  MicrophoneIcon,
 } from "@heroicons/react/24/outline";
 import { Card, CardBody, CardFooter } from "@heroui/card";
 import {
@@ -122,7 +122,9 @@ const ChatMessageList = ({
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
 
@@ -149,7 +151,6 @@ const ChatMessageList = ({
       setIsRecording(false);
     }
   };
-
 
   function formatMessageText(text: string) {
     const boldFormatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -632,8 +633,7 @@ const ChatMessageList = ({
                 color="secondary"
                 isDisabled={conversations.length === 0 || !messageText}
                 style={{ color: "white" }}
-                onClick={async (e) => {
-                  e.preventDefault();
+                onPress={async () => {
                   handleSendMessage(messageText);
                 }}
               >
@@ -643,8 +643,17 @@ const ChatMessageList = ({
                 <PaperClipIcon height={20} width={20} />
               </Button>
 
-              <Button size="sm" onClick={isRecording ? handleStopRecording : handleStartRecording}>
-                <MicrophoneIcon height={20} width={20} className={isRecording ? "text-red-500" : ""} />
+              <Button
+                size="sm"
+                onPress={
+                  isRecording ? handleStopRecording : handleStartRecording
+                }
+              >
+                <MicrophoneIcon
+                  height={20}
+                  width={20}
+                  className={isRecording ? "text-red-500" : ""}
+                />
               </Button>
 
               <input
