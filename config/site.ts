@@ -61,6 +61,20 @@ export const siteConfig = {
       'language': 'it'
     },
     {
+      'value': 'support',
+      'label': 'Assistenza',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'support',
+      'label': 'Support',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
       'value': 'help',
       'label': 'Help',
       'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
@@ -129,6 +143,20 @@ export const siteConfig = {
       'value': 'feedback',
       'label': 'Feedback',
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
+      'allow_user': true,
+      'language': 'it'
+    },
+    {
+      'value': 'support',
+      'label': 'Assistenza',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
+      'allow_user': true,
+      'language': 'en'
+    },
+    {
+      'value': 'support',
+      'label': 'Support',
+      'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
       'allow_user': true,
       'language': 'it'
     },
