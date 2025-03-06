@@ -331,11 +331,10 @@ const ChatMessageList = ({
                 <div
                   key={message.id}
                   ref={index === messages.length - 1 ? lastMessageRef : null}
-                  className={`mt-4 message flex ${
-                    message.username === Cookies.get("user_name")
+                  className={`mt-4 message flex ${message.username === Cookies.get("user_name")
                       ? "justify-end"
                       : "justify-start"
-                  }`}
+                    }`}
                 >
                   <div
                     className="flex items-start rounded-lg relative"
@@ -376,7 +375,7 @@ const ChatMessageList = ({
                       }}
                     >
                       {/* Message content */}
-                      {message.text.startsWith("http") ? (
+                      {message.text.endsWith(".png") ? (
                         <>
                           <img
                             alt="Received"
