@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         (async () => {
           try {
-            const user = await getUser();
+            const user = await getUser(true);
             setUser(user);
           } catch (error) {
             console.error(error);

@@ -144,8 +144,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidEmail == null
                   ? undefined
                   : isInvalidEmail
-                    ? "danger"
-                    : "success"
+                  ? "danger"
+                  : "success"
               }
             />
             <Input
@@ -167,8 +167,8 @@ const Login: React.FC<LoginProps> = ({
                 isInvalidPassword == null
                   ? undefined
                   : isInvalidPassword
-                    ? "danger"
-                    : "success"
+                  ? "danger"
+                  : "success"
               }
             />
             <a
@@ -204,7 +204,6 @@ const Login: React.FC<LoginProps> = ({
                 googleLogin();
               }}
               startContent={FaGoogle({ className: "text-red-500" })}
-
             >
               Continue with Google
             </Button>

@@ -1,3 +1,4 @@
+import { FREE_CREDIT_KEY } from "@/constant/credits";
 import { BACKEND_URLS } from "@/constant/urls";
 import { axiosInstance } from "@/utils/axios";
 
@@ -29,8 +30,17 @@ export async function logIn(email, password) {
     }
 }
 
-export async function getUser() {
-    const response = await axiosInstance.get(BACKEND_URLS.auth.getUser);
+export async function getUser(sendData=false) {
+
+    const creditTokenPresent = typeof localStorage !="undefined" && sendData ? localStorage.getItem(FREE_CREDIT_KEY):"";
+
+    const getUserUrl = sendData ? BACKEND_URLS.auth.getUser+`?creditToken=${creditTokenPresent}` : BACKEND_URLS.auth.getUser;
+
+    const response = await axiosInstance.get(getUserUrl);
+
+    if (creditTokenPresent){
+        localStorage.removeItem(FREE_CREDIT_KEY);
+    }
 
     if (response) {
         return response.data.response;

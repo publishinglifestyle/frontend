@@ -264,6 +264,7 @@ const ChatMessageList = ({
 
         setImageResponse(image_response);
       } else {
+        setIsGeneratingResponse(true);
         socket?.emit("sendMessage", {
           senderId: user?.id,
           message: text,
@@ -331,10 +332,11 @@ const ChatMessageList = ({
                 <div
                   key={message.id}
                   ref={index === messages.length - 1 ? lastMessageRef : null}
-                  className={`mt-4 message flex ${message.username === Cookies.get("user_name")
+                  className={`mt-4 message flex ${
+                    message.username === Cookies.get("user_name")
                       ? "justify-end"
                       : "justify-start"
-                    }`}
+                  }`}
                 >
                   <div
                     className="flex items-start rounded-lg relative"
