@@ -2,293 +2,280 @@
 
 import { generateWordSearch } from "@/managers/gamesManager";
 import { Button } from "@heroui/button";
-import jsPDF from "jspdf";
+// No longer need jsPDF: import jsPDF from "jspdf";
 import { useState } from "react";
 
-interface Word {
-  clean: string;
-  path: { x: number; y: number }[];
-}
-
-interface Cell {
-  letter: string;
-  should_be_empty: boolean;
-}
-
+// Interfaces remain the same...
+interface Word { clean: string; path: { x: number; y: number }[]; }
+interface Cell { letter: string; should_be_empty: boolean; }
 interface WordSearchProps {
   words?: string[];
-  font?: string;
+  font?: string; // Font family name (e.g., 'Arial', 'Helvetica', 'Times New Roman')
   is_sequential?: boolean;
   num_puzzles?: number;
-  solutions_per_page?: number;
+  // solutions_per_page is less relevant for image output, but we might use num_puzzles
   invert_words?: number;
   custom_name?: string;
   custom_solution_name?: string;
-  fontSize?: number;
+  fontSize?: number; // Target font size for grid letters (in pixels for canvas)
   grid_size?: number;
 }
 
 export default function WordSearch({
   words,
-  font,
+  font = "Helvetica", // Default font - ensure browser availability or use web fonts
   is_sequential,
   num_puzzles = 1,
-  solutions_per_page = 1,
+  // solutions_per_page = 1, // Less relevant now
   invert_words,
   custom_name,
   custom_solution_name,
-  fontSize = 8,
+  fontSize = 16, // Default font size for grid letters (CANVAS pixels) - Adjusted for visibility
   grid_size = 25,
 }: WordSearchProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const margin = 10;
-  const baseCellSize = 6;
 
-  const handleGenerateWordSearch = async () => {
+  // --- Canvas Drawing Configuration ---
+  const imageWidth = 1200; // Target width for the output image in pixels
+  const imageRatio = 1.414; // A4 aspect ratio (height/width)
+  const imageHeight = Math.round(imageWidth * imageRatio);
+  const margin = 60; // Margin in pixels inside the canvas
+  const titleFontSize = 32; // Title font size in pixels
+  const listFontSize = 18; // Word list font size in pixels
+  const lineSpacing = 1.4; // Multiplier for line height based on font size
+
+  // Helper to download a Data URL
+  const downloadDataUrl = (dataUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+  const handleGenerateImages = async () => {
     setIsGenerating(true);
-    const wordSearchResponses = await generateWordSearch(
-      words,
-      num_puzzles,
-      invert_words,
-      grid_size
-    );
+    try {
+      console.log(`Generating Images with Font: ${font}, GridFontSize: ${fontSize}, GridSize: ${grid_size}`);
+      const wordSearchResponses = await generateWordSearch(
+        words, num_puzzles, invert_words, grid_size
+      );
 
-    if (wordSearchResponses) {
-      generatePDF(wordSearchResponses); // Accessing response directly from the backend data structure
+      if (wordSearchResponses && wordSearchResponses.length > 0) {
+        // Generate images sequentially
+        for (let i = 0; i < wordSearchResponses.length; i++) {
+          await generatePageImage(wordSearchResponses[i], i, false); // Generate puzzle image
+          await generatePageImage(wordSearchResponses[i], i, true);  // Generate solution image
+        }
+      } else {
+        console.error("Failed to generate word search data or data is empty.");
+        alert("Could not generate the puzzle data. Please check the words input.");
+      }
+    } catch (error) {
+      console.error("Error generating word search images:", error);
+      alert(`An error occurred while generating the images: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
     }
-
-    setIsGenerating(false);
   };
 
-  const generatePDF = (wordSearchData: any[]) => {
-    console.log(JSON.stringify(wordSearchData));
-    const doc = new jsPDF("p", "mm", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
+  // Generates a single canvas image for one puzzle or solution page
+  const generatePageImage = async (wordSearchData: any, index: number, isSolution: boolean): Promise<void> => {
+    return new Promise((resolve) => {
+      const { grid, words: solutionWords } = wordSearchData;
+      if (!grid || grid.length === 0) {
+        console.warn(`Skipping image generation for invalid data at index ${index}`);
+        resolve(); // Resolve promise even if skipped
+        return;
+      }
+      const actualGridSize = grid.length;
 
-    let fontSizeToUse = 8;
+      // --- Setup Canvas ---
+      const canvas = document.createElement("canvas");
+      canvas.width = imageWidth;
+      canvas.height = imageHeight;
+      const ctx = canvas.getContext("2d");
 
-    wordSearchData.forEach((wordSearch, index) => {
-      const { grid, words } = wordSearch;
-      const gridSize = grid.length;
-      const maxGridWidth = pageWidth - 2 * margin;
-      const adjustedCellSize = Math.min(baseCellSize, maxGridWidth / gridSize); // Adjust cell size to fit within the margins
-      const gridWidth = gridSize * adjustedCellSize;
+      if (!ctx) {
+        console.error("Failed to get 2D context");
+        resolve(); // Resolve promise on error
+        return;
+      }
 
-      // Centering the grid on the page
-      const offsetX = (pageWidth - gridWidth) / 2;
-      const offsetY = margin + 20;
+      // Background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Determine titles based on the naming convention
-      const puzzleTitle = is_sequential
-        ? `Puzzle ${index + 1}`
-        : custom_name || `Word Search Puzzle ${index + 1}`;
-      const solutionTitle = is_sequential
-        ? `Solution ${index + 1}`
-        : custom_solution_name || `Word Search Solution ${index + 1}`;
+      // Available drawing area
+      const availableWidth = imageWidth - 2 * margin;
+      const availableHeight = imageHeight - 2 * margin;
 
-      // Page for each Word Search Puzzle (puzzle view without highlighted words)
-      if (index > 0) doc.addPage();
-      doc.setFont(font || "times", "normal");
-      doc.setFontSize(20);
-      doc.text(puzzleTitle, pageWidth / 2, margin + 10, { align: "center" });
+      // --- Draw Title ---
+      const titleText = isSolution
+        ? (is_sequential ? `Solution ${index + 1}` : custom_solution_name || `Word Search Solution ${index + 1}`)
+        : (is_sequential ? `Puzzle ${index + 1}` : custom_name || `Word Search Puzzle ${index + 1}`);
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.font = `bold ${titleFontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
+      const titleY = margin;
+      ctx.fillText(titleText, imageWidth / 2, titleY);
+      let currentY = titleY + titleFontSize * lineSpacing; // Update Y position
 
-      fontSizeToUse =
-        fontSize && !isNaN(fontSize) && fontSize > 0
-          ? fontSize
-          : 8 * (adjustedCellSize / baseCellSize);
+      // --- Grid Size Calculation (similar logic, but for available pixel height) ---
+      const wordListEstimateHeight = isSolution ? 0 : 150; // Estimate space needed for word list only on puzzle page
+      const maxGridHeightAllowed = availableHeight - (currentY - margin) - wordListEstimateHeight - (isSolution ? 0 : 20); // Reserve space below title and for list (if applicable)
+      let gridCellSizePx = Math.min(availableWidth / actualGridSize, maxGridHeightAllowed / actualGridSize);
+      gridCellSizePx = Math.max(gridCellSizePx, 5); // Min cell size in pixels
+      const gridWidthPx = actualGridSize * gridCellSizePx;
+      const gridHeightPx = actualGridSize * gridCellSizePx; // Grid is square
+      const gridOffsetX = margin + (availableWidth - gridWidthPx) / 2; // Center horizontally
+      const gridOffsetY = currentY + 20; // Add some space below title
 
-      // Draw the puzzle grid
-      drawWordSearchGrid({
-        doc,
+      // --- Draw Grid onto the Main Canvas ---
+      console.log(`Drawing ${isSolution ? 'Solution' : 'Puzzle'} ${index + 1} Grid onto Canvas with: cellPx=${gridCellSizePx.toFixed(1)}, fontSize=${fontSize}, font=${font}`);
+      drawWordSearchGridOnCanvas({ // Pass the main context and offsets
+        ctx, // The main canvas context
         grid,
-        offsetX,
-        offsetY,
-        cellSize: adjustedCellSize,
-        showWords: false,
-        fontSize: fontSizeToUse,
+        offsetX: gridOffsetX, // Position within the main canvas
+        offsetY: gridOffsetY, // Position within the main canvas
+        cellSizePx: gridCellSizePx, // Cell size in pixels
+        showWords: isSolution,
+        words: solutionWords,
+        fontSizePx: fontSize, // Grid font size in pixels
+        fontFamily: font, // Font name
       });
+      currentY = gridOffsetY + gridHeightPx; // Update Y position
 
-      // Draw the words to find below the grid, aligned to the left of the centered grid
-      const wordsStartY = offsetY + gridSize * adjustedCellSize + 10;
-      doc.setFontSize(10);
+      // --- Draw Word List (Only on Puzzle Page) ---
+      if (!isSolution) {
+        currentY += 25; // Space below grid
+        ctx.fillStyle = "black";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.font = `${listFontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
 
-      const wordsPerLine = 3; // Number of words per line
-      const columnWidth = pageWidth / wordsPerLine; // Width of each column
+        const wordsPerLine = 5; // Adjust for pixel layout
+        const columnSpacing = 30; // Pixels between columns
+        const listColumnWidth = Math.floor((availableWidth - (wordsPerLine - 1) * columnSpacing) / wordsPerLine);
+        const wordListTotalWidth = wordsPerLine * listColumnWidth + (wordsPerLine - 1) * columnSpacing;
+        const wordListStartX = margin + (availableWidth - wordListTotalWidth) / 2; // Center list block
 
-      for (let i = 0; i < words.length; i++) {
-        const columnCenterX =
-          (i % wordsPerLine) * columnWidth + columnWidth / 4; // Center of the current column
-        const y =
-          wordsStartY + Math.floor(i / wordsPerLine) * (fontSizeToUse + 2); // Adjusted Y spacing
+        const sortedWords = [...solutionWords].sort((a, b) => a.clean.localeCompare(b.clean));
 
-        doc.text(words[i].clean.toUpperCase(), columnCenterX, y, {
-          align: "left",
-        });
-      }
-
-      if (num_puzzles === 1 || solutions_per_page === 1) {
-        // Single puzzle and solution per page
-        doc.addPage();
-        doc.setFontSize(20);
-        doc.text(solutionTitle, pageWidth / 2, margin + 10, {
-          align: "center",
-        });
-
-        // Draw the solution grid, highlighting the correct words
-        drawWordSearchGrid({
-          doc,
-          grid,
-          offsetX,
-          offsetY,
-          cellSize: adjustedCellSize,
-          showWords: true,
-          words,
-          fontSize: fontSizeToUse,
-        });
-      }
-    });
-
-    if (num_puzzles > 1) {
-      // If more than one puzzle, print solutions in a compact layout
-      const solutionsPages = Math.ceil(num_puzzles / solutions_per_page);
-      for (let page = 0; page < solutionsPages; page++) {
-        doc.addPage();
-        doc.setFont(font || "times", "normal");
-        doc.setFontSize(16);
-        doc.text(
-          is_sequential
-            ? `Solutions ${page * solutions_per_page + 1} - ${Math.min(
-                (page + 1) * solutions_per_page,
-                num_puzzles
-              )}`
-            : custom_solution_name || "Solutions",
-          pageWidth / 2,
-          margin + 10,
-          { align: "center" }
-        );
-
-        const solutionsToShow = wordSearchData.slice(
-          page * solutions_per_page,
-          (page + 1) * solutions_per_page
-        );
-        const gridPerRow = 2; // 2 grids per row for layout
-        const maxGridSize = (pageWidth - 3 * margin) / gridPerRow; // Adjust max grid size to fit within margins
-
-        solutionsToShow.forEach((wordSearch, index) => {
-          const gridSize = wordSearch.grid.length;
-          const adjustedSolutionCellSize = Math.min(
-            baseCellSize,
-            maxGridSize / gridSize
-          ); // Adjust cell size for solutions
-          const offsetX =
-            margin + (index % gridPerRow) * (maxGridSize + margin);
-          //   const offsetY =
-          //     margin + 20 + Math.floor(index / gridPerRow) * (gridSize + 20);
-          const offsetY =
-            margin +
-            20 +
-            Math.floor(index / gridPerRow) *
-              (gridSize * adjustedSolutionCellSize + 20); // Added extra space between grids
-
-          drawWordSearchGrid({
-            doc,
-            grid: wordSearch.grid,
-            offsetX: offsetX,
-            offsetY: offsetY,
-            cellSize: adjustedSolutionCellSize,
-            showWords: true,
-            words: wordSearch.words,
-            fontSize: fontSizeToUse,
-          });
-        });
-      }
-    }
-
-    const pdfDataUrl = doc.output("bloburl");
-    window.open(pdfDataUrl, "_blank");
-  };
-
-  const drawWordSearchGrid = ({
-    doc,
-    grid,
-    offsetX,
-    offsetY,
-    cellSize,
-    showWords,
-    words,
-    fontSize,
-  }: {
-    doc: jsPDF;
-    grid: Cell[][];
-    offsetX: number;
-    offsetY: number;
-    cellSize: number;
-    showWords: boolean;
-    fontSize: number;
-    words?: Word[];
-  }) => {
-    const gridSize = grid.length;
-
-    // Draw borders only for cells that contain solution words
-    if (showWords && words) {
-      const highlightedCells = new Set(); // To avoid drawing multiple times on the same cell
-
-      words.forEach((word) => {
-        word.path.forEach((coord) => {
-          // Check if the coordinates are within bounds and the cell is not meant to be empty
-          if (
-            coord.x >= 0 &&
-            coord.x < gridSize &&
-            coord.y >= 0 &&
-            coord.y < gridSize &&
-            !grid[coord.y][coord.x].should_be_empty
-          ) {
-            const cellKey = `${coord.x},${coord.y}`;
-            if (!highlightedCells.has(cellKey)) {
-              highlightedCells.add(cellKey);
-
-              const x = offsetX + coord.x * cellSize;
-              const y = offsetY + coord.y * cellSize;
-              doc.setDrawColor(0, 0, 0); // Standard border color
-              doc.setLineWidth(0.5); // Standard border thickness
-              doc.rect(x, y, cellSize, cellSize); // Draw border around each letter in the solution
-            }
-          } else {
-            console.warn(
-              `Coordinate out of bounds or should be empty: (${coord.x}, ${coord.y})`
-            );
+        sortedWords.forEach((wordData, i) => {
+          const colIndex = i % wordsPerLine;
+          const rowIndex = Math.floor(i / wordsPerLine);
+          const wordX = wordListStartX + colIndex * (listColumnWidth + columnSpacing);
+          const wordY = currentY + rowIndex * (listFontSize * lineSpacing);
+          if (wordY < imageHeight - margin) { // Basic check to avoid drawing off bottom
+            ctx.fillText(wordData.clean.toUpperCase(), wordX, wordY, listColumnWidth); // Use maxWidth
+          } else if (rowIndex === Math.floor(i / wordsPerLine) && colIndex === 0) { // Only warn once per row overflow
+            console.warn("Word list might exceed image height.");
           }
         });
-      });
-    }
+      }
 
-    // Draw the entire grid and letters
+      // --- Convert and Download ---
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        const filenameSuffix = isSolution ? `_solution_${index + 1}` : `_puzzle_${index + 1}`;
+        const baseFilename = custom_name ? custom_name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'wordsearch';
+        const filename = `${baseFilename}${filenameSuffix}.png`;
+        downloadDataUrl(dataUrl, filename);
+        console.log(`Image generated and download prompted: ${filename}`);
+      } catch (e) {
+        console.error("Error converting canvas to Data URL or downloading:", e);
+        alert(`Failed to save image ${index + 1}: ${e.message}`);
+      } finally {
+        resolve(); // Resolve the promise after attempting download
+      }
+    }); // End Promise constructor
+  }; // End generatePageImage
+
+
+  // ==================================================================
+  // Canvas Drawing Function for the Grid (Draws onto an EXISTING Context)
+  // ==================================================================
+  const drawWordSearchGridOnCanvas = ({
+    ctx, grid, offsetX, offsetY, cellSizePx, showWords, words, fontSizePx, fontFamily,
+  }: {
+    ctx: CanvasRenderingContext2D; // Expects the context of the target canvas
+    grid: Cell[][];
+    offsetX: number; // X position to start drawing the grid within the target ctx
+    offsetY: number; // Y position to start drawing the grid within the target ctx
+    cellSizePx: number; // Cell size in pixels
+    showWords: boolean;
+    words?: Word[];
+    fontSizePx: number; // Font size for grid letters in pixels
+    fontFamily: string; // Font family name
+  }) => {
+    if (!grid || grid.length === 0) return;
+    const gridSize = grid.length;
+
+    // --- Settings for Grid Drawing on the Passed Context ---
+    ctx.save(); // Save context state before drawing grid
+    ctx.translate(offsetX, offsetY); // Move origin to where grid should start
+
+    // Text settings
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `bold ${fontSizePx}px "${fontFamily}", ${fontFamily}, Helvetica, Arial, sans-serif`;
+
+    // Draw letters
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
-        const cell = grid[r][c];
-        const letter = cell.letter;
-
+        const cell = grid[r]?.[c];
+        const letter = cell?.letter;
         if (typeof letter === "string" && letter.trim() !== "") {
-          const x = offsetX + c * cellSize;
-          const y = offsetY + r * cellSize + cellSize * 0.75; // Adjusted position to ensure correct alignment
-
-          // Draw the letter inside the cell
-          doc.setFont(font || "times", "bold");
-          doc.setFontSize(fontSize); // Adjust font size based on cell size
-          doc.text(letter, x + cellSize / 4, y);
+          const x = c * cellSizePx + cellSizePx / 2; // Center X within cell (relative to grid origin)
+          const y = r * cellSizePx + cellSizePx / 2; // Center Y within cell (relative to grid origin)
+          ctx.fillText(letter.toUpperCase(), x, y);
         }
       }
     }
-  };
+
+    // Draw highlights if showing solutions
+    if (showWords && words) {
+      ctx.strokeStyle = "rgba(100, 100, 100, 0.9)";
+      // Calculate line width based on cell size, but ensure it's visible
+      ctx.lineWidth = Math.max(1, Math.min(2, cellSizePx * 0.05)); // Example: 5% of cell size, min 1px, max 2px
+      const highlightedCells = new Set<string>();
+
+      words.forEach((word) => {
+        if (word?.path) {
+          word.path.forEach((coord) => {
+            if (coord && typeof coord.x === 'number' && coord.x >= 0 && coord.x < gridSize && typeof coord.y === 'number' && coord.y >= 0 && coord.y < gridSize) {
+              const cellKey = `${coord.x},${coord.y}`;
+              if (!highlightedCells.has(cellKey)) {
+                highlightedCells.add(cellKey);
+                const x = coord.x * cellSizePx;
+                const y = coord.y * cellSizePx;
+                // Draw slightly inset rectangle stroke
+                ctx.strokeRect(x + ctx.lineWidth / 2, y + ctx.lineWidth / 2, cellSizePx - ctx.lineWidth, cellSizePx - ctx.lineWidth);
+              }
+            }
+          });
+        }
+      });
+    }
+
+    ctx.restore(); // Restore context state
+  }; // End drawWordSearchGridOnCanvas
 
   return (
-    <div style={{ textAlign: "center" }}>
+    <div style={{ textAlign: "center", margin: "20px" }}>
       <Button
-        isDisabled={!words || words[0] === "" || isGenerating}
+        isDisabled={!words || words.length === 0 || words.every(w => w.trim() === "") || isGenerating}
         color="secondary"
-        onPress={handleGenerateWordSearch}
+        // --- Update Button Handler ---
+        onPress={handleGenerateImages}
       >
-        {isGenerating ? "Generating..." : "Generate Word Search PDF"}
+        {/* Update Button Text */}
+        {isGenerating ? "Generating Images..." : "Generate Word Search Images (PNG)"}
       </Button>
     </div>
   );
