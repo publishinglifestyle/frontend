@@ -22,6 +22,7 @@ interface Option {
 }
 
 export interface Message {
+  role: string;
   id: string;
   text: string;
   username: string;

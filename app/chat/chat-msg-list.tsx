@@ -14,7 +14,7 @@ import {
   Textarea,
 } from "@heroui/react";
 import Cookies from "js-cookie";
-import React, { Dispatch, SetStateAction, useRef, useState } from "react";
+import React, { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuidv4 } from "uuid";
 import { useClipboard } from "@heroui/use-clipboard";
@@ -313,6 +313,11 @@ const ChatMessageList = ({
     setMessages(allMessages);
   };
 
+  // Debug: log messages when they change
+  useEffect(() => {
+    console.log("Current messages:", messages);
+  }, [messages]);
+
   if (!currentConversation) {
     return <p>Loading...</p>;
   }
@@ -328,6 +333,36 @@ const ChatMessageList = ({
           <CardBody>
             {messages
               .filter((message) => message.text && message.text !== "NaN")
+              .filter((message) => {
+                // Helper function to check if any property suggests it's a system message
+                const hasSystemProperty = (obj: any): boolean => {
+                  if (!obj || typeof obj !== 'object') return false;
+                  return Object.entries(obj).some(([key, value]) => {
+                    if (key === 'role' && value === 'system') return true;
+                    if (key === 'ref' && value) return true; // Check for ref property
+                    if (typeof value === 'string' && 
+                        (value.includes('ImagineAPI') || 
+                         value.includes('image generated') || 
+                         value.includes('system message'))) return true;
+                    return false;
+                  });
+                };
+                
+                // More comprehensive filtering
+                // Check username and role for system messages
+                const isSystemMessage = 
+                  message.role === 'system' || 
+                  message.username === 'system' ||
+                  hasSystemProperty(message) ||
+                  (message.text && message.text.includes("ImagineAPI")) ||
+                  (message.text && message.text.includes("image generated")) ||
+                  (message.text && message.text.includes("action completed")) ||
+                  (message.id && message.id.startsWith("system-")) ||
+                  (message.conversation_id && typeof message.text === 'object');
+                
+                console.log(`Message ${message.id}: isSystemMessage=${isSystemMessage}, role=${message.role}, username=${message.username}`);
+                return !isSystemMessage;
+              })
               .map((message, index) => (
                 <div
                   key={message.id}
