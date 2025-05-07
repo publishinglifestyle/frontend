@@ -61,6 +61,7 @@ function ChatPageContent() {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [isCommandsModalOpen, setIsCommandsModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isDalleImageSizeModalOpen, setIsDalleImageSizeModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [messages, setMessages] = useState<Array<Message>>([]);
   const [messageText, setMessageText] = useState<string>("");
@@ -80,6 +81,7 @@ function ChatPageContent() {
   const [ideogramInitialPrompt, setIdeogramInitialPrompt] = useState("");
   const [ideogramImageUrl, setIdeogramImageUrl] = useState("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [pendingImageUrl, setPendingImageUrl] = useState("");
 
   const userId = user?.id;
 
@@ -98,7 +100,19 @@ function ChatPageContent() {
 
           setUploadedImageUrl(imageUrl);
           setIsLoading(false);
+          
+          // Make sure to explicitly set the modal state to true for each upload
           setIsImageModalOpen(true);
+          
+          // Store the image URL in pendingImageUrl state, not in the text area
+          // This keeps the text area free for the user's message
+          setPendingImageUrl(imageUrl);
+          
+          // Reset the file input so the onChange event will fire again 
+          // even if the same file is selected
+          if (e.target) {
+            e.target.value = '';
+          }
         } catch (error) {
           setIsLoading(false);
           const err = error as any;
@@ -171,6 +185,7 @@ function ChatPageContent() {
           messageId: imgResponse.messageId,
           flags: 0,
           prompt: imgResponse.prompt || "",
+          role: "assistant",
         }));
 
         return [...updatedMessages, ...newMessages];
@@ -194,6 +209,7 @@ function ChatPageContent() {
         messageId: "",
         flags: 0,
         prompt: image_response.prompt || "",
+        role: "assistant",
       };
 
       setMessages((prevMessages) => {
@@ -283,6 +299,7 @@ function ChatPageContent() {
           messageId: "",
           flags: 0,
           prompt: "",
+          role: "assistant",
         };
 
         setMessages((prevMessages) => {
@@ -327,6 +344,7 @@ function ChatPageContent() {
         messageId: response.result.message_id,
         flags: response.result.flags,
         prompt: response.result.prompt,
+        role: "assistant",
       };
 
       setMessages((prevMessages) => {
@@ -436,6 +454,7 @@ function ChatPageContent() {
                 messageId: current_conversation.context[i].messageId,
                 flags: current_conversation.context[i].flags,
                 prompt: current_conversation.context[i].prompt,
+                role: current_conversation.context[i].role,
               };
 
               conversation_messages.push(conversation_message);
@@ -510,6 +529,7 @@ function ChatPageContent() {
             messageListener={messageListener}
             messageText={messageText}
             messages={messages}
+            pendingImageUrl={pendingImageUrl}
             promptCommands={promptCommands}
             selectedAgent={selectedAgent}
             selectedAgentId={selectedAgentId}
@@ -519,10 +539,12 @@ function ChatPageContent() {
             setIsCommandsModalOpen={setIsCommandsModalOpen}
             setIsGeneratingResponse={setIsGeneratingResponse}
             setIsIdeogramModalOpen={setIsIdeogramModalOpen}
+            setIsDalleImageSizeModalOpen={setIsDalleImageSizeModalOpen}
             setIsPromptModalOpen={setIsPromptModalOpen}
             setIsReconnecting={setIsReconnecting}
             setMessageText={setMessageText}
             setMessages={setMessages}
+            setPendingImageUrl={setPendingImageUrl}
             setSelectedAgent={setSelectedAgent}
             setSelectedAgentId={setSelectedAgentId}
             socket={socket}
@@ -542,6 +564,7 @@ function ChatPageContent() {
             isConversationNameModalOpen={isConversationNameModalOpen}
             isErrorModalOpen={isErrorModalOpen}
             isIdeogramModalOpen={isIdeogramModalOpen}
+            isDalleImageSizeModalOpen={isDalleImageSizeModalOpen}
             isImageModalOpen={isImageModalOpen}
             isPromptModalOpen={isPromptModalOpen}
             isSuccessModalOpen={isSuccessModalOpen}
@@ -558,6 +581,7 @@ function ChatPageContent() {
             setIsErrorModalOpen={setIsErrorModalOpen}
             setIsGeneratingResponse={setIsGeneratingResponse}
             setIsIdeogramModalOpen={setIsIdeogramModalOpen}
+            setIsDalleImageSizeModalOpen={setIsDalleImageSizeModalOpen}
             setIsImageModalOpen={setIsImageModalOpen}
             setIsLoading={setIsLoading}
             setIsPromptModalOpen={setIsPromptModalOpen}

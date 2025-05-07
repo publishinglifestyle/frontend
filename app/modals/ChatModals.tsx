@@ -10,6 +10,7 @@ import { Agent, Command, Conversation, Message } from "@/types/chat.types";
 import React, { Dispatch, SetStateAction } from "react";
 import CommandsModal from "./commandsModal";
 import ConversationNameModal from "./conversationName";
+import DalleImageSizeModal from "./dalleImageSizeModal";
 import ErrorModal from "./errorModal";
 import IdeogramModal from "./ideogramModal";
 import ImageModal from "./imageModal";
@@ -23,6 +24,8 @@ interface ChatModals {
   setIsCommandsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isIdeogramModalOpen: boolean;
   setIsIdeogramModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isDalleImageSizeModalOpen: boolean;
+  setIsDalleImageSizeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isErrorModalOpen: boolean;
   setIsErrorModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isImageModalOpen: boolean;
@@ -64,6 +67,8 @@ const ChatModals = ({
   setIsCommandsModalOpen,
   isIdeogramModalOpen,
   setIsIdeogramModalOpen,
+  isDalleImageSizeModalOpen,
+  setIsDalleImageSizeModalOpen,
   isErrorModalOpen,
   setIsErrorModalOpen,
   isImageModalOpen,
@@ -106,6 +111,7 @@ const ChatModals = ({
       messageId: "",
       flags: 0,
       prompt: "",
+      role: "user",
     };
 
     const typingMessageId = `typing-${Date.now()}`;
@@ -121,6 +127,7 @@ const ChatModals = ({
       messageId: "",
       flags: 0,
       prompt: "",
+      role: "assistant",
     };
 
     const allMessages = [...messages, userMessage, typingMessage];
@@ -149,6 +156,19 @@ const ChatModals = ({
         onSuccess={(selected_commands) => {
           setPromptCommands(selected_commands);
           setIsCommandsModalOpen(false);
+        }}
+      />
+
+      <DalleImageSizeModal
+        isOpen={isDalleImageSizeModalOpen}
+        onClose={() => setIsDalleImageSizeModalOpen(false)}
+        onConfirm={(imageSize) => {
+          console.log("Selected DALL-E image size:", imageSize);
+          const selected_commands = [
+            { command: "size", value: imageSize }
+          ];
+          setPromptCommands(selected_commands);
+          setIsDalleImageSizeModalOpen(false);
         }}
       />
 
@@ -210,6 +230,7 @@ const ChatModals = ({
                 messageId: "",
                 flags: 0,
                 prompt: "",
+                role: "assistant",
               };
               messageListener(description_message);
             }

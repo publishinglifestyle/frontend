@@ -120,7 +120,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
           : "no details";
       if (agentId == "20a151e9-1853-48ba-b888-6a59d9cbda5c") {
         negative_prompt = "No shading, gradients, or greyscale effects.";
-        setStyleType("RENDER_3D");
+        setStyleType("GENERAL");
       }
       setNegativePrompt(negative_prompt);
     }

@@ -17,6 +17,13 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
     const [language, setLanguage] = useState('');
     const [translations, setTranslations] = useState<Translations | null>(null);
     const [tooltipContent, setTooltipContent] = useState('Copy to clipboard');
+    
+    // Reset state when modal opens to ensure proper rendering
+    useEffect(() => {
+        if (isOpen) {
+            setTooltipContent('Copy to clipboard');
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         const detectLanguage = async () => {
@@ -44,18 +51,35 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                 console.error('Failed to copy image URL to clipboard:', err);
             });
     };
+    
+    // Clean close function to ensure state is reset
+    const handleClose = () => {
+        onClose();
+    };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="xl" isDismissable={false} isKeyboardDismissDisabled={true}>
+        <Modal 
+            isOpen={isOpen} 
+            onClose={handleClose} 
+            size="xl" 
+            isDismissable={false} 
+            isKeyboardDismissDisabled={true}
+        >
             <ModalContent>
                 <ModalHeader className="modal-header justify-center">
                     <h1 style={{ fontSize: "26px" }}>{translations?.attention}</h1>
                 </ModalHeader>
-                <ModalBody style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: "center" }}>
-                    <p>Copy paste your image URL into the text box:</p>
-                    <p className="text-xs">{imageUrl}</p>
+                <ModalBody style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: "center" }}>
+                    <p>Your image has been uploaded successfully!</p>
+                    <img 
+                        src={imageUrl}
+                        alt="Uploaded"
+                        className="max-h-48 object-contain my-3"
+                    />
+                    <p>The image is now attached to your message. You can type your message text in the input field.</p>
+                    <p className="text-xs text-gray-500 mt-2">Image URL: {imageUrl}</p>
                 </ModalBody>
-                <ModalFooter>
+                <ModalFooter className="flex flex-col gap-2">
                     <Tooltip content={tooltipContent}>
                         <Button
                             fullWidth
@@ -64,9 +88,18 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                             size="md"
                             onPress={handleCopyToClipboard}
                         >
-                            {translations?.copy || 'Copy'}
+                            {translations?.copy || 'Copy URL'}
                         </Button>
                     </Tooltip>
+                    <Button
+                        fullWidth
+                        color="primary"
+                        radius="lg"
+                        size="md"
+                        onPress={handleClose}
+                    >
+                        Continue
+                    </Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>

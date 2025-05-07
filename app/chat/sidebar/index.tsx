@@ -74,6 +74,7 @@ const ChatSidebar = ({
           messageId: conversation.context[i].messageId,
           flags: conversation.context[i].flags,
           prompt: conversation.context[i].prompt,
+          role: conversation.context[i].role,
         };
 
         conversation_messages.push(conversation_message);
@@ -192,6 +193,7 @@ const ChatSidebar = ({
                             messageId: conversation.context[i].messageId,
                             flags: conversation.context[i].flags,
                             prompt: conversation.context[i].prompt,
+                            role: conversation.context[i].role,
                           };
 
                           conversation_messages.push(conversation_message);

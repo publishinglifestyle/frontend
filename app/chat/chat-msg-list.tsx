@@ -46,6 +46,8 @@ interface ChatMessageListProps {
   messageText: string;
   promptCommands: any[];
   translations?: Translations | null;
+  pendingImageUrl: string;
+  setPendingImageUrl: Dispatch<SetStateAction<string>>;
   setSelectedAgentId: (id: string) => void;
   setSelectedAgent: (agent: Agent | undefined) => void;
   setMessageText: (text: string) => void;
@@ -57,6 +59,7 @@ interface ChatMessageListProps {
   setImageResponse: (response: any) => void;
   setIsCommandsModalOpen: (isOpen: boolean) => void;
   setIsIdeogramModalOpen: (isOpen: boolean) => void;
+  setIsDalleImageSizeModalOpen: (isOpen: boolean) => void;
   socket?: Socket | null;
   userId: string;
   setIsReconnecting: Dispatch<SetStateAction<boolean>>;
@@ -79,6 +82,7 @@ const ChatMessageList = ({
   setIsCommandsModalOpen,
   setIsGeneratingResponse,
   setIsIdeogramModalOpen,
+  setIsDalleImageSizeModalOpen,
   setIsPromptModalOpen,
   setMessageText,
   setSelectedAgent,
@@ -93,7 +97,36 @@ const ChatMessageList = ({
   isGeneratingResponse,
   fullName,
   setMessages,
+  pendingImageUrl,
+  setPendingImageUrl,
 }: ChatMessageListProps) => {
+  // Add CSS styles for message images
+  const imageStyles = `
+    .message-image-container {
+      max-width: 100%;
+      overflow: hidden;
+      border-radius: 8px;
+      margin: 5px 0;
+    }
+    
+    .message-image {
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    
+    .message-with-description {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .message-text {
+      word-break: break-word;
+    }
+  `;
+
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,6 +193,10 @@ const ChatMessageList = ({
   }
 
   const handleIconClick = () => {
+    // Reset the file input before clicking to ensure the change event fires
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     fileInputRef.current?.click();
   };
 
@@ -173,13 +210,39 @@ const ChatMessageList = ({
     if (selectedAgent?.model === "ideogram") {
       setIsPictureGenerationModalOpen(true);
     } else {
-      sendChatMessage(text, false, "", true, promptCommands, 0, "", 1);
+      // When sending, combine message text with image URL if both exist
+      const messageToSend = combineMessageWithImage(text);
+      sendChatMessage(messageToSend, false, "", true, promptCommands, 0, "", 1);
+      
+      // Clear the pending image URL after sending
+      if (pendingImageUrl) {
+        setPendingImageUrl("");
+      }
+    }
+  };
+  
+  // Helper function to combine message text with image URL
+  const combineMessageWithImage = (text: string): string => {
+    if (pendingImageUrl && text.trim()) {
+      // Ensure there's always a space between text and URL
+      const messageText = text.trim();
+      
+      // Always add a space between text and URL to ensure proper separation
+      return `${messageText} ${pendingImageUrl}`;
+    } else if (pendingImageUrl) {
+      // If we only have an image, return just the image URL
+      return pendingImageUrl;
+    } else {
+      // If we only have text, return just the text
+      return text;
     }
   };
 
   const handleConfirmNumberOfPictures = (numberOfPictures: number) => {
+    // Combine message text with image URL if both exist
+    const messageToSend = combineMessageWithImage(messageText);
     sendChatMessage(
-      messageText,
+      messageToSend,
       false,
       "",
       true,
@@ -189,6 +252,11 @@ const ChatMessageList = ({
       numberOfPictures
     );
     setIsPictureGenerationModalOpen(false);
+    
+    // Clear the pending image URL after sending
+    if (pendingImageUrl) {
+      setPendingImageUrl("");
+    }
   };
 
   const sendChatMessage = async (
@@ -221,7 +289,7 @@ const ChatMessageList = ({
         setIsReconnecting(false);
       }
 
-      createNewMessage();
+      createNewMessage(text);
 
       let current_agent;
 
@@ -251,6 +319,17 @@ const ChatMessageList = ({
           );
         } else {
           setMessageText("");
+          
+          // Check if we have a size parameter in promptCommands for DALL-E
+          let size;
+          if (current_agent?.model === "dall-e" && commands) {
+            const sizeCommand = commands.find(cmd => cmd.command === "size");
+            if (sizeCommand) {
+              size = sizeCommand.value;
+              console.log("Using DALL-E image size:", size);
+            }
+          }
+          
           image_response = await generateImage(
             text,
             selectedAgentId,
@@ -258,7 +337,8 @@ const ChatMessageList = ({
             save_user_prompt,
             commands,
             socket?.id,
-            n_images
+            n_images,
+            size
           );
         }
 
@@ -291,6 +371,7 @@ const ChatMessageList = ({
       messageId: "",
       flags: 0,
       prompt: "",
+      role: "user",
     };
 
     const typingMessageId = `typing-${Date.now()}`;
@@ -306,6 +387,7 @@ const ChatMessageList = ({
       messageId: "",
       flags: 0,
       prompt: "",
+      role: "assistant",
     };
 
     const allMessages = [...messages, userMessage, typingMessage];
@@ -313,10 +395,180 @@ const ChatMessageList = ({
     setMessages(allMessages);
   };
 
+  // Helper function to check if a string is an image URL
+  const isImageUrl = (text: string): boolean => {
+    if (!text || typeof text !== 'string') return false;
+    
+    // First, check if this is definitely NOT an image
+    // Exclude common non-image URLs like localhost app routes
+    if (text.includes('localhost:3000') || 
+        text.includes('/chat') || 
+        text.includes('/login') || 
+        text.includes('/home')) {
+      console.log('Excluded URL as non-image:', text);
+      return false;
+    }
+    
+    // Check for common prefixes concatenated with URLs and remove them for checking
+    const commonPrefixes = ['describe', 'show', 'display', 'generate', 'create'];
+    for (const prefix of commonPrefixes) {
+      if (text.toLowerCase().startsWith(prefix) && text.includes('http')) {
+        // Find the http(s) part
+        const httpIndex = text.indexOf('http');
+        if (httpIndex > 0) {
+          // Extract just the URL part for checking
+          const urlPart = text.substring(httpIndex);
+          // Recursively check the extracted URL
+          return isImageUrl(urlPart);
+        }
+      }
+    }
+    
+    // Check for common image extensions
+    if (text.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return true;
+    
+    // Check for image hosting services
+    if (text.includes("cloudinary.com")) return true;
+    if (text.includes("imgur.com")) return true;
+    if (text.includes("res.cloudinary.com")) return true;
+    if (text.includes("supabase.co/storage")) return true;
+    
+    // Check for data URLs
+    if (text.startsWith("data:image/")) return true;
+    
+    // Check for blob URLs
+    if (text.startsWith("blob:")) return true;
+    
+    // Try to check if it's a valid URL
+    try {
+      const parsedUrl = new URL(text);
+      // Additional URL validation if needed
+      return false; // Default to false unless specifically matched above
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Function to extract image URLs from message text
+  const extractImageUrl = (text: string): string | null => {
+    if (!text || typeof text !== 'string') return null;
+    
+    // Only attempt to extract from text that might contain an image
+    if (!isImageUrl(text)) return null;
+    
+    // Split the text by spaces and check each part
+    const parts = text.split(/\s+/);
+    for (const part of parts) {
+      // Check if this part looks like a URL
+      if (part.startsWith('http://') || part.startsWith('https://')) {
+        // Only return URLs that are definitely images
+        if (part.match(/\.(jpeg|jpg|gif|png|webp)$/i) || 
+            part.includes('supabase.co/storage') || 
+            (part.includes('cloudinary.com') && part.includes('/image/'))) {
+          console.log('Found image URL in text:', part);
+          return part;
+        }
+      }
+    }
+    
+    // If no URL with space separation, try to handle "describe[URL]" pattern
+    // by looking for http:// or https:// in the text
+    const httpIndex = text.indexOf('http://');
+    const httpsIndex = text.indexOf('https://');
+    const startIndex = httpIndex >= 0 ? httpIndex : httpsIndex;
+    
+    if (startIndex >= 0) {
+      const urlCandidate = text.substring(startIndex);
+      // Find the end of URL - space or end of string
+      const endIndex = urlCandidate.search(/\s/);
+      const extractedUrl = endIndex >= 0 ? urlCandidate.substring(0, endIndex) : urlCandidate;
+      
+      // Only return URLs that are definitely images
+      if (extractedUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || 
+          extractedUrl.includes('supabase.co/storage') || 
+          (extractedUrl.includes('cloudinary.com') && extractedUrl.includes('/image/'))) {
+        console.log('Found concatenated image URL:', extractedUrl);
+        return extractedUrl;
+      }
+    }
+    
+    return null;
+  };
+
+  // Helper function to ensure URL is properly formatted
+  const ensureValidImageUrl = (url: string): string => {
+    if (!url) return '';
+    
+    // Trim the URL
+    url = url.trim();
+    
+    try {
+      // Try to parse the URL to check if it's valid
+      new URL(url);
+      
+      // If it's a relative URL (starts with /), convert to absolute
+      if (url.startsWith('/') && !url.startsWith('//')) {
+        return window.location.origin + url;
+      }
+      
+      // For Cloudinary URLs, ensure they use https
+      if (url.includes('cloudinary.com') && url.startsWith('http:')) {
+        return url.replace('http:', 'https:');
+      }
+      
+      // For other URLs, return as is
+      return url;
+    } catch (e) {
+      console.error('Invalid URL:', url, e);
+      return '';
+    }
+  };
+  
+  // Helper function to get proper image src with additional verification
+  const getProperImageSrc = (url: string): string => {
+    const validUrl = ensureValidImageUrl(url);
+    if (!validUrl) return '';
+    
+    // Extra verification step to avoid loading non-image URLs
+    if (validUrl.includes('localhost:3000') || 
+        validUrl.includes('/chat') || 
+        validUrl.match(/\/(login|dashboard|settings|profile)\/?$/i)) {
+      console.error('Attempted to load non-image URL as image:', validUrl);
+      return ''; // Return empty to prevent loading
+    }
+    
+    // Only load URLs that are very likely to be images
+    const likelyImageUrl = 
+      validUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i) || 
+      (validUrl.includes('supabase.co/storage') && validUrl.length > 40) ||
+      validUrl.includes('cloudinary.com');
+    
+    if (likelyImageUrl) {
+      console.log('Loading image from URL:', validUrl);
+      return validUrl;
+    }
+    
+    console.warn('URL might not be an image, not loading:', validUrl);
+    return '';
+  };
+
   // Debug: log messages when they change
   useEffect(() => {
     console.log("Current messages:", messages);
   }, [messages]);
+
+  // Add styles to document head
+  useEffect(() => {
+    // Create style element
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = imageStyles;
+    document.head.appendChild(styleElement);
+
+    // Clean up on component unmount
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   if (!currentConversation) {
     return <p>Loading...</p>;
@@ -373,6 +625,7 @@ const ChatMessageList = ({
                       : "justify-start"
                   }`}
                 >
+                  {/* Debug log to check if message contains image URL */}
                   <div
                     className="flex items-start rounded-lg relative"
                     style={{
@@ -412,115 +665,239 @@ const ChatMessageList = ({
                       }}
                     >
                       {/* Message content */}
-                      {message.text.endsWith(".png") ? (
-                        <>
-                          <img
-                            alt="Received"
-                            className="max-w-full h-auto rounded-lg"
-                            src={message.text.trim()}
-                          />
-                          {message.buttons?.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
-                              {message.buttons.map((button, index) => (
-                                <Button
-                                  key={index}
-                                  className="w-full"
-                                  color="secondary"
-                                  size="sm"
-                                  onPress={() => {
-                                    sendChatMessage(
-                                      button.label,
-                                      true,
-                                      message.messageId,
-                                      true,
-                                      promptCommands,
-                                      message.flags,
-                                      button.custom,
-                                      1
-                                    );
-                                  }}
-                                >
-                                  <span style={{ fontSize: "8px" }}>
-                                    {button.label}
-                                  </span>
-                                </Button>
-                              ))}
+                      {(() => {
+                        // First try to extract an image URL from the message
+                        const extractedImageUrl = extractImageUrl(message.text);
+                        
+                        // Case 1: Message is purely an image URL
+                        if (extractedImageUrl && message.text.trim() === extractedImageUrl) {
+                          console.log('Rendering pure image message');
+                          return (
+                            <div className="message-image-container">
+                              <img
+                                alt="Shared content" 
+                                className="message-image"
+                                src={getProperImageSrc(extractedImageUrl)}
+                                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                  const target = e.target as HTMLImageElement;
+                                  console.error(`Failed to load image: ${target.src}`, e);
+                                  target.onerror = null;
+                                  
+                                  // Create a parent div for error message
+                                  const errorContainer = document.createElement('div');
+                                  errorContainer.className = 'p-2 border border-red-300 rounded bg-red-50 mt-2';
+                                  
+                                  // Create error message with image URL
+                                  const errorMsg = document.createElement('p');
+                                  errorMsg.className = 'text-red-500 text-sm';
+                                  errorMsg.innerHTML = `Failed to load image. <br/>URL: <span class="text-xs break-all">${target.src}</span>`;
+                                  
+                                  // Try image URL again with different format
+                                  const retryLink = document.createElement('a');
+                                  retryLink.href = target.src;
+                                  retryLink.target = '_blank';
+                                  retryLink.className = 'text-blue-500 text-xs block mt-1 hover:underline';
+                                  retryLink.innerText = 'Open image in new tab';
+                                  
+                                  // Add error elements
+                                  errorContainer.appendChild(errorMsg);
+                                  errorContainer.appendChild(retryLink);
+                                  
+                                  // Replace image with error message
+                                  target.style.display = 'none';
+                                  if (target.parentNode) {
+                                    target.parentNode.appendChild(errorContainer);
+                                  }
+                                }}
+                                crossOrigin="anonymous"
+                              />
                             </div>
-                          )}
-                          {message.ideogram_buttons?.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
-                              {message.ideogram_buttons.map((button, index) => (
-                                <Button
-                                  key={index}
-                                  className="w-full"
-                                  color="secondary"
-                                  isLoading={isGeneratingImageDescription}
-                                  size="sm"
-                                  onPress={async () => {
-                                    if (button == "Remix") {
-                                      setIdeogramImageUrl(message.text);
-                                      setIsGeneratingImageDescription(true);
-                                      const description = await describeImage(
-                                        currentConversation,
-                                        message.text,
-                                        selectedAgent?.id,
-                                        true
-                                      );
-
-                                      setIsGeneratingImageDescription(false);
-                                      setIdeogramInitialPrompt(
-                                        description.response
-                                      );
-
-                                      setIsPromptModalOpen(true);
-                                    } else if (button == "Upscale") {
-                                      createNewMessage();
-                                      const image_response = await upscaleImage(
-                                        currentConversation,
-                                        message.text,
-                                        message.prompt
-                                      );
-
-                                      setImageResponse(image_response);
-                                    } else if (button == "Describe") {
-                                      createNewMessage(message.text);
-                                      const description = await describeImage(
-                                        currentConversation,
-                                        message.text,
-                                        selectedAgent?.id
-                                      );
-                                      const description_message = {
-                                        id: uuidv4(),
-                                        username: "LowContent AI",
-                                        text: description.response,
-                                        conversation_id: currentConversation,
-                                        complete: true,
-                                        title: "",
-                                        buttons: [],
-                                        ideogram_buttons: [],
-                                        messageId: "",
-                                        flags: 0,
-                                        prompt: "",
-                                      };
-
-                                      messageListener(description_message);
+                          );
+                        }
+                        
+                        // Case 2: Message contains both text and an image URL
+                        else if (extractedImageUrl) {
+                          console.log('Rendering mixed text/image message');
+                          // Get text parts by replacing the exact image URL with an empty string
+                          const textParts = message.text.split(extractedImageUrl);
+                          const textContent = textParts.join(' ').trim();
+                          
+                          return (
+                            <div className="message-with-description">
+                              {textContent && (
+                                <div
+                                  className="message-text mb-2"
+                                  dangerouslySetInnerHTML={{
+                                    __html: formatMessageText(textContent),
+                                  }}
+                                />
+                              )}
+                              <div className="message-image-container">
+                                <img
+                                  alt="Shared content"
+                                  className="message-image"
+                                  src={getProperImageSrc(extractedImageUrl)}
+                                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                    const target = e.target as HTMLImageElement;
+                                    console.error(`Failed to load image: ${target.src}`, e);
+                                    target.onerror = null;
+                                    
+                                    // Create a parent div for error message
+                                    const errorContainer = document.createElement('div');
+                                    errorContainer.className = 'p-2 border border-red-300 rounded bg-red-50 mt-2';
+                                    
+                                    // Create error message with image URL
+                                    const errorMsg = document.createElement('p');
+                                    errorMsg.className = 'text-red-500 text-sm';
+                                    errorMsg.innerHTML = `Failed to load image. <br/>URL: <span class="text-xs break-all">${target.src}</span>`;
+                                    
+                                    // Try image URL again with different format
+                                    const retryLink = document.createElement('a');
+                                    retryLink.href = target.src;
+                                    retryLink.target = '_blank';
+                                    retryLink.className = 'text-blue-500 text-xs block mt-1 hover:underline';
+                                    retryLink.innerText = 'Open image in new tab';
+                                    
+                                    // Add error elements
+                                    errorContainer.appendChild(errorMsg);
+                                    errorContainer.appendChild(retryLink);
+                                    
+                                    // Replace image with error message
+                                    target.style.display = 'none';
+                                    if (target.parentNode) {
+                                      target.parentNode.appendChild(errorContainer);
                                     }
                                   }}
-                                >
-                                  <span style={{ fontSize: "8px" }}>
-                                    {button}
-                                  </span>
-                                </Button>
-                              ))}
+                                  crossOrigin="anonymous"
+                                />
+                              </div>
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: formatMessageText(message.text),
-                          }}
-                        />
+                          );
+                        }
+                        
+                        // Case 3: Regular text message with no image
+                        else {
+                          return (
+                            <div
+                              className="message-text"
+                              dangerouslySetInnerHTML={{
+                                __html: formatMessageText(message.text),
+                              }}
+                            />
+                          );
+                        }
+                      })()}
+
+                      {/* Buttons section */}
+                      {message.buttons?.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
+                          {message.buttons.map((button, index) => (
+                            <Button
+                              key={index}
+                              className="w-full"
+                              color="secondary"
+                              size="sm"
+                              onPress={() => {
+                                sendChatMessage(
+                                  button.label,
+                                  true,
+                                  message.messageId,
+                                  true,
+                                  promptCommands,
+                                  message.flags,
+                                  button.custom,
+                                  1
+                                );
+                              }}
+                            >
+                              <span style={{ fontSize: "8px" }}>
+                                {button.label}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Ideogram buttons section */}
+                      {message.ideogram_buttons?.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2">
+                          {message.ideogram_buttons.map((button, index) => (
+                            <Button
+                              key={index}
+                              className="w-full"
+                              color="secondary"
+                              isLoading={isGeneratingImageDescription}
+                              size="sm"
+                              onPress={async () => {
+                                if (button == "Remix") {
+                                  // For remix, extract image URL if present
+                                  const imageUrl = extractImageUrl(message.text) || message.text;
+                                  if (typeof imageUrl === 'string') {
+                                    setIdeogramImageUrl(imageUrl);
+                                    setIsGeneratingImageDescription(true);
+                                    const description = await describeImage(
+                                      currentConversation,
+                                      imageUrl,
+                                      selectedAgent?.id,
+                                      true
+                                    );
+
+                                    setIsGeneratingImageDescription(false);
+                                    setIdeogramInitialPrompt(
+                                      description.response
+                                    );
+
+                                    setIsPromptModalOpen(true);
+                                  }
+                                } else if (button == "Upscale") {
+                                  createNewMessage();
+                                  // For upscale, extract image URL if present
+                                  const imageUrl = extractImageUrl(message.text) || message.text;
+                                  if (typeof imageUrl === 'string') {
+                                    const image_response = await upscaleImage(
+                                      currentConversation,
+                                      imageUrl,
+                                      message.prompt
+                                    );
+
+                                    setImageResponse(image_response);
+                                  }
+                                } else if (button == "Describe") {
+                                  // For describe, extract image URL if present
+                                  const imageUrl = extractImageUrl(message.text) || message.text;
+                                  if (typeof imageUrl === 'string') {
+                                    createNewMessage(imageUrl);
+                                    const description = await describeImage(
+                                      currentConversation,
+                                      imageUrl,
+                                      selectedAgent?.id
+                                    );
+                                    const description_message = {
+                                      id: uuidv4(),
+                                      username: "LowContent AI",
+                                      text: description.response,
+                                      conversation_id: currentConversation,
+                                      complete: true,
+                                      title: "",
+                                      buttons: [],
+                                      ideogram_buttons: [],
+                                      messageId: "",
+                                      flags: 0,
+                                      prompt: "",
+                                      role: "assistant",
+                                    };
+
+                                    messageListener(description_message);
+                                  }
+                                }
+                              }}
+                            >
+                              <span style={{ fontSize: "8px" }}>
+                                {button}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
                       )}
 
                       {message.username != Cookies.get("user_name") &&
@@ -575,6 +952,29 @@ const ChatMessageList = ({
             </div>
 
             <div className="flex gap-4 md:flex-row flex-col">
+              {/* Image Preview */}
+              {pendingImageUrl && (
+                <div className="w-full mb-2 relative">
+                  <div className="border rounded-md p-2 flex items-center">
+                    <img 
+                      src={pendingImageUrl} 
+                      alt="Preview" 
+                      className="h-16 object-contain mr-2"
+                    />
+                    <div className="flex flex-grow justify-between items-center">
+                      <div className="text-sm text-gray-600 overflow-hidden text-ellipsis">
+                        Image attached
+                      </div>
+                      <button 
+                        className="text-gray-500 hover:text-gray-700 ml-2"
+                        onClick={() => setPendingImageUrl("")}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <Textarea
                 fullWidth
                 isDisabled={
@@ -591,7 +991,7 @@ const ChatMessageList = ({
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={async (e) => {
-                  if (e.key === "Enter" && !e.shiftKey && messageText) {
+                  if (e.key === "Enter" && !e.shiftKey && (messageText || pendingImageUrl)) {
                     e.preventDefault();
                     handleSendMessage(messageText);
                   }
@@ -658,6 +1058,17 @@ const ChatMessageList = ({
                     </Button>
                   </div>
                 )}
+
+                {selectedAgent?.type === "image" && selectedAgent?.model === "dall-e" && (
+                  <Button
+                    className="mt-2"
+                    color={promptCommands.length > 0 ? "secondary" : "default"}
+                    variant={promptCommands.length > 0 ? "ghost" : "flat"}
+                    onPress={() => setIsDalleImageSizeModalOpen(true)}
+                  >
+                    {translations?.commands || "Commands"}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -667,7 +1078,7 @@ const ChatMessageList = ({
               <Button
                 fullWidth
                 color="secondary"
-                isDisabled={conversations.length === 0 || !messageText}
+                isDisabled={conversations.length === 0 || (!messageText && !pendingImageUrl)}
                 style={{ color: "white" }}
                 onPress={async () => {
                   handleSendMessage(messageText);
