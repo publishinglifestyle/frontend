@@ -194,9 +194,11 @@ const ChatMessageList = ({
 
   const handleIconClick = () => {
     // Reset the file input before clicking to ensure the change event fires
+    // even if the same file is selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    // After resetting, trigger the click event
     fileInputRef.current?.click();
   };
 
@@ -223,18 +225,33 @@ const ChatMessageList = ({
   
   // Helper function to combine message text with image URL
   const combineMessageWithImage = (text: string): string => {
-    if (pendingImageUrl && text.trim()) {
+    if (!pendingImageUrl) {
+      // If no image, just return the text
+      return text;
+    }
+    
+    // Remove cache-busting parameters for storage/transmission
+    // This prevents multiple copies of the same image in the chat history
+    let cleanImageUrl = pendingImageUrl;
+    try {
+      const url = new URL(pendingImageUrl);
+      url.searchParams.delete('t');
+      url.searchParams.delete('timestamp');
+      cleanImageUrl = url.toString();
+    } catch (e) {
+      console.error('Error cleaning image URL:', e);
+      // Fall back to the original URL if there's an error
+    }
+    
+    if (text.trim()) {
       // Ensure there's always a space between text and URL
       const messageText = text.trim();
       
       // Always add a space between text and URL to ensure proper separation
-      return `${messageText} ${pendingImageUrl}`;
-    } else if (pendingImageUrl) {
-      // If we only have an image, return just the image URL
-      return pendingImageUrl;
+      return `${messageText} ${cleanImageUrl}`;
     } else {
-      // If we only have text, return just the text
-      return text;
+      // If we only have an image, return just the image URL
+      return cleanImageUrl;
     }
   };
 
@@ -960,6 +977,8 @@ const ChatMessageList = ({
                       src={pendingImageUrl} 
                       alt="Preview" 
                       className="h-16 object-contain mr-2"
+                      key={pendingImageUrl}
+                      crossOrigin="anonymous"
                     />
                     <div className="flex flex-grow justify-between items-center">
                       <div className="text-sm text-gray-600 overflow-hidden text-ellipsis">

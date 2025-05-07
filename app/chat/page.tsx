@@ -97,19 +97,23 @@ function ChatPageContent() {
         try {
           setIsLoading(true);
           const imageUrl = await uploadImage(file);
+          
+          // Add cache-busting query parameter to prevent browser caching
+          const cacheBustUrl = imageUrl.includes('?') 
+            ? `${imageUrl}&t=${Date.now()}` 
+            : `${imageUrl}?t=${Date.now()}`;
 
-          setUploadedImageUrl(imageUrl);
+          setUploadedImageUrl(cacheBustUrl);
           setIsLoading(false);
           
           // Make sure to explicitly set the modal state to true for each upload
           setIsImageModalOpen(true);
           
-          // Store the image URL in pendingImageUrl state, not in the text area
-          // This keeps the text area free for the user's message
-          setPendingImageUrl(imageUrl);
+          // Store the image URL with cache-busting in pendingImageUrl state
+          setPendingImageUrl(cacheBustUrl);
           
-          // Reset the file input so the onChange event will fire again 
-          // even if the same file is selected
+          // Reset the file input value to ensure the change event will fire again
+          // even if the user selects the same file multiple times
           if (e.target) {
             e.target.value = '';
           }
@@ -120,6 +124,11 @@ function ChatPageContent() {
           if (err.response) {
             setErrorMessage(err.response.data);
             setIsErrorModalOpen(true);
+          }
+          
+          // Also reset the file input on error
+          if (e.target) {
+            e.target.value = '';
           }
         }
       }
