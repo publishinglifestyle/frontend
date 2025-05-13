@@ -46,7 +46,7 @@ export const siteConfig = {
       'allow_user': false,
       'language': 'it'
     },
-    {
+    /*{
       'value': 'feedback',
       'label': 'Feedback',
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
@@ -59,7 +59,7 @@ export const siteConfig = {
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSdeCLgP_JLERdP-ecHF7fxgUP_j3RbbdmpZK2Q-Nzz4wTKZDw/viewform',
       'allow_user': true,
       'language': 'it'
-    },
+    },*/
     {
       'value': 'support',
       'label': 'Assistenza',
