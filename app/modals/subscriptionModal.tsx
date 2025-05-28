@@ -1,5 +1,11 @@
 "use client";
 
+declare global {
+  interface Window {
+    endorsely_referral?: string;
+  }
+}
+
 import { Button } from "@heroui/button";
 import { Card, CardHeader } from "@heroui/card";
 import {
@@ -18,6 +24,7 @@ import {
   startSubscription,
 } from "../../managers/subscriptionManager";
 import { Translations } from "../../translations.d";
+import { getEndorselyReferral } from "../../utils/endorsely";
 
 interface Subscription {
   id: string;
@@ -78,9 +85,15 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   const handleSubscriptionSelect = async () => {
     if (selectedSubscription) {
       setIsLoading(true);
+      
+      // Get the referral ID from Endorsely
+      const endorselyReferral = getEndorselyReferral();
+      
       const url = await startSubscription(
         Cookie.get("authToken"),
-        selectedSubscription.price_id
+        selectedSubscription.price_id,
+        undefined, // affiliateId
+        endorselyReferral
       );
 
       window.location.href = url;

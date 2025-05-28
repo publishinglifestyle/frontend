@@ -1,9 +1,9 @@
 import { BACKEND_URLS } from "@/constant/urls";
 import { axiosInstance } from "@/utils/axios";
 
-export async function startSubscription(token, price_id, affiliateId) {
+export async function startSubscription(token, price_id, affiliateId, endorsely_referral) {
     const response = await axiosInstance.post(BACKEND_URLS.stripe.startSubscription,
-        { price_id, affiliateId }, {
+        { price_id, affiliateId, endorsely_referral }, {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': token

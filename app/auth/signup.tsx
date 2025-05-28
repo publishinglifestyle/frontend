@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 declare global {
   interface Window {
     PostAffTracker: any;
+    endorsely_referral?: string;
   }
 }
 
@@ -28,6 +29,7 @@ import SubscriptionOptions from "@/components/subscription-options";
 import { Subscription } from "@/types/user.types";
 import { useGoogleLogin } from "@react-oauth/google";
 import { FaGoogle } from "react-icons/fa";
+import { getEndorselyReferral } from "../../utils/endorsely";
 
 const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const router = useRouter();
@@ -204,7 +206,11 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
 
       const affiliateId = localStorage.getItem("affiliate_id");
       console.log("affiliateId", affiliateId);
-      const url = await startSubscription(token, price_id, affiliateId);
+      
+      // Get the referral ID from Endorsely
+      const endorselyReferral = getEndorselyReferral();
+      
+      const url = await startSubscription(token, price_id, affiliateId, endorselyReferral);
       window.location.href = url;
       // Add success modal logic if needed
     } catch (e) {

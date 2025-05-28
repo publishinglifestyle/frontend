@@ -116,6 +116,14 @@ export default function RootLayout({
           />
         </noscript>
         {/* End Meta Pixel Code */}
+        
+        {/* Endorsely Script */}
+        <script 
+          async 
+          src="https://assets.endorsely.com/endorsely.js" 
+          data-endorsely="2f92e228-4ddb-44e0-921b-11fb35bd7a39"
+        />
+        {/* End Endorsely Script */}
       </head>
       <body
         className={clsx(

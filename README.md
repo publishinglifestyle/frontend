@@ -51,3 +51,27 @@ After modifying the `.npmrc` file, you need to run `pnpm install` again to ensur
 ## License
 
 Licensed under the [MIT license](https://github.com/nextui-org/next-app-template/blob/main/LICENSE).
+
+# Low Content AI Frontend
+
+This is the frontend application for Low Content AI, built with Next.js.
+
+## Endorsely Integration
+
+This application integrates with Endorsely for referral tracking. The integration includes:
+
+### Setup
+- Endorsely script is automatically loaded in the main layout (`app/layout.tsx`)
+- Script ID: `2f92e228-4ddb-44e0-921b-11fb35bd7a39`
+
+### Usage
+- Referral IDs are automatically captured when users visit the site through Endorsely links
+- The referral ID is passed to the backend during subscription creation
+- Utility functions are available in `utils/endorsely.js` for working with Endorsely data
+
+### Implementation Details
+- The `startSubscription` function in `managers/subscriptionManager.js` accepts an `endorsely_referral` parameter
+- Components that trigger subscriptions (signup flow, subscription modal) automatically include the referral ID
+- TypeScript declarations are included for the `window.endorsely_referral` property
+
+## Getting Started
