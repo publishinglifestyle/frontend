@@ -80,6 +80,7 @@ const ChatModals = ({
   ideogramInitialPrompt,
   ideogramImageUrl,
   uploadedImageUrl,
+  setUploadedImageUrl,
   errorMessage,
   currentConversation,
   setConversations,
@@ -247,7 +248,11 @@ const ChatModals = ({
       <ImageModal
         imageUrl={uploadedImageUrl}
         isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
+        onClose={() => {
+          console.log('ImageModal closing, clearing uploadedImageUrl');
+          setIsImageModalOpen(false);
+          setUploadedImageUrl("");
+        }}
       />
 
       <PromptModal

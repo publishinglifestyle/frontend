@@ -83,9 +83,25 @@ function ChatPageContent() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [pendingImageUrl, setPendingImageUrl] = useState("");
 
+  // Debug logging for pendingImageUrl changes
+  useEffect(() => {
+    console.log('🖼️ pendingImageUrl changed:', {
+      oldValue: 'previous value not tracked',
+      newValue: pendingImageUrl,
+      timestamp: new Date().toISOString()
+    });
+  }, [pendingImageUrl]);
+
   const userId = user?.id;
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🎯 handleImageChange called:', {
+      hasFiles: !!(e.target.files && e.target.files.length > 0),
+      fileCount: e.target.files?.length || 0,
+      fileName: e.target.files?.[0]?.name || 'no file',
+      timestamp: new Date().toISOString()
+    });
+    
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
 
@@ -103,6 +119,12 @@ function ChatPageContent() {
             ? `${imageUrl}&t=${Date.now()}` 
             : `${imageUrl}?t=${Date.now()}`;
 
+          console.log('Image upload completed:', {
+            originalUrl: imageUrl,
+            cacheBustUrl: cacheBustUrl,
+            fileName: file.name
+          });
+
           setUploadedImageUrl(cacheBustUrl);
           setIsLoading(false);
           
@@ -111,6 +133,12 @@ function ChatPageContent() {
           
           // Store the image URL with cache-busting in pendingImageUrl state
           setPendingImageUrl(cacheBustUrl);
+          
+          console.log('Image state updated:', {
+            uploadedImageUrl: cacheBustUrl,
+            pendingImageUrl: cacheBustUrl,
+            modalOpen: true
+          });
           
           // Reset the file input value to ensure the change event will fire again
           // even if the user selects the same file multiple times

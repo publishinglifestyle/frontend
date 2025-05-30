@@ -130,6 +130,16 @@ const ChatMessageList = ({
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Add a ref to track the latest pendingImageUrl to avoid closure issues
+  const pendingImageUrlRef = useRef<string>(pendingImageUrl);
+  
+  // Update ref whenever pendingImageUrl changes
+  useEffect(() => {
+    pendingImageUrlRef.current = pendingImageUrl;
+    console.log('pendingImageUrl updated:', pendingImageUrl);
+  }, [pendingImageUrl]);
+  
   const isSocketConnected = false;
   const { copied, copy } = useClipboard();
   const { profilePic, user } = useAuth();
@@ -209,32 +219,58 @@ const ChatMessageList = ({
   };
 
   const handleSendMessage = async (text: string) => {
+    console.log('handleSendMessage called with:', {
+      text: text,
+      pendingImageUrl_state: pendingImageUrl,
+      pendingImageUrl_ref: pendingImageUrlRef.current,
+      selectedAgent: selectedAgent?.model
+    });
+    
     if (selectedAgent?.model === "ideogram") {
       setIsPictureGenerationModalOpen(true);
     } else {
       // When sending, combine message text with image URL if both exist
       const messageToSend = combineMessageWithImage(text);
+      console.log('Message to send after combining:', messageToSend);
+      
       sendChatMessage(messageToSend, false, "", true, promptCommands, 0, "", 1);
       
       // Clear the pending image URL after sending
-      if (pendingImageUrl) {
+      const currentPendingUrl = pendingImageUrlRef.current;
+      if (currentPendingUrl) {
+        console.log('Clearing pendingImageUrl after sending message:', currentPendingUrl);
         setPendingImageUrl("");
+        pendingImageUrlRef.current = ""; // Also clear the ref
       }
     }
   };
   
   // Helper function to combine message text with image URL
   const combineMessageWithImage = (text: string): string => {
-    if (!pendingImageUrl) {
-      // If no image, just return the text
+    const currentPendingUrl = pendingImageUrlRef.current;
+    
+    console.log('combineMessageWithImage called with:', {
+      text: text,
+      pendingImageUrl_state: pendingImageUrl,
+      pendingImageUrl_ref: currentPendingUrl,
+      stateAndRefMatch: pendingImageUrl === currentPendingUrl
+    });
+    
+    if (!currentPendingUrl) {
+      console.log('No pending image URL, returning text only');
       return text;
     }
     
+    console.log('Combining message with image:', {
+      text: text,
+      pendingImageUrl: currentPendingUrl
+    });
+    
     // Remove cache-busting parameters for storage/transmission
     // This prevents multiple copies of the same image in the chat history
-    let cleanImageUrl = pendingImageUrl;
+    let cleanImageUrl = currentPendingUrl;
     try {
-      const url = new URL(pendingImageUrl);
+      const url = new URL(currentPendingUrl);
       url.searchParams.delete('t');
       url.searchParams.delete('timestamp');
       cleanImageUrl = url.toString();
@@ -243,19 +279,33 @@ const ChatMessageList = ({
       // Fall back to the original URL if there's an error
     }
     
+    console.log('Image URL cleaned:', {
+      original: currentPendingUrl,
+      cleaned: cleanImageUrl
+    });
+    
     if (text.trim()) {
       // Ensure there's always a space between text and URL
       const messageText = text.trim();
       
       // Always add a space between text and URL to ensure proper separation
-      return `${messageText} ${cleanImageUrl}`;
+      const combinedMessage = `${messageText} ${cleanImageUrl}`;
+      console.log('Final combined message:', combinedMessage);
+      return combinedMessage;
     } else {
       // If we only have an image, return just the image URL
+      console.log('Image only message:', cleanImageUrl);
       return cleanImageUrl;
     }
   };
 
   const handleConfirmNumberOfPictures = (numberOfPictures: number) => {
+    console.log('handleConfirmNumberOfPictures called:', {
+      numberOfPictures,
+      pendingImageUrl_state: pendingImageUrl,
+      pendingImageUrl_ref: pendingImageUrlRef.current
+    });
+    
     // Combine message text with image URL if both exist
     const messageToSend = combineMessageWithImage(messageText);
     sendChatMessage(
@@ -271,8 +321,11 @@ const ChatMessageList = ({
     setIsPictureGenerationModalOpen(false);
     
     // Clear the pending image URL after sending
-    if (pendingImageUrl) {
+    const currentPendingUrl = pendingImageUrlRef.current;
+    if (currentPendingUrl) {
+      console.log('Clearing pendingImageUrl after picture generation:', currentPendingUrl);
       setPendingImageUrl("");
+      pendingImageUrlRef.current = ""; // Also clear the ref
     }
   };
 
@@ -375,6 +428,8 @@ const ChatMessageList = ({
   };
 
   const createNewMessage = (text = messageText) => {
+    console.log('createNewMessage called with text:', text);
+    
     const userMessageId = `${Date.now()}`;
     const userMessage = {
       id: userMessageId,
@@ -390,6 +445,8 @@ const ChatMessageList = ({
       prompt: "",
       role: "user",
     };
+
+    console.log('Created user message:', userMessage);
 
     const typingMessageId = `typing-${Date.now()}`;
     const typingMessage = {
@@ -686,15 +743,28 @@ const ChatMessageList = ({
                         // First try to extract an image URL from the message
                         const extractedImageUrl = extractImageUrl(message.text);
                         
+                        console.log(`Message ${message.id} rendering:`, {
+                          messageText: message.text,
+                          extractedImageUrl: extractedImageUrl,
+                          username: message.username
+                        });
+                        
                         // Case 1: Message is purely an image URL
                         if (extractedImageUrl && message.text.trim() === extractedImageUrl) {
                           console.log('Rendering pure image message');
+                          
+                          // Add message-specific cache busting to prevent browser caching issues
+                          const cacheBustedUrl = extractedImageUrl.includes('?') 
+                            ? `${extractedImageUrl}&msgId=${message.id}` 
+                            : `${extractedImageUrl}?msgId=${message.id}`;
+                          
                           return (
                             <div className="message-image-container">
                               <img
                                 alt="Shared content" 
                                 className="message-image"
-                                src={getProperImageSrc(extractedImageUrl)}
+                                src={cacheBustedUrl}
+                                key={`${message.id}-${extractedImageUrl}`}
                                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                   const target = e.target as HTMLImageElement;
                                   console.error(`Failed to load image: ${target.src}`, e);
@@ -739,6 +809,11 @@ const ChatMessageList = ({
                           const textParts = message.text.split(extractedImageUrl);
                           const textContent = textParts.join(' ').trim();
                           
+                          // Add message-specific cache busting to prevent browser caching issues
+                          const cacheBustedUrl = extractedImageUrl.includes('?') 
+                            ? `${extractedImageUrl}&msgId=${message.id}` 
+                            : `${extractedImageUrl}?msgId=${message.id}`;
+                          
                           return (
                             <div className="message-with-description">
                               {textContent && (
@@ -753,7 +828,8 @@ const ChatMessageList = ({
                                 <img
                                   alt="Shared content"
                                   className="message-image"
-                                  src={getProperImageSrc(extractedImageUrl)}
+                                  src={cacheBustedUrl}
+                                  key={`${message.id}-${extractedImageUrl}`}
                                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                     const target = e.target as HTMLImageElement;
                                     console.error(`Failed to load image: ${target.src}`, e);
