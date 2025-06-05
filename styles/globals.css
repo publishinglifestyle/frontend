@@ -5,11 +5,76 @@
 body {
     margin: 0;
     padding: 0;
+    /* Prevent layout shifts during translation */
+    overflow-x: hidden;
 }
 
+/* Google Translate Compatibility */
+.goog-te-banner-frame {
+    display: none !important;
+}
+
+.goog-te-menu-value {
+    padding: 0 !important;
+}
+
+body.goog-te-hl {
+    margin-top: 0 !important;
+}
+
+/* Hide Google Translate bar to prevent layout issues */
+.skiptranslate {
+    display: none !important;
+}
+
+/* Ensure pricing cards maintain layout during translation */
+[class*="motion-div"] {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Improve text wrapping for translated content */
+* {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Ensure chips and buttons don't break layout when translated */
+[data-slot="base"] {
+    min-width: max-content;
+    white-space: nowrap;
+}
+
+/* Specific fixes for pricing section */
+.pricing-card {
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Prevent Google Translate from breaking flex layouts */
+.pricing-grid > * {
+    flex-shrink: 0;
+}
+
+/* Ensure text doesn't overflow containers when translated */
+.pricing-title,
+.pricing-price,
+.pricing-description {
+    word-break: break-word;
+    hyphens: auto;
+    line-height: 1.4;
+}
+
+/* Handle longer translated text in tabs */
+[role="tab"] {
+    min-width: max-content;
+    text-align: center;
+}
 
 @keyframes bounce {
-
     0%,
     100% {
         transform: translateY(0);

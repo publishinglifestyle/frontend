@@ -178,56 +178,67 @@ export default function Home() {
 
       {/* Pricing Table */}
       <section className="py-64 bg-[#1e1e2f] text-white">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl font-semibold mb-12">Pricing</h2>
-          <Tabs
-            classNames={{ tab: "data-[hover-unselected=true]:opacity-90" }}
-            radius="full"
-            size="lg"
-            onSelectionChange={onFrequencyChange}
-          >
-            {frequencies.map((frequency) => (
-              <Tab
-                key={frequency.key}
-                title={
-                  <div className="flex items-center gap-2">
-                    <p>{frequency.label}</p>
-                    {frequency.discount && (
-                      <Chip color="secondary">{frequency.discount}</Chip>
-                    )}
-                  </div>
-                }
-              />
-            ))}
-          </Tabs>
-          <div className="grid grid-cols-1 gap-8 mt-12 md:grid-cols-2 lg:grid-cols-3">
+        <div className="container mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-semibold mb-8 sm:mb-12 break-words">Pricing</h2>
+          <div className="mb-6 sm:mb-8 flex justify-center">
+            <Tabs
+              classNames={{ 
+                tab: "data-[hover-unselected=true]:opacity-90",
+                tabList: "bg-[#2a2a3c] p-1"
+              }}
+              radius="full"
+              size="lg"
+              onSelectionChange={onFrequencyChange}
+            >
+              {frequencies.map((frequency) => (
+                <Tab
+                  key={frequency.key}
+                  title={
+                    <div className="flex items-center gap-2 flex-wrap justify-center px-2">
+                      <span className="whitespace-nowrap text-sm sm:text-base">{frequency.label}</span>
+                      {frequency.discount && (
+                        <Chip color="secondary" className="shrink-0 text-xs">{frequency.discount}</Chip>
+                      )}
+                    </div>
+                  }
+                />
+              ))}
+            </Tabs>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 mt-8 sm:mt-12 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto pricing-grid">
             {tiers.map((tier) => (
               <motion.div
                 key={tier.key}
-                whileHover={{ scale: 1.05 }}
-                className={`p-8 rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 
+                whileHover={{ scale: 1.02 }}
+                className={`relative p-6 sm:p-8 rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 min-h-[320px] sm:min-h-[300px] flex flex-col justify-between pricing-card
         ${tier.mostPopular ? "bg-purple-700 border-2 border-yellow-400" : "bg-[#2a2a3c]"}`}
               >
                 {tier.mostPopular && (
-                  <Chip
-                    color="warning"
-                    className="absolute -top-4 left-1/2 -translate-x-1/2"
-                  >
-                    Most Popular
-                  </Chip>
+                  <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 z-10">
+                    <Chip
+                      color="warning"
+                      className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-3"
+                    >
+                      Most Popular
+                    </Chip>
+                  </div>
                 )}
-                <h3 className="text-3xl font-semibold mb-4">{tier.title}</h3>
-                <p className="text-5xl font-bold text-yellow-300">
-                  {tier.price[selectedFrequency.key as keyof typeof tier.price]}
-                  <span className="text-lg text-gray-400">
-                    /{selectedFrequency.priceSuffix}
-                  </span>
-                </p>
-                <p className="text-gray-300 mt-6">
-                  {selectedFrequency.key === "yearly"
-                    ? tier.description_year
-                    : tier.description_month}
-                </p>
+                <div className="flex-1 pt-6 sm:pt-4">
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-3 sm:mb-4 break-words leading-tight pricing-title">{tier.title}</h3>
+                  <div className="mb-4 sm:mb-6">
+                    <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-yellow-300 break-words leading-none pricing-price">
+                      {tier.price[selectedFrequency.key as keyof typeof tier.price]}
+                    </p>
+                    <span className="text-xs sm:text-sm md:text-lg text-gray-400 block mt-1 break-words">
+                      /{selectedFrequency.priceSuffix}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 text-xs sm:text-sm md:text-base leading-relaxed break-words hyphens-auto pricing-description">
+                    {selectedFrequency.key === "yearly"
+                      ? tier.description_year
+                      : tier.description_month}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
