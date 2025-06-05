@@ -87,6 +87,21 @@ export default function Crossword({
         return;
       }
 
+      // Sort words by position (top to bottom, then left to right) and renumber them sequentially
+      const sortedWords = [...placedWords].sort((a, b) => {
+        // First sort by row (starty), then by column (startx)
+        if (a.starty !== b.starty) {
+          return a.starty - b.starty;
+        }
+        return a.startx - b.startx;
+      });
+
+      // Assign new sequential positions starting from 1
+      const renumberedWords = sortedWords.map((word, idx) => ({
+        ...word,
+        position: idx + 1
+      }));
+
       const cellSize = Math.min(
         (pageWidth - margin * 2) / rows,
         (pageHeight / 2 - margin * 2) / cols
@@ -105,7 +120,7 @@ export default function Crossword({
             const y = gridOffsetY + rowIndex * cellSize;
 
             // Check if the current cell is part of any word
-            const wordInCell = placedWords.some((word: any) => {
+            const wordInCell = renumberedWords.some((word: any) => {
               const { startx, starty, answer, orientation } = word;
               for (let i = 0; i < answer.length; i++) {
                 const currentCol =
@@ -138,7 +153,7 @@ export default function Crossword({
           }
         }
 
-        for (const word of placedWords) {
+        for (const word of renumberedWords) {
           const { startx, starty, answer, orientation, position } = word;
 
           // Debugging: Log the word being placed
@@ -222,12 +237,12 @@ export default function Crossword({
       };
 
       distributeClues(
-        placedWords.filter((word: any) => word.orientation === "across"),
+        renumberedWords.filter((word: any) => word.orientation === "across"),
         leftColumnX,
         currentY
       );
       distributeClues(
-        placedWords.filter((word: any) => word.orientation === "down"),
+        renumberedWords.filter((word: any) => word.orientation === "down"),
         rightColumnX,
         currentY
       );
@@ -278,6 +293,20 @@ export default function Crossword({
             table: grid,
             outputJson: placedWords,
           } = crossword;
+
+          // Sort and renumber words for solutions too
+          const sortedWords = [...placedWords].sort((a, b) => {
+            if (a.starty !== b.starty) {
+              return a.starty - b.starty;
+            }
+            return a.startx - b.startx;
+          });
+
+          const renumberedWords = sortedWords.map((word, idx) => ({
+            ...word,
+            position: idx + 1
+          }));
+
           const adjustedCellSize = Math.min(
             gridWidth / cols,
             gridHeight / rows
@@ -292,7 +321,7 @@ export default function Crossword({
           // Draw the solution grid for each crossword
           let wordIndex = 0;
 
-          for (const word of placedWords) {
+          for (const word of renumberedWords) {
             const { startx, starty, answer, orientation } = word;
 
             for (let i = 0; i < answer.length; i++) {
