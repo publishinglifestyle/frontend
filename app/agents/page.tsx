@@ -91,6 +91,10 @@ const agent_models = [
     label: "Dall-E",
   },
   {
+    value: "gpt-image",
+    label: "GPT Image",
+  },
+  {
     value: "midjourney",
     label: "Midjourney",
   },
