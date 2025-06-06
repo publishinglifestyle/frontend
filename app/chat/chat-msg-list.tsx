@@ -1154,7 +1154,7 @@ const ChatMessageList = ({
                   </div>
                 )}
 
-                {selectedAgent?.type === "image" && selectedAgent?.model === "dall-e" && (
+                {selectedAgent?.type === "image" && selectedAgent?.model === "gpt-image" && (
                   <Button
                     className="mt-2"
                     color={promptCommands.length > 0 ? "secondary" : "default"}
