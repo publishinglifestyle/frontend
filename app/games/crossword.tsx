@@ -51,6 +51,27 @@ export default function Crossword({
       );
 
       if (crosswordResponse) {
+        // Check if all puzzles have the expected number of words
+        const response = crosswordResponse.response;
+        if (Array.isArray(response) && cross_words && cross_words.length > 0) {
+          const expectedWordsPerPuzzle = wordsPerPuzzle === 1 ? cross_words.length : wordsPerPuzzle;
+          const missingWordsInfo: string[] = [];
+          
+          response.forEach((crossword, index) => {
+            const placedWordsCount = crossword.outputJson?.length || 0;
+            if (placedWordsCount < expectedWordsPerPuzzle) {
+              const missingCount = expectedWordsPerPuzzle - placedWordsCount;
+              missingWordsInfo.push(`Puzzle ${index + 1}: ${missingCount} word(s) could not be placed`);
+            }
+          });
+          
+          if (missingWordsInfo.length > 0) {
+            const warningMessage = `Warning: Some words could not be placed in the crossword grid:\n${missingWordsInfo.join('\n')}\n\nConsider:\n- Using a larger grid size\n- Using shorter words\n- Reducing the number of words per puzzle`;
+            console.warn(warningMessage);
+            // Still generate the PDF but show a warning
+          }
+        }
+        
         generatePDF(crosswordResponse.response);
       }
     } catch (error: any) {
@@ -102,22 +123,33 @@ export default function Crossword({
         position: idx + 1
       }));
 
+      // Reserve space for title and ensure grid doesn't overlap
+      const titleHeight = 30; // Space reserved for title
+      const cluesHeight = 120; // Minimum space reserved for clues at bottom
+      const gridSpacing = 10; // Additional spacing after title
+      
+      const availableGridHeight = pageHeight - titleHeight - cluesHeight - margin * 2;
+      const availableGridWidth = pageWidth - margin * 2;
+      
       const cellSize = Math.min(
-        (pageWidth - margin * 2) / rows,
-        (pageHeight / 2 - margin * 2) / cols
+        availableGridWidth / cols,
+        availableGridHeight / rows
       );
 
       const gridOffsetX = (pageWidth - cellSize * cols) / 2;
-      const gridOffsetY = (pageHeight / 2 - cellSize * rows) / 2 + margin;
+      const gridOffsetY = titleHeight + gridSpacing + margin;
 
       const numberFontSize = cellSize * 0.7;
       const letterFontSize = cellSize * 1.1;
 
-      const drawGrid = (isSolution = false) => {
+      const drawGrid = (isSolution = false, customCellSize?: number, customGridOffsetX?: number, customGridOffsetY?: number) => {
+        const activeCellSize = customCellSize || cellSize;
+        const activeGridOffsetX = customGridOffsetX !== undefined ? customGridOffsetX : gridOffsetX;
+        const activeGridOffsetY = customGridOffsetY !== undefined ? customGridOffsetY : gridOffsetY;
         for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
           for (let colIndex = 0; colIndex < cols; colIndex++) {
-            const x = gridOffsetX + colIndex * cellSize;
-            const y = gridOffsetY + rowIndex * cellSize;
+            const x = activeGridOffsetX + colIndex * activeCellSize;
+            const y = activeGridOffsetY + rowIndex * activeCellSize;
 
             // Check if the current cell is part of any word
             const wordInCell = renumberedWords.some((word: any) => {
@@ -147,9 +179,9 @@ export default function Crossword({
               doc.setFillColor(200, 200, 200); // Gray for empty cells
             }
 
-            doc.rect(x, y, cellSize, cellSize, "F"); // 'F' for filled rectangle
+            doc.rect(x, y, activeCellSize, activeCellSize, "F"); // 'F' for filled rectangle
             doc.setDrawColor(0, 0, 0); // Black for border
-            doc.rect(x, y, cellSize, cellSize); // Draw border
+            doc.rect(x, y, activeCellSize, activeCellSize); // Draw border
           }
         }
 
@@ -165,27 +197,74 @@ export default function Crossword({
             const colIndex = orientation === "across" ? startx + i : startx;
             const rowIndex = orientation === "down" ? starty + i : starty;
 
-            const x = gridOffsetX + colIndex * cellSize;
-            const y = gridOffsetY + rowIndex * cellSize;
-
-            const number = i === 0 ? position.toString() : ""; // Only add the number at the start of the word
-
-            if (number) {
-              doc.setFontSize(numberFontSize * 0.8);
-              doc.setFont(font || "times", "normal");
-              doc.text(number, x + cellSize * 0.1, y + cellSize * 0.2);
-            }
+            const x = activeGridOffsetX + colIndex * activeCellSize;
+            const y = activeGridOffsetY + rowIndex * activeCellSize;
 
             if (isSolution) {
-              doc.setFontSize(letterFontSize);
+              doc.setFontSize(activeCellSize * 1.1);
               doc.setFont(font || "times", "normal");
               doc.text(
                 answer[i].toUpperCase(),
-                x + cellSize / 4,
-                y + cellSize * 0.75
+                x + activeCellSize / 4,
+                y + activeCellSize * 0.75
               );
             }
           }
+        }
+
+        // Handle number placement separately to avoid overlaps
+        if (!isSolution) {
+          // Group words by their starting cell to detect overlaps
+          const cellNumbers: Record<string, { across?: number; down?: number }> = {};
+          
+          renumberedWords.forEach((word) => {
+            const { startx, starty, orientation, position } = word;
+            const cellKey = `${starty}-${startx}`;
+            
+            if (!cellNumbers[cellKey]) {
+              cellNumbers[cellKey] = {};
+            }
+            
+            if (orientation === "across") {
+              cellNumbers[cellKey].across = position;
+            } else {
+              cellNumbers[cellKey].down = position;
+            }
+          });
+          
+          // Place numbers, positioning them side by side if there are overlaps
+          Object.entries(cellNumbers).forEach(([cellKey, numbers]) => {
+            const [rowStr, colStr] = cellKey.split('-');
+            const rowIndex = parseInt(rowStr);
+            const colIndex = parseInt(colStr);
+            
+            const x = activeGridOffsetX + colIndex * activeCellSize;
+            const y = activeGridOffsetY + rowIndex * activeCellSize;
+            
+            doc.setFontSize((activeCellSize * 0.7) * 0.8);
+            doc.setFont(font || "times", "normal");
+            
+            const hasAcross = numbers.across !== undefined;
+            const hasDown = numbers.down !== undefined;
+            
+            if (hasAcross && hasDown) {
+              // Both numbers present - place them side by side
+              const acrossText = numbers.across!.toString();
+              const downText = numbers.down!.toString();
+              
+              // Place across number on the left
+              doc.text(acrossText, x + activeCellSize * 0.05, y + activeCellSize * 0.2);
+              
+              // Place down number on the right
+              doc.text(downText, x + activeCellSize * 0.5, y + activeCellSize * 0.2);
+            } else if (hasAcross) {
+              // Only across number
+              doc.text(numbers.across!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
+            } else if (hasDown) {
+              // Only down number
+              doc.text(numbers.down!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
+            }
+          });
         }
       };
 
@@ -205,7 +284,7 @@ export default function Crossword({
       const clueColumnWidth = (pageWidth - 2 * margin) / maxColumns - 10;
       const leftColumnX = (pageWidth - (2 * clueColumnWidth + 10)) / 2;
       const rightColumnX = leftColumnX + clueColumnWidth + 10;
-      let currentY = gridOffsetY + rows * cellSize + 20;
+      let currentY = gridOffsetY + rows * cellSize + 15;
 
       doc.setFontSize(8);
       doc.setFont(font || "times", "italic");
@@ -234,18 +313,35 @@ export default function Crossword({
           doc.text(splitText, xPosition, yPosition);
           yPosition += splitText.length * 6;
         });
+        
+        return yPosition; // Return the updated Y position
       };
 
-      distributeClues(
-        renumberedWords.filter((word: any) => word.orientation === "across"),
-        leftColumnX,
-        currentY
-      );
-      distributeClues(
-        renumberedWords.filter((word: any) => word.orientation === "down"),
-        rightColumnX,
-        currentY
-      );
+      const acrossWords = renumberedWords.filter((word: any) => word.orientation === "across");
+      const downWords = renumberedWords.filter((word: any) => word.orientation === "down");
+      
+      const finalAcrossY = distributeClues(acrossWords, leftColumnX, currentY);
+      const finalDownY = distributeClues(downWords, rightColumnX, currentY);
+      
+      // Check if this puzzle is missing words and add a note
+      const expectedWordsCount = wordsPerPuzzle === 1 ? (cross_words?.length || 0) : wordsPerPuzzle;
+      const actualWordsCount = renumberedWords.length;
+      
+      if (actualWordsCount < expectedWordsCount) {
+        const missingCount = expectedWordsCount - actualWordsCount;
+        const noteY = Math.max(finalAcrossY, finalDownY) + 15;
+        
+        if (noteY < pageHeight - margin - 20) {
+          doc.setFontSize(8);
+          doc.setFont(font || "times", "italic");
+          doc.text(
+            `Note: ${missingCount} word(s) could not be placed in this crossword grid.`,
+            pageWidth / 2,
+            noteY,
+            { align: "center" }
+          );
+        }
+      }
 
       // Page for solution
       if (num_puzzles === 1 || solutions_per_page === 1) {
@@ -254,7 +350,19 @@ export default function Crossword({
         doc.text(`Solution ${index + 1}`, pageWidth / 2, margin + 10, {
           align: "center",
         });
-        drawGrid(true);
+        
+        // Recalculate grid positioning for solution page (more space available without clues)
+        const solutionAvailableHeight = pageHeight - titleHeight - margin * 2;
+        const solutionCellSize = Math.min(
+          availableGridWidth / cols,
+          solutionAvailableHeight / rows
+        );
+        
+        // Update for solution drawing
+        const solutionGridOffsetX = (pageWidth - solutionCellSize * cols) / 2;
+        const solutionGridOffsetY = titleHeight + gridSpacing + margin;
+        
+        drawGrid(true, solutionCellSize, solutionGridOffsetX, solutionGridOffsetY);
       }
     });
 
@@ -318,33 +426,49 @@ export default function Crossword({
           const offsetX = margin + columnIndex * (gridWidth + margin);
           const offsetY = margin + 20 + rowIndex * (gridHeight + 20);
 
-          // Draw the solution grid for each crossword
-          let wordIndex = 0;
-
-          for (const word of renumberedWords) {
-            const { startx, starty, answer, orientation } = word;
-
+          // Build a quick lookup map for letters in the grid
+          const letterMap: Record<string, string> = {};
+          renumberedWords.forEach(({ startx, starty, answer, orientation }) => {
             for (let i = 0; i < answer.length; i++) {
-              const colIndex = orientation === "across" ? startx + i : startx;
-              const rowIndex = orientation === "down" ? starty + i : starty;
+              const col = orientation === "across" ? startx + i : startx;
+              const row = orientation === "down" ? starty + i : starty;
+              letterMap[`${row}-${col}`] = answer[i];
+            }
+          });
 
-              const x = offsetX + colIndex * adjustedCellSize;
-              const y = offsetY + rowIndex * adjustedCellSize;
+          // Draw every cell so that the solution grid mirrors the puzzle grid
+          for (let rowIdx = 0; rowIdx < rows; rowIdx++) {
+            for (let colIdx = 0; colIdx < cols; colIdx++) {
+              const x = offsetX + colIdx * adjustedCellSize;
+              const y = offsetY + rowIdx * adjustedCellSize;
 
+              const key = `${rowIdx}-${colIdx}`;
+              const letter = letterMap[key];
+              const isWordCell = Boolean(letter && letter !== "-" && letter !== " ");
+
+              // Shade cells: white for letters, grey for blanks
+              if (isWordCell) {
+                doc.setFillColor(255, 255, 255);
+              } else {
+                doc.setFillColor(200, 200, 200);
+              }
+
+              // Filled rectangle then border
+              doc.rect(x, y, adjustedCellSize, adjustedCellSize, "F");
+              doc.setDrawColor(0, 0, 0);
               doc.rect(x, y, adjustedCellSize, adjustedCellSize);
 
-              if (answer[i] !== "-" && answer[i] !== " ") {
-                doc.setFontSize(5);
+              // Write the letter if this is part of a word
+              if (isWordCell) {
+                doc.setFontSize(adjustedCellSize * 0.75);
                 doc.setFont(font || "times", "normal");
-
                 doc.text(
-                  answer[i].toUpperCase(),
+                  letter.toUpperCase(),
                   x + adjustedCellSize / 4,
                   y + adjustedCellSize * 0.75
                 );
               }
             }
-            wordIndex += 1;
           }
         });
       }
