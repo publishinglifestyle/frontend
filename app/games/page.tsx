@@ -125,7 +125,7 @@ export default function GamesPage() {
       // Render an iframe for the Maze game
       return (
         <iframe
-          src="https://maze-lowcontent-e5d92aeae259.herokuapp.com/"
+          src="https://lca-maze-e5a721fab7ab.herokuapp.com/"
           width="100%"
           height="600px"
           style={{ border: "none" }}
