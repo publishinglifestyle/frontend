@@ -34,7 +34,10 @@ import { getAgentsPerLevel } from "@/managers/agentsManager";
 
 let GREETING_MESSAGE = "";
 
-let columns: Column[] = [{ key: "id", name: "Conversations" }];
+let columns: Column[] = [
+  { key: "name", name: "Conversations" },
+  { key: "actions", name: "Actions" }
+];
 
 let socket: Socket | null = null;
 const aiPic = "./ai.png";
@@ -114,29 +117,24 @@ function ChatPageContent() {
           setIsLoading(true);
           const imageUrl = await uploadImage(file);
           
-          // Add cache-busting query parameter to prevent browser caching
-          const cacheBustUrl = imageUrl.includes('?') 
-            ? `${imageUrl}&t=${Date.now()}` 
-            : `${imageUrl}?t=${Date.now()}`;
-
+          // Don't add cache-busting to the stored URL - only add it when displaying
           console.log('Image upload completed:', {
             originalUrl: imageUrl,
-            cacheBustUrl: cacheBustUrl,
             fileName: file.name
           });
 
-          setUploadedImageUrl(cacheBustUrl);
+          // Set both URLs to ensure synchronization
+          setUploadedImageUrl(imageUrl);
+          setPendingImageUrl(imageUrl);
+          
           setIsLoading(false);
           
-          // Make sure to explicitly set the modal state to true for each upload
+          // Show the modal after setting the URLs
           setIsImageModalOpen(true);
           
-          // Store the image URL with cache-busting in pendingImageUrl state
-          setPendingImageUrl(cacheBustUrl);
-          
           console.log('Image state updated:', {
-            uploadedImageUrl: cacheBustUrl,
-            pendingImageUrl: cacheBustUrl,
+            uploadedImageUrl: imageUrl,
+            pendingImageUrl: imageUrl,
             modalOpen: true
           });
           
@@ -151,6 +149,12 @@ function ChatPageContent() {
 
           if (err.response) {
             setErrorMessage(err.response.data);
+            setIsErrorModalOpen(true);
+          } else if (err.message) {
+            setErrorMessage(`Failed to upload image: ${err.message}`);
+            setIsErrorModalOpen(true);
+          } else {
+            setErrorMessage("Failed to upload image. Please try again.");
             setIsErrorModalOpen(true);
           }
           
@@ -318,6 +322,18 @@ function ChatPageContent() {
     if (!socket.hasListeners("message")) {
       socket.on("message", messageListener);
     }
+    
+    // Listen for conversation title updates
+    socket.on("conversationTitleUpdate", ({ conversation_id, title }) => {
+      console.log(`Received title update for conversation ${conversation_id}: "${title}"`);
+      setConversations((prevConversations) =>
+        prevConversations.map((conversation) =>
+          conversation.id === conversation_id
+            ? { ...conversation, name: title, last_activity: new Date().toISOString() }
+            : conversation
+        )
+      );
+    });
 
     // Listen for the midjourneyCallback event
     socket.on("midjourneyCallback", async (response) => {
@@ -408,6 +424,7 @@ function ChatPageContent() {
         socket.off("disconnect");
         socket.off("connect_error");
         socket.off("message", messageListener);
+        socket.off("conversationTitleUpdate");
         socket.off("midjourneyCallback");
         socket.close();
         socket = null;
@@ -438,7 +455,10 @@ function ChatPageContent() {
 
       setTranslations(translations);
 
-      columns = [{ key: "id", name: translations?.conversations || "" }];
+      columns = [
+        { key: "name", name: translations?.conversations || "Conversations" },
+        { key: "actions", name: "" }
+      ];
 
       GREETING_MESSAGE = translations?.greeting || "";
     };
@@ -587,6 +607,8 @@ function ChatPageContent() {
             socket={socket}
             translations={translations}
             userId={user?.id ?? ""}
+            setConversations={setConversations}
+            setCurrentConversation={setCurrentConversation}
           />
 
           <ChatModals

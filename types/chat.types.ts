@@ -40,6 +40,7 @@ export interface Conversation {
   id: string;
   name: string;
   context: Context[];
+  last_activity?: string;
 }
 
 export interface Context {

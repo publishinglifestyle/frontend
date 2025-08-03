@@ -84,20 +84,28 @@ const ChatSidebar = ({
   };
 
   const handleCreateNewMessage = async () => {
-    setIsLoading(true);
-    const newConversation = await createConversation();
-
-    setConversations((prevConversations) => [
-      ...prevConversations,
-      newConversation,
-    ]);
-    setCurrentConversation(newConversation.id);
+    // Simply clear the current conversation and messages
+    // The actual conversation will be created when the user sends a message
+    setCurrentConversation("");
     setSelectedAgentId("");
     setSelectedAgent(undefined);
-
-    // Fetch and display messages for the new conversation
-    changeConversationMessages(newConversation);
-    setIsLoading(false);
+    
+    // Show initial greeting message
+    const greetingMessage = {
+      id: "0",
+      text: greeting || "Hello! How can I help you today?",
+      username: "LowContent AI",
+      conversation_id: "",
+      complete: true,
+      title: "",
+      buttons: [],
+      ideogram_buttons: [],
+      messageId: "",
+      flags: 0,
+      prompt: "",
+      role: "system",
+    };
+    setMessages([greetingMessage as Message]);
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -160,7 +168,6 @@ const ChatSidebar = ({
               <TableRow key={item.id.toString()}>
                 {columns.map((column) => (
                   <TableCell key={column.key}>
-                    {column.name}
                     <SingleConversationRow
                       columnKey={column.key as keyof Conversation}
                       handleClick={async () => {

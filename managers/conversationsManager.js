@@ -101,27 +101,51 @@ export async function changeName(conversation_id, name, agent_id) {
     }
 }
 
-export async function uploadImage(file) {
+export async function uploadImage(file, retries = 3) {
     const reader = new FileReader();
 
     return new Promise((resolve, reject) => {
         reader.onloadend = async () => {
             const base64String = reader.result.split(',')[1];
 
-            try {
-                const response = await axiosInstance.post(
-                    BACKEND_URLS.imageGen.uploadImage,
-                    { base64String }, {
-                });
+            let lastError = null;
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    console.log(`Upload attempt ${attempt} of ${retries}`);
+                    const response = await axiosInstance.post(
+                        BACKEND_URLS.imageGen.uploadImage,
+                        { base64String },
+                        {
+                            timeout: 30000, // 30 second timeout
+                        }
+                    );
 
-                resolve(response.data.url);
-            } catch (error) {
-                reject(error);
+                    if (response.data && response.data.url) {
+                        console.log('Upload successful:', response.data.url);
+                        resolve(response.data.url);
+                        return;
+                    } else {
+                        throw new Error('Invalid response from server - no URL returned');
+                    }
+                } catch (error) {
+                    lastError = error;
+                    console.error(`Upload attempt ${attempt} failed:`, error.message);
+                    
+                    if (attempt < retries) {
+                        // Wait before retrying (exponential backoff)
+                        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                        console.log(`Waiting ${delay}ms before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
             }
+            
+            // All retries failed
+            reject(lastError || new Error('Upload failed after all retries'));
         };
 
         reader.onerror = () => {
-            reject('Error reading file');
+            reject(new Error('Error reading file'));
         };
 
         reader.readAsDataURL(file);

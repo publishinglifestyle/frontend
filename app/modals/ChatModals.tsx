@@ -249,9 +249,9 @@ const ChatModals = ({
         imageUrl={uploadedImageUrl}
         isOpen={isImageModalOpen}
         onClose={() => {
-          console.log('ImageModal closing, clearing uploadedImageUrl');
+          console.log('ImageModal closing, uploadedImageUrl will remain for message sending');
           setIsImageModalOpen(false);
-          setUploadedImageUrl("");
+          // Don't clear uploadedImageUrl here - it should be cleared after the message is sent
         }}
       />
 

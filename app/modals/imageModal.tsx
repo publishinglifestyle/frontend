@@ -18,17 +18,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
     const [translations, setTranslations] = useState<Translations | null>(null);
     const [tooltipContent, setTooltipContent] = useState('Copy to clipboard');
     
-    // Create a cache-busting image URL if needed
-    const cacheBustedImageUrl = (() => {
-        // If the URL already has a timestamp parameter, use it as is
-        if (imageUrl && (imageUrl.includes('t=') || imageUrl.includes('timestamp='))) {
-            return imageUrl;
-        }
-        // Otherwise, add a timestamp parameter
-        return imageUrl && imageUrl.includes('?') 
-            ? `${imageUrl}&t=${Date.now()}` 
-            : `${imageUrl}?t=${Date.now()}`;
-    })();
+    // Add cache-busting only for display purposes
+    const displayImageUrl = imageUrl ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
     
     // Reset state when modal opens to ensure proper rendering
     useEffect(() => {
@@ -84,10 +75,10 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                 <ModalBody style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: "center" }}>
                     <p>Your image has been uploaded successfully!</p>
                     <img 
-                        src={cacheBustedImageUrl}
+                        src={displayImageUrl}
                         alt="Uploaded"
                         className="max-h-48 object-contain my-3"
-                        key={cacheBustedImageUrl} 
+                        key={displayImageUrl} 
                         crossOrigin="anonymous"
                     />
                     <p>The image is now attached to your message. You can type your message text in the input field.</p>
