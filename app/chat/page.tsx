@@ -519,6 +519,23 @@ function ChatPageContent() {
           }
 
           setMessages(conversation_messages.map((message) => ({ ...message })));
+        } else {
+          // No conversations exist, set up initial greeting message
+          const greetingMessage: Message = {
+            id: "0",
+            text: GREETING_MESSAGE || "Hello! How can I help you today?",
+            username: "LowContent AI",
+            conversation_id: "",
+            complete: true,
+            title: "",
+            buttons: [],
+            ideogram_buttons: [],
+            messageId: "",
+            flags: 0,
+            prompt: "",
+            role: "assistant",
+          };
+          setMessages([greetingMessage]);
         }
 
         Cookies.set("user_name", fullName);

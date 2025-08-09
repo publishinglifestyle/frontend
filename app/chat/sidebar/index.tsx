@@ -84,6 +84,10 @@ const ChatSidebar = ({
   };
 
   const handleCreateNewMessage = async () => {
+    console.log("handleCreateNewMessage called");
+    console.log("Current greeting:", greeting);
+    console.log("Current agents:", agents);
+    
     // Simply clear the current conversation and messages
     // The actual conversation will be created when the user sends a message
     setCurrentConversation("");
@@ -103,8 +107,9 @@ const ChatSidebar = ({
       messageId: "",
       flags: 0,
       prompt: "",
-      role: "system",
+      role: "assistant",
     };
+    console.log("Setting greeting message:", greetingMessage);
     setMessages([greetingMessage as Message]);
   };
 
@@ -144,13 +149,14 @@ const ChatSidebar = ({
       <Button
         className="mb-4"
         color="secondary"
-        isDisabled={!agents || agents.length === 0}
         size="sm"
         onPress={async () => {
+          console.log("Button clicked!");
+          console.log("Agents available:", agents?.length || 0);
           handleCreateNewMessage();
         }}
       >
-        {translations?.new_conversation}
+        {translations?.new_conversation || "Nuova Conversazione"}
       </Button>
       <div style={{ flex: 1, overflowY: "auto" }}>
         <Table

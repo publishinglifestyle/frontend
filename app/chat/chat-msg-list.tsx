@@ -1149,7 +1149,6 @@ const ChatMessageList = ({
               <Textarea
                 fullWidth
                 isDisabled={
-                  conversations.length === 0 ||
                   isGeneratingResponse ||
                   (selectedAgent?.buttons && selectedAgent?.buttons?.length > 0)
                 }
@@ -1171,7 +1170,7 @@ const ChatMessageList = ({
               <div className="flex flex-col w-full md:w-1/3">
                 <Select
                   className="max-w-xs"
-                  isDisabled={conversations.length === 0}
+                  isDisabled={false}
                   label={translations?.type}
                   placeholder={translations?.select_agent || ""}
                   selectedKeys={[selectedAgentId]}
@@ -1249,7 +1248,7 @@ const ChatMessageList = ({
               <Button
                 fullWidth
                 color="secondary"
-                isDisabled={conversations.length === 0 || (!messageText && !pendingImageUrl)}
+                isDisabled={!messageText && !pendingImageUrl}
                 style={{ color: "white" }}
                 onPress={async () => {
                   handleSendMessage(messageText);
