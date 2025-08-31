@@ -41,6 +41,7 @@ export interface Conversation {
   name: string;
   context: Context[];
   last_activity?: string;
+  agent_id?: string;
 }
 
 export interface Context {

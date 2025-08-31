@@ -483,8 +483,14 @@ function ChatPageContent() {
             (agent: any) => agent.id === current_conversation.agent_id
           );
 
-          setSelectedAgent(current_agent);
-          setSelectedAgentId(current_conversation.agent_id);
+          if (current_agent) {
+            setSelectedAgent(current_agent);
+            setSelectedAgentId(current_conversation.agent_id);
+          } else {
+            // If no agent is saved with the conversation, clear the selection
+            setSelectedAgent(undefined);
+            setSelectedAgentId("");
+          }
 
           let conversation_messages = [];
 

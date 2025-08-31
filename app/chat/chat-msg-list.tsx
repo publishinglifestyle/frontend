@@ -352,9 +352,7 @@ const ChatMessageList = ({
         setCurrentConversation(newConversation.id);
         conversationId = newConversation.id;
         
-        // Reset agent selection for new conversation
-        setSelectedAgentId("");
-        setSelectedAgent(undefined);
+        // Don't reset agent selection for new conversation - keep the current selection
         
         // Set up initial greeting message for the new conversation
         const greetingMessage = {

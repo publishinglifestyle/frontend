@@ -56,6 +56,15 @@ const ChatSidebar = ({
     let conversation_messages = [];
 
     if (conversation) {
+      // Set the agent that was used in this conversation
+      if (conversation.agent_id) {
+        setSelectedAgentId(conversation.agent_id);
+        const current_agent = agents.find(
+          (agent: any) => agent.id === conversation.agent_id
+        );
+        setSelectedAgent(current_agent);
+      }
+      
       for (let i = 0; i < conversation.context.length; i++) {
         const textMessage =
           i === 0 ? greeting : conversation.context[i].content;
@@ -180,10 +189,19 @@ const ChatSidebar = ({
                         setIsLoading(true);
                         setCurrentConversation(item.id);
 
-                        setSelectedAgentId("");
-                        setSelectedAgent(undefined);
-
                         const conversation = await getConversation(item.id);
+                        
+                        // Set the agent that was used in this conversation
+                        if (conversation.agent_id) {
+                          setSelectedAgentId(conversation.agent_id);
+                          const current_agent = agents.find(
+                            (agent: any) => agent.id === conversation.agent_id
+                          );
+                          setSelectedAgent(current_agent);
+                        } else {
+                          setSelectedAgentId("");
+                          setSelectedAgent(undefined);
+                        }
 
                         let conversation_messages = [];
 
