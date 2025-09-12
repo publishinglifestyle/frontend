@@ -99,6 +99,10 @@ const agent_models = [
     label: "Midjourney",
   },
   {
+    value: "gemini",
+    label: "Google Gemini",
+  },
+  {
     value: "ideogram",
     label: "Ideogram",
   },

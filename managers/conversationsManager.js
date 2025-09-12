@@ -34,9 +34,9 @@ export async function deleteConversation(conversation_id) {
     }
 }
 
-export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size) {
+export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size, reference_image_url) {
     const response = await axiosInstance.post(BACKEND_URLS.imageGen.generateImage,
-        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size })
+        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size, reference_image_url })
 
     if (response) {
         return response.data;

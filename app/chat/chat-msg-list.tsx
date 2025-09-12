@@ -434,15 +434,37 @@ const ChatMessageList = ({
             }
           }
           
+          // Check if we have a reference image for Gemini
+          let referenceImageUrl = null;
+          let messageTextForGemini = text;
+          
+          // For Gemini, extract the image URL from the message if it's combined
+          if (current_agent?.model === "gemini") {
+            // Check if the text contains an image URL (from combineMessageWithImage)
+            const urlMatch = text.match(/https?:\/\/[^\s]+/);
+            if (urlMatch) {
+              referenceImageUrl = urlMatch[0];
+              // Remove the URL from the message text
+              messageTextForGemini = text.replace(urlMatch[0], '').trim();
+              console.log("Extracted reference image for Gemini:", referenceImageUrl);
+              console.log("Cleaned message text:", messageTextForGemini);
+            } else if (pendingImageUrlRef.current) {
+              // Fallback to pendingImageUrlRef if not in text
+              referenceImageUrl = pendingImageUrlRef.current;
+              console.log("Using pending reference image for Gemini:", referenceImageUrl);
+            }
+          }
+          
           image_response = await generateImage(
-            text,
+            current_agent?.model === "gemini" ? messageTextForGemini : text,
             selectedAgentId,
             conversationId,
             save_user_prompt,
             commands,
             socket?.id,
             n_images,
-            size
+            size,
+            referenceImageUrl
           );
         }
 
