@@ -2,9 +2,10 @@ import React, { useState, useRef, useCallback } from "react";
 import { Button } from "@heroui/button"; // Assuming this Button component exists
 import { generateSudoku } from "@/managers/gamesManager"; // Assuming this fetches Sudoku data
 
-// Helper function to download canvas content
+// Helper function to download canvas content with high quality
 const downloadCanvasAsImage = (canvas: HTMLCanvasElement, filename: string) => {
-  const dataUrl = canvas.toDataURL("image/png");
+  // Use maximum quality PNG compression
+  const dataUrl = canvas.toDataURL("image/png", 1.0);
   const link = document.createElement("a");
   link.href = dataUrl;
   link.download = filename;
@@ -66,8 +67,10 @@ export default function Sudoku({
 
     // --- Draw Grid Lines ---
     ctx.strokeStyle = "#000000"; // Black lines
+    // Scale line widths for high-res rendering
+    const scaleFactor = canvas.width > 2000 ? 3 : 1; // Detect if high-res canvas
     for (let i = 0; i <= 9; i++) {
-      const lineWidth = i % 3 === 0 ? 2 : 0.5; // Thicker lines for 3x3 boxes
+      const lineWidth = i % 3 === 0 ? 2 * scaleFactor : 0.5 * scaleFactor; // Thicker lines for 3x3 boxes
       ctx.lineWidth = lineWidth;
 
       // Vertical lines
@@ -128,13 +131,14 @@ export default function Sudoku({
           return; // Early exit if canvas context fails
         }
 
-        // --- Constants for Drawing (pixels) ---
-        const A4_WIDTH_PX = 794; // Approx A4 width at 96 DPI
-        const A4_HEIGHT_PX = 1123; // Approx A4 height at 96 DPI
-        const MARGIN = 50; // Generous margin
-        const TITLE_FONT_SIZE = 30;
-        const NUMBER_FONT_SIZE = 18;
-        const SMALL_NUMBER_FONT_SIZE = 12; // For compact solution grids
+        // --- Constants for Drawing (pixels) - High Quality (300 DPI) ---
+        const SCALE_FACTOR = 3; // 3x scale for 300 DPI quality (96 DPI * 3 ≈ 300 DPI)
+        const A4_WIDTH_PX = 794 * SCALE_FACTOR; // High res A4 width
+        const A4_HEIGHT_PX = 1123 * SCALE_FACTOR; // High res A4 height
+        const MARGIN = 50 * SCALE_FACTOR; // Scaled margin
+        const TITLE_FONT_SIZE = 30 * SCALE_FACTOR;
+        const NUMBER_FONT_SIZE = 18 * SCALE_FACTOR;
+        const SMALL_NUMBER_FONT_SIZE = 12 * SCALE_FACTOR; // For compact solution grids
 
         // --- Generate Puzzle Images ---
         for (let index = 0; index < sudokuResponses.length; index++) {
@@ -148,6 +152,11 @@ export default function Sudoku({
           // Configure canvas for single large puzzle
           canvas.width = A4_WIDTH_PX;
           canvas.height = A4_HEIGHT_PX / 2; // Can be shorter if only one grid
+
+          // Enable image smoothing and anti-aliasing for better quality
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
           ctx.fillStyle = "#FFFFFF"; // White background
           ctx.fillRect(0, 0, canvas.width, canvas.height); // Clear canvas with background
 
@@ -191,6 +200,11 @@ export default function Sudoku({
           // Configure canvas (reuse dimensions from puzzle)
           canvas.width = A4_WIDTH_PX;
           canvas.height = A4_HEIGHT_PX / 2;
+
+          // Enable image smoothing and anti-aliasing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
           ctx.fillStyle = "#FFFFFF";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -237,6 +251,11 @@ export default function Sudoku({
               20 +
               gridsPerCol * (estimatedGridHeight + 20) +
               MARGIN;
+
+            // Enable image smoothing and anti-aliasing
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 

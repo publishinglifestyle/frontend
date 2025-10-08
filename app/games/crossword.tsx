@@ -139,8 +139,8 @@ export default function Crossword({
       const gridOffsetX = (pageWidth - cellSize * cols) / 2;
       const gridOffsetY = titleHeight + gridSpacing + margin;
 
-      const numberFontSize = cellSize * 0.7;
-      const letterFontSize = cellSize * 1.1;
+      const numberFontSize = Math.max(4, cellSize * 0.7);
+      const letterFontSize = Math.max(6, cellSize * 1.1);
 
       const drawGrid = (isSolution = false, customCellSize?: number, customGridOffsetX?: number, customGridOffsetY?: number) => {
         const activeCellSize = customCellSize || cellSize;
@@ -201,7 +201,7 @@ export default function Crossword({
             const y = activeGridOffsetY + rowIndex * activeCellSize;
 
             if (isSolution) {
-              doc.setFontSize(activeCellSize * 1.1);
+              doc.setFontSize(Math.max(6, activeCellSize * 0.6));
               doc.setFont(font || "times", "normal");
               doc.text(
                 answer[i].toUpperCase(),
@@ -240,8 +240,8 @@ export default function Crossword({
             
             const x = activeGridOffsetX + colIndex * activeCellSize;
             const y = activeGridOffsetY + rowIndex * activeCellSize;
-            
-            doc.setFontSize((activeCellSize * 0.7) * 0.8);
+
+            doc.setFontSize(Math.max(4, activeCellSize * 0.4));
             doc.setFont(font || "times", "normal");
             
             const hasAcross = numbers.across !== undefined;
@@ -460,7 +460,7 @@ export default function Crossword({
 
               // Write the letter if this is part of a word
               if (isWordCell) {
-                doc.setFontSize(adjustedCellSize * 0.75);
+                doc.setFontSize(Math.max(6, adjustedCellSize * 0.6));
                 doc.setFont(font || "times", "normal");
                 doc.text(
                   letter.toUpperCase(),
