@@ -12,11 +12,12 @@ import {
   FaCircleDot,
   FaQuestion
 } from "react-icons/fa6";
+import type { IconType } from "react-icons";
 
 interface Game {
   id: string;
   name: string;
-  icon: React.ReactNode;
+  icon: IconType;
   description: string;
   color: string;
 }
@@ -25,63 +26,63 @@ const gamesList: Game[] = [
   {
     id: "1",
     name: "Sudoku",
-    icon: <FaTableCells className="text-2xl" />,
+    icon: FaTableCells,
     description: "Logic-based number placement puzzle",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "2",
     name: "Crossword",
-    icon: <FaCrosshairs className="text-2xl" />,
+    icon: FaCrosshairs,
     description: "Word puzzle with intersecting clues",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "3",
     name: "Word Search",
-    icon: <FaMagnifyingGlass className="text-2xl" />,
+    icon: FaMagnifyingGlass,
     description: "Find hidden words in a grid",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "4",
     name: "Hangman",
-    icon: <FaQuestion className="text-2xl" />,
+    icon: FaQuestion,
     description: "Guess the word letter by letter",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "5",
     name: "Scramble Words",
-    icon: <FaArrowsLeftRight className="text-2xl" />,
+    icon: FaArrowsLeftRight,
     description: "Unscramble letters to form words",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "6",
     name: "Cryptogram",
-    icon: <FaLock className="text-2xl" />,
+    icon: FaLock,
     description: "Decode encrypted messages",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "7",
     name: "Maze",
-    icon: <FaPuzzlePiece className="text-2xl" />,
+    icon: FaPuzzlePiece,
     description: "Navigate through complex paths",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "8",
     name: "Mine Finder",
-    icon: <FaBomb className="text-2xl" />,
+    icon: FaBomb,
     description: "Minesweeper-style logic game",
     color: "from-gray-700 to-gray-800",
   },
   {
     id: "9",
     name: "Dots to Dots",
-    icon: <FaCircleDot className="text-2xl" />,
+    icon: FaCircleDot,
     description: "Connect the dots to reveal images",
     color: "from-gray-700 to-gray-800",
   },
@@ -117,7 +118,10 @@ export default function GameSelector({ selectedGame, onSelectGame }: GameSelecto
             `}
           >
             <div className={`flex-shrink-0 ${selectedGame === game.id ? "text-white" : "text-gray-600 dark:text-gray-400"}`}>
-              {game.icon}
+              {(() => {
+                const Icon = game.icon as React.ComponentType<{ className?: string }>;
+                return <Icon className="text-2xl" />;
+              })()}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-sm truncate">
