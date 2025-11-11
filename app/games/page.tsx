@@ -79,8 +79,8 @@ export default function GamesPage() {
   const [invertWords, setInvertWords] = useState<number>(0);
   const [isMazeAllowed, setIsMazeAllowed] = useState<boolean>(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [wordSearchFontSize, setWordSearchFontSize] = useState<number>(8);
-  const [wordSearchGridSize, setWordSearchGridSize] = useState<number>(25);
+  const [wordSearchFontSize, setWordSearchFontSize] = useState<number>(30);
+  const [wordSearchGridSize, setWordSearchGridSize] = useState<number>(15);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorModalMessage, setErrorModalMessage] = useState("");
   const { isAuthenticated } = useAuth();
@@ -438,9 +438,18 @@ export default function GamesPage() {
                 />
                 {crosswordGrids > 0 && crosswordWords && (() => {
                   const words = crosswordWords.split(",").map(w => w.trim()).filter(w => w);
+                  const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
                   const longestWord = Math.max(...words.map(w => w.length), 0);
-                  // Calculate minimum recommended grid size: longest word + 2 for crossword placement
-                  const minRecommended = Math.max(longestWord + 2, Math.ceil(Math.sqrt(words.reduce((sum, w) => sum + w.length, 0))));
+
+                  // Calculate minimum recommended grid size
+                  const minRecommended = Math.max(
+                    longestWord + 2,
+                    Math.ceil(Math.sqrt(totalLetters * 1.5))
+                  );
+
+                  // Calculate maximum recommended grid size to avoid sparse grids
+                  // Using a more conservative multiplier to prevent mostly-empty grids
+                  const maxRecommended = Math.ceil(Math.sqrt(totalLetters * 2.2));
 
                   if (crosswordGrids < longestWord) {
                     return (
@@ -452,6 +461,18 @@ export default function GamesPage() {
                     return (
                       <p className="text-xs text-amber-500 mt-1">
                         ⚠️ Recommended grid size: {minRecommended} or larger for better word placement
+                      </p>
+                    );
+                  } else if (crosswordGrids > maxRecommended + 5) {
+                    return (
+                      <p className="text-xs text-red-500 mt-1">
+                        ⚠️ Grid size {crosswordGrids} is too large for {words.length} words. Maximum recommended: {maxRecommended}. This will result in a mostly empty grid.
+                      </p>
+                    );
+                  } else if (crosswordGrids > maxRecommended) {
+                    return (
+                      <p className="text-xs text-amber-500 mt-1">
+                        ⚠️ Grid size {crosswordGrids} may be too large for {words.length} words. Recommended: {minRecommended}-{maxRecommended}
                       </p>
                     );
                   }
@@ -536,8 +557,14 @@ export default function GamesPage() {
                   onChange={(e) =>
                     setWordSearchFontSize(Number(e.target.value))
                   }
-                  max={20}
-                  min={1}
+                  onBlur={(e) => {
+                    const value = Number(e.target.value);
+                    if (value < 30) {
+                      setWordSearchFontSize(30);
+                    }
+                  }}
+                  max={60}
+                  min={30}
                   value={wordSearchFontSize?.toString() || ""}
                 />
                 <Input
@@ -553,8 +580,16 @@ export default function GamesPage() {
                   onChange={(e) =>
                     setWordSearchGridSize(Number(e.target.value))
                   }
-                  max={20}
-                  min={1}
+                  onBlur={(e) => {
+                    const value = Number(e.target.value);
+                    if (value < 8) {
+                      setWordSearchGridSize(8);
+                    } else if (value > 25) {
+                      setWordSearchGridSize(25);
+                    }
+                  }}
+                  max={25}
+                  min={8}
                   value={wordSearchGridSize?.toString() || ""}
                 />
                 {/* Inversion Option for Word Search */}
