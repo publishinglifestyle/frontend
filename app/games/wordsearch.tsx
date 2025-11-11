@@ -36,8 +36,8 @@ export default function WordSearch({
   invert_words,
   custom_name,
   custom_solution_name,
-  fontSize = 16, // Default grid font size in pixels
-  grid_size = 25,
+  fontSize = 30, // Default grid font size in pixels
+  grid_size = 15, // Default grid size for word search
 }: WordSearchProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -52,6 +52,29 @@ export default function WordSearch({
   const lineSpacing = 1.4;
   const solutionGridSpacing = 30; // Pixels between solution grids
 
+  // Calculate optimal grid size based on font size and number of words
+  const calculateOptimalGridSize = (wordCount: number, fontSize: number): number => {
+    // Base calculation: larger fonts need smaller grids
+    // fontSize 30 → ~15, fontSize 20 → ~22, fontSize 40 → ~11
+    let baseSize = Math.round(450 / fontSize);
+
+    // Adjust based on word count per puzzle
+    const wordsPerPuzzle = Math.ceil(wordCount / num_puzzles);
+
+    // For fontSize 30:
+    // - 5-10 words → grid size ~10-12
+    // - 10-20 words → grid size ~12-15
+    // - 20+ words → grid size ~15+
+    const wordAdjustment = Math.floor(wordsPerPuzzle / 8);
+    const adjustedSize = baseSize + wordAdjustment;
+
+    // Clamp between reasonable bounds
+    const minSize = Math.max(8, Math.round(240 / fontSize)); // Min size scales with font
+    const maxSize = 25; // Maximum grid size
+
+    return Math.min(maxSize, Math.max(minSize, adjustedSize));
+  };
+
   // Helper to download a Data URL
   const downloadDataUrl = (dataUrl: string, filename: string) => {
     const link = document.createElement("a");
@@ -65,14 +88,18 @@ export default function WordSearch({
   const handleGenerateImages = async () => {
     setIsGenerating(true);
     try {
+      // Calculate optimal grid size if not provided
+      const wordCount = words?.length || 0;
+      const effectiveGridSize = grid_size ?? calculateOptimalGridSize(wordCount, fontSize);
+
       console.log(
-        `Generating Images with Font: ${font}, GridFontSize: ${fontSize}, GridSize: ${grid_size}, SolutionsPerPage: ${solutions_per_page}`
+        `Generating Images with Font: ${font}, GridFontSize: ${fontSize}, GridSize: ${effectiveGridSize} ${grid_size ? '(manual)' : '(auto-calculated)'}, SolutionsPerPage: ${solutions_per_page}`
       );
       const wordSearchResponses = await generateWordSearch(
         words,
         num_puzzles,
         invert_words,
-        grid_size
+        effectiveGridSize
       );
 
       if (!wordSearchResponses || wordSearchResponses.length === 0) {
@@ -362,19 +389,12 @@ export default function WordSearch({
         const gridOffsetX = slotOffsetX + (slotWidthPx - gridWidthPx) / 2;
         const gridOffsetY = slotOffsetY + (slotHeightPx - gridHeightPx) / 2;
 
-        // Calculate scaled font size for potentially smaller grids
-        // Use a slightly different base size reference if needed, or fixed small size
-        const solutionGridFontSize = Math.max(
-          8,
-          fontSize * (gridCellSizePx / 25)
-        ); // Example scaling, adjust base (25px?) or make fixed
-
         console.log(
           `  Drawing solution ${
             globalStartIndex + chunkIndex + 1
           } onto multi-solution canvas: cellPx=${gridCellSizePx.toFixed(
             1
-          )}, fontSize=${solutionGridFontSize.toFixed(1)}`
+          )}, fontSize=${fontSize}`
         );
         drawWordSearchGridOnCanvas({
           ctx, // <<< Pass the main canvas context
@@ -384,7 +404,7 @@ export default function WordSearch({
           cellSizePx: gridCellSizePx,
           showWords: true,
           words: solutionWords,
-          fontSizePx: solutionGridFontSize, // Scaled font size
+          fontSizePx: fontSize, // Use same font size as puzzle
           fontFamily: font,
         });
       }); // End loop through chunk
@@ -440,6 +460,61 @@ export default function WordSearch({
     const gridSize = grid.length;
     ctx.save();
     ctx.translate(offsetX, offsetY);
+
+    // Draw highlights FIRST (before letters) if showing words
+    if (showWords && words) {
+      ctx.fillStyle = "rgba(200, 200, 200, 0.5)"; // Light gray
+
+      words.forEach((word) => {
+        if (word?.path && word.path.length > 0) {
+          const path = word.path;
+
+          // Get start and end positions
+          const startCoord = path[0];
+          const endCoord = path[path.length - 1];
+
+          if (!startCoord || !endCoord) return;
+
+          const startX = startCoord.x * cellSizePx + cellSizePx / 2;
+          const startY = startCoord.y * cellSizePx + cellSizePx / 2;
+          const endX = endCoord.x * cellSizePx + cellSizePx / 2;
+          const endY = endCoord.y * cellSizePx + cellSizePx / 2;
+
+          // Calculate the angle and length of the word
+          const dx = endX - startX;
+          const dy = endY - startY;
+          const angle = Math.atan2(dy, dx);
+          const length = Math.sqrt(dx * dx + dy * dy);
+
+          // Draw a rounded capsule (pill shape) along the word
+          ctx.save();
+          ctx.translate(startX, startY);
+          ctx.rotate(angle);
+
+          // More precise sizing - extend to cover first and last letter fully
+          const capsuleHeight = cellSizePx * 0.7; // Narrower height
+          const radius = Math.min(capsuleHeight / 2, cellSizePx * 0.35); // Less rounded corners
+
+          // Start half a cell before first letter center, end half a cell after last letter center
+          const startOffset = -cellSizePx / 2;
+          const endOffset = length + cellSizePx / 2;
+          const capsuleLength = endOffset - startOffset;
+
+          // Draw rounded capsule shape starting from startOffset
+          ctx.beginPath();
+          ctx.arc(startOffset + radius, 0, radius, Math.PI / 2, (3 * Math.PI) / 2);
+          ctx.lineTo(endOffset - radius, -radius);
+          ctx.arc(endOffset - radius, 0, radius, (3 * Math.PI) / 2, Math.PI / 2);
+          ctx.lineTo(startOffset + radius, radius);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
+        }
+      });
+    }
+
+    // Draw letters on top of highlights
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -456,39 +531,7 @@ export default function WordSearch({
         }
       }
     }
-    if (showWords && words) {
-      ctx.strokeStyle = "rgba(100, 100, 100, 0.9)";
-      ctx.lineWidth = Math.max(1, Math.min(2, cellSizePx * 0.05));
-      const highlightedCells = new Set<string>();
-      words.forEach((word) => {
-        if (word?.path) {
-          word.path.forEach((coord) => {
-            if (
-              coord &&
-              typeof coord.x === "number" &&
-              coord.x >= 0 &&
-              coord.x < gridSize &&
-              typeof coord.y === "number" &&
-              coord.y >= 0 &&
-              coord.y < gridSize
-            ) {
-              const cellKey = `${coord.x},${coord.y}`;
-              if (!highlightedCells.has(cellKey)) {
-                highlightedCells.add(cellKey);
-                const x = coord.x * cellSizePx;
-                const y = coord.y * cellSizePx;
-                ctx.strokeRect(
-                  x + ctx.lineWidth / 2,
-                  y + ctx.lineWidth / 2,
-                  cellSizePx - ctx.lineWidth,
-                  cellSizePx - ctx.lineWidth
-                );
-              }
-            }
-          });
-        }
-      });
-    }
+
     ctx.restore();
   }; // End drawWordSearchGridOnCanvas
 
