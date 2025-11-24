@@ -62,7 +62,7 @@ export const siteConfig = {
     },*/
     {
       'value': 'support',
-      'label': 'Assistenza',
+      'label': 'Support',
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
       'allow_user': true,
       'language': 'en'
@@ -148,7 +148,7 @@ export const siteConfig = {
     },
     {
       'value': 'support',
-      'label': 'Assistenza',
+      'label': 'Support',
       'href': 'https://docs.google.com/forms/d/e/1FAIpQLSeolIG18qRCaauFNlK0cs_EzsLiuBX1ozbetXaW1upxdzQt4w/viewform',
       'allow_user': true,
       'language': 'en'
