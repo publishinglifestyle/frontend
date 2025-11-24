@@ -214,10 +214,25 @@ export default function Hangman({
     });
   };
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!hangman_words || hangman_words.length === 0 || hangman_words.every((w) => !w || w.trim() === "")) {
+      return false; // Words are required
+    }
+
+    // Check custom name if not sequential
+    if (is_sequential === false && (!custom_name || custom_name.trim() === "")) {
+      return false; // Custom name is required when not sequential
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={!hangman_words || hangman_words[0] === "" || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
         onPress={handleGenerateHangman}
       >

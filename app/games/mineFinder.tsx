@@ -431,10 +431,28 @@ export default function MineFinder({
     custom_solution_name,
   ]); // Add dependencies
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!width || width <= 0) {
+      return false; // Width is required
+    }
+
+    if (!height || height <= 0) {
+      return false; // Height is required
+    }
+
+    if (!mines || mines <= 0) {
+      return false; // Mines count is required
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <Button
-        isDisabled={isGenerating || !width || !height || !mines}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary" // Use your Button component's props
         onPress={handleGenerateMineFinder} // Or onClick
       >

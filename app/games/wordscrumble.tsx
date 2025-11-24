@@ -146,10 +146,20 @@ export default function ScrambleWords({
     window.open(pdfDataUrl, "_blank");
   };
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!words || words.length === 0 || words.every((w) => !w || w.trim() === "")) {
+      return false; // Words are required
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={!words || words[0] == "" || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
         onPress={handleGenerateScrambledWords}
       >

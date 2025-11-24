@@ -444,12 +444,12 @@ export default function GamesPage() {
                   // Calculate minimum recommended grid size
                   const minRecommended = Math.max(
                     longestWord + 2,
-                    Math.ceil(Math.sqrt(totalLetters * 1.5))
+                    Math.ceil(Math.sqrt(totalLetters * 2.0))
                   );
 
                   // Calculate maximum recommended grid size to avoid sparse grids
-                  // Using a more conservative multiplier to prevent mostly-empty grids
-                  const maxRecommended = Math.ceil(Math.sqrt(totalLetters * 2.2));
+                  // Using a more generous multiplier to support larger word sets (25+ words)
+                  const maxRecommended = Math.ceil(Math.sqrt(totalLetters * 3.0));
 
                   if (crosswordGrids < longestWord) {
                     return (
@@ -463,7 +463,7 @@ export default function GamesPage() {
                         ⚠️ Recommended grid size: {minRecommended} or larger for better word placement
                       </p>
                     );
-                  } else if (crosswordGrids > maxRecommended + 5) {
+                  } else if (crosswordGrids > maxRecommended + 10) {
                     return (
                       <p className="text-xs text-red-500 mt-1">
                         ⚠️ Grid size {crosswordGrids} is too large for {words.length} words. Maximum recommended: {maxRecommended}. This will result in a mostly empty grid.
@@ -592,6 +592,52 @@ export default function GamesPage() {
                   min={8}
                   value={wordSearchGridSize?.toString() || ""}
                 />
+                {(() => {
+                  if (!wordSearchWords || wordSearchWords.trim() === "" || wordSearchGridSize <= 0) {
+                    return null;
+                  }
+
+                  const words = wordSearchWords.split(",").map(w => w.trim()).filter(w => w);
+                  if (words.length === 0) return null;
+
+                  const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
+                  const avgWordLength = totalLetters / words.length;
+                  const longestWord = Math.max(...words.map(w => w.length), 0);
+                  const wordsPerPuzzle = Math.ceil(words.length / (numPuzzles || 1));
+                  const totalLettersPerPuzzle = wordsPerPuzzle * avgWordLength;
+                  const gridCapacity = wordSearchGridSize * wordSearchGridSize;
+                  const utilizationRatio = totalLettersPerPuzzle / gridCapacity;
+
+                  // Calculate recommended grid size
+                  const recommendedSize = Math.ceil(Math.sqrt(totalLettersPerPuzzle / 0.55));
+
+                  if (wordSearchGridSize < longestWord) {
+                    return (
+                      <p className="text-xs text-red-500 mt-1">
+                        ⚠️ Grid size must be at least {longestWord} (length of longest word "{words.find(w => w.length === longestWord)}")
+                      </p>
+                    );
+                  } else if (utilizationRatio > 0.65) {
+                    return (
+                      <p className="text-xs text-red-500 mt-1">
+                        ⚠️ Grid size {wordSearchGridSize} is too small for {wordsPerPuzzle} words per puzzle. Recommended: {recommendedSize} or larger
+                      </p>
+                    );
+                  } else if (utilizationRatio > 0.5) {
+                    return (
+                      <p className="text-xs text-amber-500 mt-1">
+                        ⚠️ Grid might be tight for {wordsPerPuzzle} words. Consider using grid size {recommendedSize} or larger for better results
+                      </p>
+                    );
+                  } else if (utilizationRatio < 0.2) {
+                    return (
+                      <p className="text-xs text-amber-500 mt-1">
+                        ⚠️ Grid size {wordSearchGridSize} may be too large for {wordsPerPuzzle} words. Consider a smaller grid (around {Math.ceil(Math.sqrt(totalLettersPerPuzzle / 0.4))}) for better density
+                      </p>
+                    );
+                  }
+                  return null;
+                })()}
                 {/* Inversion Option for Word Search */}
                 <Select
                   isRequired

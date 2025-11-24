@@ -150,10 +150,20 @@ export default function Nurikabe({ size, font }: NurikabeProps) {
     }
   };
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!size || size <= 0) {
+      return false; // Size is required
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={!size || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
         onPress={handleGenerateNurikabe}
       >

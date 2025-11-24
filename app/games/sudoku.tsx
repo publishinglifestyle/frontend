@@ -233,24 +233,15 @@ export default function Sudoku({
           // Multiple puzzles, generate compact solution images
           const numSolutionPages = Math.ceil(num_puzzles / solutions_per_page);
           const gridsPerRow = 2; // Fixed layout: 2 solution grids per row
-          const gridsPerCol = Math.ceil(solutions_per_page / gridsPerRow);
 
           for (let page = 0; page < numSolutionPages; page++) {
             const startIdx = page * solutions_per_page;
             const endIdx = Math.min(startIdx + solutions_per_page, num_puzzles);
             const solutionsToShow = sudokuResponses.slice(startIdx, endIdx);
 
-            // Adjust canvas height based on how many rows of grids
-            const estimatedGridHeight =
-              (A4_WIDTH_PX - 2 * MARGIN - (gridsPerRow - 1) * 20) / gridsPerRow;
+            // Use A4 height to maintain proper rectangle (portrait) format
             canvas.width = A4_WIDTH_PX;
-            // Calculate needed height: Margin + Title + Rows*(GridHeight + Spacing) + Margin
-            canvas.height =
-              MARGIN +
-              TITLE_FONT_SIZE +
-              20 +
-              gridsPerCol * (estimatedGridHeight + 20) +
-              MARGIN;
+            canvas.height = A4_HEIGHT_PX;
 
             // Enable image smoothing and anti-aliasing
             ctx.imageSmoothingEnabled = true;
@@ -270,8 +261,8 @@ export default function Sudoku({
             ctx.fillText(pageTitle, canvas.width / 2, MARGIN);
 
             // --- Draw Solution Grids ---
-            const horizontalSpacing = 20; // Space between grids horizontally
-            const verticalSpacing = 30; // Space between rows vertically + space for optional mini-title
+            const horizontalSpacing = 20 * SCALE_FACTOR; // Space between grids horizontally
+            const verticalSpacing = 150 * SCALE_FACTOR; // Space between rows vertically + space for optional mini-title
             const totalHorizontalSpacing =
               (gridsPerRow - 1) * horizontalSpacing;
             const availableWidthForGrids =
@@ -303,7 +294,7 @@ export default function Sudoku({
                 ctx,
                 solution,
                 offsetX,
-                offsetY + 15, // Add little space for the mini-title
+                offsetY + 50, // Add space for the mini-title
                 miniCellSize,
                 font,
                 SMALL_NUMBER_FONT_SIZE, // Smaller font for compact view
@@ -338,12 +329,27 @@ export default function Sudoku({
     solutions_per_page,
   ]); // Add dependencies
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!difficulty || difficulty.trim() === "") {
+      return false; // Difficulty is required
+    }
+
+    // Check custom name if not sequential
+    if (is_sequential === false && (!custom_name || custom_name.trim() === "")) {
+      return false; // Custom name is required when not sequential
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       {/* Hidden canvas for drawing, or remove if creating dynamically */}
       {/* <canvas ref={canvasRef} style={{ display: 'none' }}></canvas> */}
       <Button
-        isDisabled={!difficulty || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary" // Use your Button component's props
         onPress={handleGenerateSudoku} // Or onClick if it's a standard HTML button
       >
