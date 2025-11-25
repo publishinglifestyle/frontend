@@ -13,6 +13,7 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useRouter } from "next/navigation";
+import { captureUtmParams } from "../utils/utm";
 import { motion } from "framer-motion";
 
 const frequencies = [
@@ -71,6 +72,9 @@ export default function Home() {
 
   useEffect(() => {
     setIsClient(true);
+    // Capture UTM parameters on landing (first-touch attribution)
+    const searchParams = new URLSearchParams(window.location.search);
+    captureUtmParams(searchParams);
   }, []);
 
   const onFrequencyChange = (selectedKey: Key) => {

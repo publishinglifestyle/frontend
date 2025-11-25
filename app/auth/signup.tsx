@@ -30,6 +30,7 @@ import { Subscription } from "@/types/user.types";
 import { useGoogleLogin } from "@react-oauth/google";
 import { FaGoogle } from "react-icons/fa";
 import { getEndorselyReferral } from "../../utils/endorsely";
+import { getUtmData } from "../../utils/utm";
 
 const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const router = useRouter();
@@ -206,11 +207,15 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
 
       const affiliateId = localStorage.getItem("affiliate_id");
       console.log("affiliateId", affiliateId);
-      
+
       // Get the referral ID from Endorsely
       const endorselyReferral = getEndorselyReferral();
-      
-      const url = await startSubscription(token, price_id, affiliateId, endorselyReferral);
+
+      // Get UTM tracking data
+      const utmData = getUtmData();
+      console.log("utmData", utmData);
+
+      const url = await startSubscription(token, price_id, affiliateId, endorselyReferral, utmData);
       window.location.href = url;
       // Add success modal logic if needed
     } catch (e) {
