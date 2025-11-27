@@ -64,6 +64,7 @@ interface ChatModals {
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
   setPendingImageUrl: React.Dispatch<React.SetStateAction<string>>;
+  setPendingImages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const ChatModals = ({
@@ -108,6 +109,7 @@ const ChatModals = ({
   messages,
   setMessages,
   setPendingImageUrl,
+  setPendingImages,
 }: ChatModals) => {
   const [selectedAspectRatio, setSelectedAspectRatio] = React.useState("");
   const createMessageText = (text: string) => {
@@ -257,6 +259,10 @@ const ChatModals = ({
             { command: "referenceImages", value: JSON.stringify(referenceImages) },
           ];
           setPromptCommands(selected_commands);
+          // Show reference images in the input bar
+          if (referenceImages && referenceImages.length > 0) {
+            setPendingImages(referenceImages);
+          }
           setIsGeminiModalOpen(false);
         }}
         conversationId={currentConversation}
