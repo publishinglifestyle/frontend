@@ -77,8 +77,8 @@ export default function GamesLayout({
           />
         </head>
       )}
-      <section className="gap-4 py-8 md:py-10">
-        <div>{children}</div>
+      <section className="fixed inset-0 top-16 z-40 overflow-auto">
+        {children}
       </section>
     </>
   );

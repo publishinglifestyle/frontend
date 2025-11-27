@@ -1,10 +1,6 @@
 "use client";
 
 import ErrorModal from "@/app/modals/errorModal";
-import { Button } from "@heroui/button";
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Input } from "@heroui/input";
-import { Spinner } from "@heroui/spinner";
 import Cookies from "js-cookie";
 import { useEffect, useMemo, useState } from "react";
 
@@ -50,7 +46,6 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const [errorModalMessage, setErrorModalMessage] = useState("");
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [subscriptionsFetched, setSubscriptionsFetched] = useState(false);
-  //   const [isAnnual, setIsAnnual] = useState(true);
   const [step, setStep] = useState(1);
   const [googleAuthToken, setGoogleAuthToken] = useState("");
   const { login } = useAuth();
@@ -62,10 +57,7 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     [email]
   );
 
-  //const validatePassword = (password: string): boolean => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
-
   const validatePassword = (password: string): boolean => {
-    // You can add specific criteria here, for now, we're just checking length
     return password.length >= 8;
   };
 
@@ -83,11 +75,8 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
 
   useEffect(() => {
     const detectLanguage = async () => {
-      // Detect browser language
       const browserLanguage = navigator.language;
       setLanguage(browserLanguage);
-
-      // Get translations for the detected language
       const translations = await getTranslations(browserLanguage);
       setTranslations(translations);
     };
@@ -96,14 +85,12 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   }, []);
 
   useEffect(() => {
-    // Load the Post Affiliate Pro script dynamically
     const script = document.createElement("script");
     script.src = "https://lowcontent.postaffiliatepro.com/scripts/lv5w3ke4j";
     script.async = true;
     script.id = "pap_x2s6df8d";
     document.body.appendChild(script);
 
-    // After the script loads, capture the tracking cookie
     script.onload = () => {
       if (window.PostAffTracker) {
         try {
@@ -112,8 +99,6 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
           const papCookie =
             window.PostAffTracker._getAccountId() +
             window.PostAffTracker._cmanager.getVisitorIdOrSaleCookieValue();
-
-          // Store papCookie in local storage
           localStorage.setItem("affiliate_id", papCookie);
           setAffiliateId(papCookie);
         } catch (err) {
@@ -122,7 +107,6 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
       }
     };
 
-    // Clean up the script on unmount
     return () => {
       document.body.removeChild(script);
     };
@@ -167,7 +151,6 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
       if (userExists) {
         login(token);
         router.push("/chat");
-
         return;
       }
       setGoogleAuthToken(token);
@@ -187,7 +170,6 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
   const handleSignUp = async (price_id: string) => {
     try {
       let token;
-
       setIsLoading(true);
 
       if (!googleAuthToken) {
@@ -208,16 +190,12 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
       const affiliateId = localStorage.getItem("affiliate_id");
       console.log("affiliateId", affiliateId);
 
-      // Get the referral ID from Endorsely
       const endorselyReferral = getEndorselyReferral();
-
-      // Get UTM tracking data
       const utmData = getUtmData();
       console.log("utmData", utmData);
 
       const url = await startSubscription(token, price_id, affiliateId, endorselyReferral, utmData);
       window.location.href = url;
-      // Add success modal logic if needed
     } catch (e) {
       setIsLoading(false);
       const error = e as any;
@@ -228,192 +206,261 @@ const SignUp = ({ toggleToLogin }: { toggleToLogin: () => void }) => {
     }
   };
 
+  const getStepTitle = () => {
+    switch (step) {
+      case 1:
+        return translations?.sign_up || "Sign Up";
+      case 2:
+        return "Your Details";
+      case 3:
+        return "Choose Your Plan";
+      default:
+        return translations?.sign_up || "Sign Up";
+    }
+  };
+
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div className={`w-full transition-all duration-300 ${step === 3 ? "max-w-4xl" : "max-w-md"}`}>
       {isLoading ? (
-        <div
-          className="flex flex-col md:flex-row items-center justify-center gap-8 py-8 md:py-10"
-          style={{ marginTop: "10%" }}
-        >
-          <Spinner color="secondary" />
+        <div className="flex items-center justify-center py-12">
+          <div className="w-10 h-10 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin" />
         </div>
       ) : (
-        <Card>
-          <CardBody>
-            <CardHeader className="flex flex-col">
-              <h1 className="text-4xl font-bold">{translations?.sign_up}</h1>
-              <br />
-              <div className="flex gap-2">
-                <span>{translations?.already_have_an_account}</span>
-                <span
-                  style={{ cursor: "pointer", color: "#9353D3" }}
+        <div className={`bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 ${step === 3 ? "p-6" : "p-8"}`}>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">{getStepTitle()}</h2>
+            {step === 1 && (
+              <p className="text-white/50 text-sm">
+                {translations?.already_have_an_account}{" "}
+                <button
                   onClick={toggleToLogin}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
                 >
                   Login
-                </span>
-              </div>
-            </CardHeader>
-            {step === 1 && (
-              <>
-                <Input
+                </button>
+              </p>
+            )}
+            {/* Step Indicator */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    s === step
+                      ? "w-6 bg-purple-500"
+                      : s < step
+                      ? "bg-purple-500/50"
+                      : "bg-white/20"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Step 1: Email & Password */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  {translations?.enter_email || "Email"}
+                </label>
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  fullWidth
-                  label={translations?.enter_email}
-                  type="email"
-                  isRequired
-                  size="sm"
-                  radius="lg"
-                  variant="bordered"
-                  className="mt-16"
-                  isInvalid={
-                    isInvalidEmail == null ? undefined : isInvalidEmail
-                  }
-                  errorMessage={
-                    isInvalidEmail && translations?.enter_valid_email
-                  }
-                  color={
-                    isInvalidEmail == null
-                      ? undefined
-                      : isInvalidEmail
-                        ? "danger"
-                        : "success"
-                  }
+                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
+                    isInvalidEmail === true
+                      ? "border-red-500/50"
+                      : isInvalidEmail === false
+                      ? "border-green-500/50"
+                      : "border-white/10"
+                  }`}
+                  placeholder="Enter your email"
                 />
-                <Input
+                {isInvalidEmail && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {translations?.enter_valid_email}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  {translations?.enter_password || "Password"}
+                </label>
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  fullWidth
-                  label={translations?.enter_password}
-                  type="password"
-                  isRequired
-                  size="sm"
-                  radius="lg"
-                  variant="bordered"
-                  className="mt-4"
-                  isInvalid={
-                    isInvalidPassword == null ? undefined : isInvalidPassword
-                  }
-                  errorMessage={
-                    isInvalidPassword && translations?.password_invalid_format_2
-                  }
-                  color={
-                    isInvalidPassword == null
-                      ? undefined
-                      : isInvalidPassword
-                        ? "danger"
-                        : "success"
-                  }
+                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
+                    isInvalidPassword === true
+                      ? "border-red-500/50"
+                      : isInvalidPassword === false
+                      ? "border-green-500/50"
+                      : "border-white/10"
+                  }`}
+                  placeholder="Min. 8 characters"
                 />
-                <Input
+                {isInvalidPassword && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {translations?.password_invalid_format_2}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">
+                  {translations?.re_enter_password || "Confirm Password"}
+                </label>
+                <input
+                  type="password"
                   value={password_2}
                   onChange={(e) => setPassword_2(e.target.value)}
-                  fullWidth
-                  label={translations?.re_enter_password}
-                  type="password"
-                  isRequired
-                  size="sm"
-                  radius="lg"
-                  variant="bordered"
-                  className="mt-4"
-                  isInvalid={
-                    isInvalidPassword_2 == null
-                      ? undefined
-                      : isInvalidPassword_2
-                  }
-                  errorMessage={
-                    isInvalidPassword_2 && translations?.password_mismatch
-                  }
-                  color={
-                    isInvalidPassword_2 == null
-                      ? undefined
-                      : isInvalidPassword_2
-                        ? "danger"
-                        : "success"
-                  }
+                  className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
+                    isInvalidPassword_2 === true
+                      ? "border-red-500/50"
+                      : isInvalidPassword_2 === false
+                      ? "border-green-500/50"
+                      : "border-white/10"
+                  }`}
+                  placeholder="Re-enter your password"
                 />
-                <Button
-                  fullWidth
-                  color="secondary"
-                  style={{ color: "white" }}
-                  radius="lg"
-                  className="mt-12 mb-6"
-                  onPress={() => setStep(2)}
-                  isDisabled={Boolean(
-                    !validateEmail(email) ||
-                    !validatePassword(password) ||
-                    !validatePassword(password_2) ||
-                    password !== password_2
-                  )}
+                {isInvalidPassword_2 && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {translations?.password_mismatch}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => setStep(2)}
+                disabled={
+                  !validateEmail(email) ||
+                  !validatePassword(password) ||
+                  !validatePassword(password_2) ||
+                  password !== password_2
+                }
+                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 disabled:from-zinc-600 disabled:to-zinc-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-200"
+              >
+                {translations?.next || "Next"}
+              </button>
+
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-zinc-900 text-white/40">or</span>
+                </div>
+              </div>
+
+              {/* Google Login */}
+              <button
+                onClick={() => googleLogin()}
+                className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-gray-800 font-medium rounded-xl flex items-center justify-center gap-3 transition-all duration-200"
+              >
+                <FaGoogle className="text-red-500" />
+                Continue with Google
+              </button>
+            </div>
+          )}
+
+          {/* Step 2: Name */}
+          {step === 2 && (
+            <div className="space-y-5">
+              {/* Welcome Icon */}
+              <div className="flex justify-center mb-2">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+              </div>
+
+              <p className="text-center text-white/50 text-sm mb-4">
+                Let us know what to call you
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">
+                    {translations?.enter_first_name || "First Name"}
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
+                      firstName ? "border-green-500/50" : "border-white/10"
+                    }`}
+                    placeholder="John"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white/70 mb-2">
+                    {translations?.enter_last_name || "Last Name"}
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
+                      lastName ? "border-green-500/50" : "border-white/10"
+                    }`}
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  {translations?.next}
-                </Button>
-                <Button
-                  fullWidth
-                  style={{
-                    backgroundColor: "white",
-                    border: "0.5px solid gray",
-                    color: "black",
-                  }}
-                  className="rounded-lg mb-6"
-                  onPress={() => {
-                    googleLogin();
-                  }}
-                  startContent={FaGoogle({ className: "text-red-500" })}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  Back
+                </button>
+                <button
+                  onClick={() => setStep(3)}
+                  disabled={firstName === "" || lastName === ""}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 disabled:from-zinc-600 disabled:to-zinc-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  Continue with Google
-                </Button>
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <Input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  fullWidth
-                  label={translations?.enter_first_name}
-                  type="text"
-                  isRequired
-                  size="sm"
-                  radius="lg"
-                  variant="bordered"
-                  className="mt-16"
-                />
-                <Input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  fullWidth
-                  label={translations?.enter_last_name}
-                  type="text"
-                  isRequired
-                  size="sm"
-                  radius="lg"
-                  variant="bordered"
-                  className="mt-4"
-                />
-                <Button
-                  fullWidth
-                  color="secondary"
-                  style={{ color: "white" }}
-                  radius="lg"
-                  className="mt-12 mb-6"
-                  onPress={() => setStep(3)}
-                  isDisabled={Boolean(firstName === "" || lastName === "")}
-                >
-                  {translations?.next}
-                </Button>
-              </>
-            )}
-            {step === 3 && (
+                  {translations?.next || "Continue"}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Subscription */}
+          {step === 3 && (
+            <div>
+              <button
+                onClick={() => setStep(2)}
+                className="mb-4 text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
               <SubscriptionOptions
                 setIsLoading={setIsLoading}
                 onClickOnSelectedSubscription={async (selectedSubscription) => {
                   await handleSignUp(selectedSubscription.price_id);
                 }}
               />
-            )}
-          </CardBody>
-        </Card>
+            </div>
+          )}
+        </div>
       )}
       <ErrorModal
         isOpen={isErrorModalOpen}

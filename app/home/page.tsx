@@ -102,23 +102,40 @@ export default function Main() {
                     />
                 </head>
             )}
-            <div className="flex flex-col text-center align-center items-center w-full">
-                <h1 className="text-3xl font-bold text-center mb-6">
-                    Welcome to Low Content AI
-                </h1>
-            </div>
-            <section className="flex flex-col md:flex-row items-center justify-center gap-8 py-8 md:py-10">
-                <div className="w-full md:w-1/2">
+            <div className="w-full max-w-4xl px-4">
+                {/* Logo and Welcome */}
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl border border-purple-500/30 mb-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400">
+                            <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
+                        </svg>
+                    </div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                        Welcome to Low Content AI
+                    </h1>
+                    <p className="text-white/50">
+                        Create amazing low-content books with AI
+                    </p>
+                </div>
+
+                {/* Auth Forms */}
+                <div className="flex justify-center">
                     {isLogin && (
-                        <Login
-                            toggleToForgotPassword={toggleToForgotPassword}
-                            toggleToSignUp={toggleToSignUp}
-                        />
+                        <div className="w-full max-w-md">
+                            <Login
+                                toggleToForgotPassword={toggleToForgotPassword}
+                                toggleToSignUp={toggleToSignUp}
+                            />
+                        </div>
                     )}
                     {isSignUp && <SignUp toggleToLogin={toggleToLogin} />}
-                    {isForgot && <ForgotPassword toggleToLogin={toggleToLogin} />}
+                    {isForgot && (
+                        <div className="w-full max-w-md">
+                            <ForgotPassword toggleToLogin={toggleToLogin} />
+                        </div>
+                    )}
                 </div>
-            </section>
+            </div>
         </>
     );
 }

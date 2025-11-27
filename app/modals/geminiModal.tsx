@@ -5,10 +5,16 @@ import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 import { uploadImage } from "@/managers/conversationsManager";
 
-interface DalleImageSizeModalProps {
+interface GeminiModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (imageSize: string, referenceImage: string | null) => void;
+  onSuccess: (
+    aspectRatio: string,
+    useGoogleSearch: boolean,
+    referenceImages: string[]
+  ) => void;
+  initialAspectRatio?: string;
+  initialGoogleSearch?: boolean;
   conversationId?: string;
 }
 
@@ -25,7 +31,7 @@ const SmallCloseIcon = () => (
   </svg>
 );
 
-const OpenAIIcon = () => (
+const GeminiIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M12 2L2 7l10 5 10-5-10-5z" />
     <path d="M2 17l10 5 10-5" />
@@ -47,11 +53,20 @@ const ImageIcon = () => (
   </svg>
 );
 
-const imageSizeOptions = [
-  { value: "1024x1024", label: "1:1 (Square)", ratio: "1:1", description: "Best for social media posts" },
-  { value: "1536x1024", label: "3:2 (Landscape)", ratio: "3:2", description: "Standard landscape orientation" },
-  { value: "1024x1536", label: "2:3 (Portrait)", ratio: "2:3", description: "Standard portrait orientation" },
+const aspectRatios = [
+  { key: "1:1", label: "1:1 (Square)", description: "Best for social media posts" },
+  { key: "2:3", label: "2:3 (Portrait)", description: "Standard portrait orientation" },
+  { key: "3:2", label: "3:2 (Landscape)", description: "Standard landscape orientation" },
+  { key: "3:4", label: "3:4", description: "Slightly taller portrait" },
+  { key: "4:3", label: "4:3", description: "Slightly wider landscape" },
+  { key: "4:5", label: "4:5", description: "Instagram portrait" },
+  { key: "5:4", label: "5:4", description: "Classic print ratio" },
+  { key: "9:16", label: "9:16 (Vertical)", description: "Stories, Reels, TikTok" },
+  { key: "16:9", label: "16:9 (Wide)", description: "YouTube, presentations" },
+  { key: "21:9", label: "21:9 (Ultra Wide)", description: "Cinematic, banners" },
 ];
+
+const MAX_REFERENCE_IMAGES = 14;
 
 // Aspect Ratio Visual Preview Component
 const AspectRatioPreview = ({ ratio, isSelected }: { ratio: string; isSelected: boolean }) => {
@@ -96,15 +111,18 @@ const LoadingSpinner = () => (
   <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
 );
 
-const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
+const GeminiModal: React.FC<GeminiModalProps> = ({
   isOpen,
   onClose,
-  onConfirm,
+  onSuccess,
+  initialAspectRatio = "1:1",
+  initialGoogleSearch = false,
   conversationId,
 }) => {
   const [translations, setTranslations] = useState<Translations | null>(null);
-  const [selectedSize, setSelectedSize] = useState("1024x1024");
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<string>(initialAspectRatio);
+  const [useGoogleSearch, setUseGoogleSearch] = useState<boolean>(initialGoogleSearch);
+  const [referenceImages, setReferenceImages] = useState<{ id: string; url: string }[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -118,39 +136,64 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 
   // Reset state when conversation changes
   useEffect(() => {
-    setSelectedSize("1024x1024");
-    setReferenceImage(null);
-  }, [conversationId]);
+    setAspectRatio(initialAspectRatio);
+    setUseGoogleSearch(initialGoogleSearch);
+    setReferenceImages([]);
+  }, [conversationId, initialAspectRatio, initialGoogleSearch]);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const file = e.target.files[0];
-    if (!file.type.startsWith("image/")) return;
+    const files = Array.from(e.target.files);
+    const remainingSlots = MAX_REFERENCE_IMAGES - referenceImages.length;
+    const filesToUpload = files.slice(0, remainingSlots);
+
+    if (filesToUpload.length === 0) return;
 
     setIsUploading(true);
 
     try {
-      const imageUrl = await uploadImage(file);
-      setReferenceImage(imageUrl);
+      const uploadPromises = filesToUpload.map(async (file) => {
+        if (file.type.startsWith("image/")) {
+          const imageUrl = await uploadImage(file);
+          return imageUrl;
+        }
+        return null;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter((url): url is string => url !== null);
+
+      // Create image objects with unique IDs
+      const newImages = validUrls.map((url) => ({
+        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        url,
+      }));
+
+      setReferenceImages((prev) => [...prev, ...newImages]);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error uploading images:", error);
     } finally {
       setIsUploading(false);
+      // Reset the input
       if (e.target) e.target.value = "";
     }
   };
 
-  const handleRemoveImage = () => {
-    setReferenceImage(null);
+  const handleRemoveImage = (index: number) => {
+    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllImages = () => {
+    setReferenceImages([]);
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedSize, referenceImage);
+    // Extract just the URLs from the image objects
+    const imageUrls = referenceImages.map((img) => img.url);
+    onSuccess(aspectRatio, useGoogleSearch, imageUrls);
     onClose();
   };
-
-  const selectedOption = imageSizeOptions.find(opt => opt.value === selectedSize);
 
   if (!isOpen) return null;
 
@@ -166,7 +209,7 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <div
           className="
-            relative w-full max-w-xl max-h-[85vh]
+            relative w-full max-w-2xl max-h-[85vh]
             bg-gradient-to-b from-zinc-800/95 to-zinc-900/95
             backdrop-blur-xl
             rounded-3xl
@@ -185,11 +228,11 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
           <div className="relative flex items-center justify-between p-6 border-b border-white/10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30 text-purple-400">
-                <OpenAIIcon />
+                <GeminiIcon />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">
-                  OpenAI Settings
+                  Gemini Settings
                 </h2>
                 <p className="text-sm text-white/50">
                   Configure your image generation
@@ -206,43 +249,47 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Reference Image Section */}
+            {/* Reference Images Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ImageIcon />
                   <label className="block text-sm font-medium text-white/70">
-                    Reference Image
+                    Reference Images
                   </label>
                   <span className="text-xs text-white/40">
-                    (optional)
+                    ({referenceImages.length}/{MAX_REFERENCE_IMAGES})
                   </span>
                 </div>
-                {referenceImage && (
+                {referenceImages.length > 0 && (
                   <button
-                    onClick={handleRemoveImage}
+                    onClick={handleClearAllImages}
                     className="text-xs text-red-400 hover:text-red-300 transition-colors"
                   >
-                    Remove
+                    Clear all
                   </button>
                 )}
               </div>
 
               <p className="text-xs text-white/40">
-                Upload a reference image for style guidance or image editing
+                Upload up to 14 reference images for character consistency, style transfer, or composition
               </p>
 
-              {/* Image Upload Area */}
-              <div className="flex gap-3">
-                {referenceImage ? (
-                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-white/10 group">
+              {/* Image Grid */}
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2">
+                {/* Uploaded Images */}
+                {referenceImages.map((img, index) => (
+                  <div
+                    key={img.id}
+                    className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group"
+                  >
                     <img
-                      src={referenceImage}
-                      alt="Reference"
+                      src={`${img.url}${img.url.includes('?') ? '&' : '?'}cb=${img.id}`}
+                      alt={`Reference ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={handleRemoveImage}
+                      onClick={() => handleRemoveImage(index)}
                       className="
                         absolute top-1 right-1 p-1 rounded-full
                         bg-black/60 text-white/70 hover:text-red-400
@@ -252,11 +299,17 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                     >
                       <SmallCloseIcon />
                     </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white/70 text-xs text-center py-0.5">
+                      {index + 1}
+                    </div>
                   </div>
-                ) : (
+                ))}
+
+                {/* Upload Button */}
+                {referenceImages.length < MAX_REFERENCE_IMAGES && (
                   <label
                     className={`
-                      w-24 h-24 rounded-lg border-2 border-dashed
+                      aspect-square rounded-lg border-2 border-dashed
                       flex flex-col items-center justify-center gap-1
                       cursor-pointer transition-all duration-200
                       ${isUploading
@@ -270,12 +323,13 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                     ) : (
                       <>
                         <UploadIcon />
-                        <span className="text-xs text-white/50">Upload</span>
+                        <span className="text-xs text-white/50">Add</span>
                       </>
                     )}
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={handleImageUpload}
                       disabled={isUploading}
@@ -285,38 +339,66 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
               </div>
             </div>
 
-            {/* Image Size Section */}
+            {/* Aspect Ratio Section */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-white/70">
-                Image Size
+                Aspect Ratio
               </label>
-              <div className="grid grid-cols-3 gap-3">
-                {imageSizeOptions.map((option) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {aspectRatios.map((ratio) => (
                   <button
-                    key={option.value}
-                    onClick={() => setSelectedSize(option.value)}
+                    key={ratio.key}
+                    onClick={() => setAspectRatio(ratio.key)}
                     className={`
-                      relative flex flex-col items-center gap-2 p-4 rounded-xl
+                      relative flex flex-col items-center gap-2 p-3 rounded-xl
                       border transition-all duration-200
-                      ${selectedSize === option.value
+                      ${aspectRatio === ratio.key
                         ? "bg-purple-500/20 border-purple-500/50 shadow-lg shadow-purple-500/20"
                         : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                       }
                     `}
                   >
-                    <AspectRatioPreview ratio={option.ratio} isSelected={selectedSize === option.value} />
-                    <span className={`text-sm font-medium ${selectedSize === option.value ? "text-purple-300" : "text-white/70"}`}>
-                      {option.label}
-                    </span>
-                    <span className="text-xs text-white/40">
-                      {option.value}
+                    <AspectRatioPreview ratio={ratio.key} isSelected={aspectRatio === ratio.key} />
+                    <span className={`text-xs font-medium ${aspectRatio === ratio.key ? "text-purple-300" : "text-white/70"}`}>
+                      {ratio.label}
                     </span>
                   </button>
                 ))}
               </div>
               <p className="text-xs text-white/40 mt-1">
-                {selectedOption?.description}
+                {aspectRatios.find(r => r.key === aspectRatio)?.description}
               </p>
+            </div>
+
+            {/* Google Search Grounding Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-white">
+                    Google Search Grounding
+                  </label>
+                  <p className="text-xs text-white/50 mt-1">
+                    Use real-time data for weather, events, charts, and current information
+                  </p>
+                </div>
+                <button
+                  onClick={() => setUseGoogleSearch(!useGoogleSearch)}
+                  className={`
+                    relative w-12 h-6 rounded-full transition-all duration-200
+                    ${useGoogleSearch
+                      ? "bg-purple-500"
+                      : "bg-white/20"
+                    }
+                  `}
+                >
+                  <div
+                    className={`
+                      absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-200
+                      ${useGoogleSearch ? "left-7" : "left-1"}
+                    `}
+                  />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -356,4 +438,4 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
   );
 };
 
-export default DalleImageSizeModal;
+export default GeminiModal;

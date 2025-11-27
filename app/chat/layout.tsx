@@ -4,8 +4,8 @@ export default function ChatLayout({
   children: React.ReactNode;
 }) {
   return (
-    <section className="gap-4">
-      <div>{children}</div>
+    <section className="fixed inset-0 top-16 z-40 bg-black overflow-hidden">
+      {children}
     </section>
   );
 }
