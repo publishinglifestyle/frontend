@@ -7,44 +7,42 @@ export default function ProfileLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const [isClient, setIsClient] = useState(false); // State to track if we're on the client
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setIsClient(true); // Set to true once the component mounts on the client
+        setIsClient(true);
     }, []);
 
     return (
         <>
-            {/* Conditionally render SEO meta tags only on the client side */}
             {isClient && (
                 <head>
                     <title>Your Profile - Manage Your Account on Low Content AI</title>
                     <meta
-                        name="description"
                         content="Manage your Low Content AI account, update your profile, change your password, and manage your subscription. Stay updated with your credits and subscription status."
+                        name="description"
                     />
                     <meta
-                        name="keywords"
                         content="Low Content AI, profile management, account settings, update profile, manage subscription, change password"
+                        name="keywords"
                     />
-                    <meta name="robots" content="index, follow" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <link rel="canonical" href="https://www.lowcontent.ai/profile" />
-                    <meta property="og:title" content="Manage Your Account on Low Content AI" />
+                    <meta content="index, follow" name="robots" />
+                    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+                    <link href="https://www.lowcontent.ai/profile" rel="canonical" />
+                    <meta content="Manage Your Account on Low Content AI" property="og:title" />
                     <meta
-                        property="og:description"
                         content="Access and manage your Low Content AI account settings, profile updates, and subscriptions with ease."
+                        property="og:description"
                     />
-                    <meta property="og:url" content="https://www.lowcontent.ai/profile" />
-                    <meta property="og:image" content="/og-image.jpg" />
-                    <meta name="twitter:card" content="summary_large_image" />
-                    <meta name="twitter:title" content="Manage Your Account on Low Content AI" />
+                    <meta content="https://www.lowcontent.ai/profile" property="og:url" />
+                    <meta content="/og-image.jpg" property="og:image" />
+                    <meta content="summary_large_image" name="twitter:card" />
+                    <meta content="Manage Your Account on Low Content AI" name="twitter:title" />
                     <meta
-                        name="twitter:description"
                         content="Manage your Low Content AI account, update profile information, manage subscriptions, and check your credits."
+                        name="twitter:description"
                     />
-                    <meta name="twitter:image" content="/og-image.jpg" />
-                    {/* Structured Data for SEO */}
+                    <meta content="/og-image.jpg" name="twitter:image" />
                     <script
                         type="application/ld+json"
                         dangerouslySetInnerHTML={{
@@ -64,10 +62,8 @@ export default function ProfileLayout({
                     />
                 </head>
             )}
-            <section className="flex items-center justify-center gap-4 py-8 md:py-10">
-                <div className="text-center">
-                    {children}
-                </div>
+            <section className="fixed inset-0 top-16 z-40 overflow-auto">
+                {children}
             </section>
         </>
     );

@@ -44,9 +44,9 @@ export default function Crossword({
     // Validate grid size before generation
     if (cross_words && cross_words.length > 0 && crosswordGrids > 0) {
       const totalLetters = cross_words.reduce((sum, w) => sum + w.length, 0);
-      const maxRecommended = Math.ceil(Math.sqrt(totalLetters * 2.2));
+      const maxRecommended = Math.ceil(Math.sqrt(totalLetters * 3.0));
 
-      if (crosswordGrids > maxRecommended + 5) {
+      if (crosswordGrids > maxRecommended + 10) {
         setError(`Grid size ${crosswordGrids} is too large for ${cross_words.length} words. Maximum recommended: ${maxRecommended}. Please reduce the grid size to avoid a mostly empty grid.`);
         setErrorModalOpen(true);
         setIsGenerating(false);
@@ -280,54 +280,52 @@ export default function Crossword({
         }
 
         // Handle number placement separately to avoid overlaps
-        if (!isSolution) {
-          // Group words by their starting cell to detect overlaps
-          const cellNumbers: Record<string, { across?: number; down?: number }> = {};
-          
-          renumberedWords.forEach((word) => {
-            const { startx, starty, orientation, position } = word;
-            const cellKey = `${starty}-${startx}`;
-            
-            if (!cellNumbers[cellKey]) {
-              cellNumbers[cellKey] = {};
-            }
-            
-            if (orientation === "across") {
-              cellNumbers[cellKey].across = position;
-            } else {
-              cellNumbers[cellKey].down = position;
-            }
-          });
-          
-          // Place numbers, positioning them side by side if there are overlaps
-          Object.entries(cellNumbers).forEach(([cellKey, numbers]) => {
-            const [rowStr, colStr] = cellKey.split('-');
-            const rowIndex = parseInt(rowStr);
-            const colIndex = parseInt(colStr);
-            
-            const x = activeGridOffsetX + colIndex * activeCellSize;
-            const y = activeGridOffsetY + rowIndex * activeCellSize;
+        // Group words by their starting cell to detect overlaps
+        const cellNumbers: Record<string, { across?: number; down?: number }> = {};
 
-            doc.setFontSize(Math.max(4, activeCellSize * 0.4));
-            doc.setFont(font || "times", "normal");
-            
-            const hasAcross = numbers.across !== undefined;
-            const hasDown = numbers.down !== undefined;
+        renumberedWords.forEach((word) => {
+          const { startx, starty, orientation, position } = word;
+          const cellKey = `${starty}-${startx}`;
 
-            if (hasAcross && hasDown) {
-              // Both words start at this position
-              // Since they share the same starting position, they MUST have the same number
-              // Just display the number once
-              doc.text(numbers.across!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
-            } else if (hasAcross) {
-              // Only across number
-              doc.text(numbers.across!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
-            } else if (hasDown) {
-              // Only down number
-              doc.text(numbers.down!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
-            }
-          });
-        }
+          if (!cellNumbers[cellKey]) {
+            cellNumbers[cellKey] = {};
+          }
+
+          if (orientation === "across") {
+            cellNumbers[cellKey].across = position;
+          } else {
+            cellNumbers[cellKey].down = position;
+          }
+        });
+
+        // Place numbers, positioning them side by side if there are overlaps
+        Object.entries(cellNumbers).forEach(([cellKey, numbers]) => {
+          const [rowStr, colStr] = cellKey.split('-');
+          const rowIndex = parseInt(rowStr);
+          const colIndex = parseInt(colStr);
+
+          const x = activeGridOffsetX + colIndex * activeCellSize;
+          const y = activeGridOffsetY + rowIndex * activeCellSize;
+
+          doc.setFontSize(Math.max(4, activeCellSize * 0.4));
+          doc.setFont(font || "times", "normal");
+
+          const hasAcross = numbers.across !== undefined;
+          const hasDown = numbers.down !== undefined;
+
+          if (hasAcross && hasDown) {
+            // Both words start at this position
+            // Since they share the same starting position, they MUST have the same number
+            // Just display the number once
+            doc.text(numbers.across!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
+          } else if (hasAcross) {
+            // Only across number
+            doc.text(numbers.across!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
+          } else if (hasDown) {
+            // Only down number
+            doc.text(numbers.down!.toString(), x + activeCellSize * 0.1, y + activeCellSize * 0.2);
+          }
+        });
       };
 
       if (index > 0) doc.addPage();
@@ -581,6 +579,51 @@ export default function Crossword({
               }
             }
           }
+
+          // Add numbers to solution grid
+          const cellNumbers: Record<string, { across?: number; down?: number }> = {};
+
+          renumberedWords.forEach((word) => {
+            const { startx, starty, orientation, position } = word;
+            const cellKey = `${starty}-${startx}`;
+
+            if (!cellNumbers[cellKey]) {
+              cellNumbers[cellKey] = {};
+            }
+
+            if (orientation === "across") {
+              cellNumbers[cellKey].across = position;
+            } else {
+              cellNumbers[cellKey].down = position;
+            }
+          });
+
+          // Place numbers in the solution grid
+          Object.entries(cellNumbers).forEach(([cellKey, numbers]) => {
+            const [rowStr, colStr] = cellKey.split('-');
+            const rowIndex = parseInt(rowStr);
+            const colIndex = parseInt(colStr);
+
+            const x = offsetX + colIndex * adjustedCellSize;
+            const y = offsetY + rowIndex * adjustedCellSize;
+
+            doc.setFontSize(Math.max(4, adjustedCellSize * 0.4));
+            doc.setFont(font || "times", "normal");
+
+            const hasAcross = numbers.across !== undefined;
+            const hasDown = numbers.down !== undefined;
+
+            if (hasAcross && hasDown) {
+              // Both words start at this position - display the number once
+              doc.text(numbers.across!.toString(), x + adjustedCellSize * 0.1, y + adjustedCellSize * 0.2);
+            } else if (hasAcross) {
+              // Only across number
+              doc.text(numbers.across!.toString(), x + adjustedCellSize * 0.1, y + adjustedCellSize * 0.2);
+            } else if (hasDown) {
+              // Only down number
+              doc.text(numbers.down!.toString(), x + adjustedCellSize * 0.1, y + adjustedCellSize * 0.2);
+            }
+          });
         });
       }
     }
@@ -590,11 +633,55 @@ export default function Crossword({
     window.open(pdfDataUrl, "_blank");
   };
 
+  // Validate all required fields and grid size
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!cross_words || cross_words.length === 0 || cross_words.every((w) => w.trim() === "")) {
+      return false; // Words are required
+    }
+
+    if (!clues || clues.length === 0) {
+      return false; // Clues are required
+    }
+
+    // Check custom name if not sequential
+    if (is_sequential === false && (!custom_name || custom_name.trim() === "")) {
+      return false; // Custom name is required when not sequential
+    }
+
+    // Validate grid size if provided
+    if (crosswordGrids && crosswordGrids > 0) {
+      const validWords = cross_words.filter(w => w.trim() !== "");
+      if (validWords.length > 0) {
+        const totalLetters = validWords.reduce((sum, w) => sum + w.trim().length, 0);
+        const longestWord = Math.max(...validWords.map(w => w.trim().length), 0);
+
+        // Calculate recommended grid size range
+        const minRecommendedSize = Math.max(
+          longestWord + 2,
+          Math.ceil(Math.sqrt(totalLetters * 2.0))
+        );
+
+        // Check if grid is too small for longest word
+        if (crosswordGrids < longestWord) {
+          return false;
+        }
+
+        // Check if grid is too small for word count
+        if (crosswordGrids < minRecommendedSize) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center" }}>
       <Button
         color="secondary"
-        isDisabled={!cross_words || cross_words.length === 0 || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateCrossword}
       >
         {isGenerating ? "Generating..." : "Generate Crossword PDF"}

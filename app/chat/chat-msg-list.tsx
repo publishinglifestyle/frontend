@@ -8,8 +8,6 @@ import { Card, CardBody, CardFooter } from "@heroui/card";
 import {
   Avatar,
   Button,
-  Select,
-  SelectItem,
   Spacer,
   Textarea,
 } from "@heroui/react";
@@ -33,6 +31,7 @@ import {
 import { transcribeAudio } from "@/managers/audioManager";
 import { getAgent } from "@/managers/agentsManager";
 import PictureGenerationModal from "../modals/pictureGenerationModal";
+import SelectedAgentBanner from "./components/AgentHub/SelectedAgentBanner";
 
 interface ChatMessageListProps {
   agents: Agent[];
@@ -69,6 +68,7 @@ interface ChatMessageListProps {
   setMessages: Dispatch<SetStateAction<Array<Message>>>;
   setConversations: Dispatch<SetStateAction<Array<Conversation>>>;
   setCurrentConversation: (id: string) => void;
+  onExpandHub: () => void;
 }
 
 const ChatMessageList = ({
@@ -104,6 +104,7 @@ const ChatMessageList = ({
   setPendingImageUrl,
   setConversations,
   setCurrentConversation,
+  onExpandHub,
 }: ChatMessageListProps) => {
   // Add CSS styles for message images
   const imageStyles = `
@@ -434,10 +435,10 @@ const ChatMessageList = ({
             }
           }
           
-          // Check if we have a reference image for Gemini
+          // Check if we have a reference image for Gemini or gpt-image
           let referenceImageUrl = null;
           let messageTextForGemini = text;
-          
+
           // For Gemini, extract the image URL from the message if it's combined
           if (current_agent?.model === "gemini") {
             // Check if the text contains an image URL (from combineMessageWithImage)
@@ -452,6 +453,15 @@ const ChatMessageList = ({
               // Fallback to pendingImageUrlRef if not in text
               referenceImageUrl = pendingImageUrlRef.current;
               console.log("Using pending reference image for Gemini:", referenceImageUrl);
+            }
+          }
+
+          // For gpt-image (Vector Illustrator), check for referenceImage in commands
+          if (current_agent?.model === "gpt-image" && commands) {
+            const refImageCommand = commands.find(cmd => cmd.command === "referenceImage");
+            if (refImageCommand && refImageCommand.value) {
+              referenceImageUrl = refImageCommand.value;
+              console.log("Using reference image for gpt-image:", referenceImageUrl);
             }
           }
           
@@ -1187,27 +1197,19 @@ const ChatMessageList = ({
                   }
                 }}
               />
-              <div className="flex flex-col w-full md:w-1/3">
-                <Select
-                  className="max-w-xs"
-                  isDisabled={false}
-                  label={translations?.type}
-                  placeholder={translations?.select_agent || ""}
-                  selectedKeys={[selectedAgentId]}
-                  size="sm"
-                  onChange={(e) => {
-                    setSelectedAgentId(e.target.value);
-                    const s_agent = agents.find(
-                      (agent) => agent.id === e.target.value
-                    );
-
-                    setSelectedAgent(s_agent);
+              <div className="flex flex-col w-full md:w-1/3 gap-2">
+                {/* Selected Agent Banner */}
+                <SelectedAgentBanner
+                  selectedAgent={selectedAgent}
+                  onChangeAgent={onExpandHub}
+                  translations={{
+                    change: "Change",
+                    no_agent: translations?.select_agent || "Select an agent",
+                    using: "Using",
                   }}
-                >
-                  {agents.map((agent) => (
-                    <SelectItem key={agent.id}>{agent.name}</SelectItem>
-                  ))}
-                </Select>
+                />
+
+                {/* Agent-specific command buttons */}
                 {selectedAgent?.model == "midjourney" && (
                   <Button
                     className="mt-2"

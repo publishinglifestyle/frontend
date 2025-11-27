@@ -1,13 +1,13 @@
+"use client";
+
 export default function AgentsLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <section className="gap-4 py-8 md:py-10">
-            <div>
-                {children}
-            </div>
-        </section>
-    );
+  return (
+    <section className="fixed inset-0 top-16 z-40 overflow-auto">
+      {children}
+    </section>
+  );
 }

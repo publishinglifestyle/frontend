@@ -1,6 +1,5 @@
 import "@/styles/globals.css";
 import { Metadata, Viewport } from "next";
-import { Link } from "@heroui/link";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
@@ -127,41 +126,18 @@ export default function RootLayout({
       </head>
       <body
         className={clsx(
-          "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable,
-          "bg-cover bg-center",
-          "bg-no-repeat"
+          "min-h-screen bg-black font-sans antialiased",
+          fontSans.variable
         )}
-        style={{
-          backgroundImage: `url("/background.jpg")`,
-        }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           {/* Flex container to ensure the footer sticks to the bottom */}
           <div className="flex flex-col min-h-screen">
             <Navbar />
             {/* Main Content */}
-            <main className="w-full flex-grow pt-16">
+            <main className="w-full flex-grow">
               {children}
             </main>
-
-            {/* Footer inside a black div */}
-            <footer className="w-full bg-black text-white text-center">
-              <div className="container mx-auto flex items-center justify-center py-4">
-                <Link
-                  isExternal
-                  className="flex flex-col md:flex-row items-center gap-1 text-current"
-                  href="/terms"
-                  title="Terms of Service"
-                >
-                  <span className="text-default-600">Copyright @</span>
-                  <p>
-                    <span className="text-secondary">Wealthy Magnet LTD</span>, 27
-                    Old Gloucester Street, London, United Kingdom, WC1N 3AX
-                  </p>
-                </Link>
-              </div>
-            </footer>
           </div>
         </Providers>
       </body>

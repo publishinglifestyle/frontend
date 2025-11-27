@@ -13,6 +13,7 @@ import ConversationNameModal from "./conversationName";
 import DalleImageSizeModal from "./dalleImageSizeModal";
 import ErrorModal from "./errorModal";
 import IdeogramModal from "./ideogramModal";
+import GeminiModal from "./geminiModal";
 import ImageModal from "./imageModal";
 import PromptModal from "./promptModal";
 import SuccessModal from "./successModal";
@@ -24,6 +25,8 @@ interface ChatModals {
   setIsCommandsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isIdeogramModalOpen: boolean;
   setIsIdeogramModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isGeminiModalOpen: boolean;
+  setIsGeminiModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isDalleImageSizeModalOpen: boolean;
   setIsDalleImageSizeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isErrorModalOpen: boolean;
@@ -40,6 +43,8 @@ interface ChatModals {
   setIdeogramInitialPrompt: React.Dispatch<React.SetStateAction<string>>;
   ideogramImageUrl: string;
   setIdeogramImageUrl: React.Dispatch<React.SetStateAction<string>>;
+  ideogramInitialTab: string;
+  setIdeogramInitialTab: React.Dispatch<React.SetStateAction<string>>;
   uploadedImageUrl: string;
   setUploadedImageUrl: React.Dispatch<React.SetStateAction<string>>;
   errorMessage: string;
@@ -58,6 +63,7 @@ interface ChatModals {
   fullName: string;
   messages: Message[];
   setMessages: Dispatch<SetStateAction<Message[]>>;
+  setPendingImageUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const ChatModals = ({
@@ -67,6 +73,8 @@ const ChatModals = ({
   setIsCommandsModalOpen,
   isIdeogramModalOpen,
   setIsIdeogramModalOpen,
+  isGeminiModalOpen,
+  setIsGeminiModalOpen,
   isDalleImageSizeModalOpen,
   setIsDalleImageSizeModalOpen,
   isErrorModalOpen,
@@ -79,12 +87,15 @@ const ChatModals = ({
   setIsConversationNameModalOpen,
   ideogramInitialPrompt,
   ideogramImageUrl,
+  ideogramInitialTab,
+  setIdeogramInitialTab,
   uploadedImageUrl,
   setUploadedImageUrl,
   errorMessage,
   currentConversation,
   setConversations,
   conversations,
+  setMessageText,
   setImageResponse,
   setIsGeneratingResponse,
   setPromptCommands,
@@ -96,6 +107,7 @@ const ChatModals = ({
   fullName,
   messages,
   setMessages,
+  setPendingImageUrl,
 }: ChatModals) => {
   const [selectedAspectRatio, setSelectedAspectRatio] = React.useState("");
   const createMessageText = (text: string) => {
@@ -158,28 +170,41 @@ const ChatModals = ({
           setPromptCommands(selected_commands);
           setIsCommandsModalOpen(false);
         }}
+        conversationId={currentConversation}
       />
 
       <DalleImageSizeModal
         isOpen={isDalleImageSizeModalOpen}
         onClose={() => setIsDalleImageSizeModalOpen(false)}
-        onConfirm={(imageSize) => {
-          console.log("Selected DALL-E image size:", imageSize);
+        onConfirm={(imageSize, referenceImage) => {
+          console.log("Selected DALL-E image size:", imageSize, "Reference:", referenceImage);
           const selected_commands = [
-            { command: "size", value: imageSize }
+            { command: "size", value: imageSize },
+            { command: "referenceImage", value: referenceImage || "" },
           ];
           setPromptCommands(selected_commands);
+          // Show reference image in the input bar (same as attachment)
+          if (referenceImage) {
+            setPendingImageUrl(referenceImage);
+          }
           setIsDalleImageSizeModalOpen(false);
         }}
+        conversationId={currentConversation}
       />
 
-      {isIdeogramModalOpen && (
-        <IdeogramModal
-          agentId={selectedAgent?.id}
-          selectedAspectRatio={selectedAspectRatio}
-          isOpen={isIdeogramModalOpen}
-          onClose={() => setIsIdeogramModalOpen(false)}
-          onSuccess={async (
+      <IdeogramModal
+        agentId={selectedAgent?.id}
+        selectedAspectRatio={selectedAspectRatio}
+        isOpen={isIdeogramModalOpen}
+        onClose={() => {
+          setIsIdeogramModalOpen(false);
+          setIdeogramInitialTab("");
+        }}
+        conversationId={currentConversation}
+        initialTab={ideogramInitialTab}
+        initialImageUrl={ideogramImageUrl}
+        initialPrompt={ideogramInitialPrompt}
+        onSuccess={async (
             selectedTab,
             styleType,
             aspectRatio,
@@ -213,31 +238,29 @@ const ChatModals = ({
 
               setImageResponse(image_response);
             } else if (selectedTab == "describe") {
-              setIsGeneratingResponse(true);
-              const description = await describeImage(
-                currentConversation,
-                uploadedImageUrl,
-                selectedAgent?.id
-              );
-              const description_message = {
-                id: uuidv4(),
-                username: "LowContent AI",
-                text: description.response,
-                conversation_id: currentConversation,
-                complete: true,
-                title: "",
-                buttons: [],
-                ideogram_buttons: [],
-                messageId: "",
-                flags: 0,
-                prompt: "",
-                role: "assistant",
-              };
-              messageListener(description_message);
+              // Put the description text into the chat input
+              // remixPrompt contains the description text from the modal
+              if (remixPrompt) {
+                setMessageText(remixPrompt);
+              }
             }
           }}
         />
-      )}
+
+      <GeminiModal
+        isOpen={isGeminiModalOpen}
+        onClose={() => setIsGeminiModalOpen(false)}
+        onSuccess={(aspectRatio, useGoogleSearch, referenceImages) => {
+          const selected_commands = [
+            { command: "aspectRatio", value: aspectRatio },
+            { command: "googleSearch", value: useGoogleSearch.toString() },
+            { command: "referenceImages", value: JSON.stringify(referenceImages) },
+          ];
+          setPromptCommands(selected_commands);
+          setIsGeminiModalOpen(false);
+        }}
+        conversationId={currentConversation}
+      />
 
       <ErrorModal
         isOpen={isErrorModalOpen}

@@ -118,10 +118,20 @@ export default function Cryptogram({
     window.open(pdfDataUrl, "_blank");
   };
 
+  // Validate all required fields
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!phrases || phrases.length === 0 || phrases.every((p) => !p || p.trim() === "")) {
+      return false; // Phrases are required
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={!phrases || phrases[0] == "" || isGenerating}
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
         onPress={handleGenerateCryptogram}
       >

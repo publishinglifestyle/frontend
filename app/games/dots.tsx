@@ -38,6 +38,28 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     fileInputRef.current?.click();
   };
 
+  // Calculate optimal dot radius based on number of dots and canvas size
+  const calculateDotRadius = (numDots: number, canvasArea: number, forPDF: boolean = false): number => {
+    if (numDots === 0) return forPDF ? 2 : 5;
+
+    // Base calculation: scale inversely with square root of number of dots
+    // More dots = smaller radius to avoid overcrowding
+    const baseRadius = Math.max(2, Math.min(8, 300 / Math.sqrt(numDots)));
+
+    // Adjust for canvas size (larger canvas can handle larger dots)
+    const sizeMultiplier = Math.sqrt(canvasArea / 500000); // Normalized to ~707x707 canvas
+    const scaledRadius = baseRadius * Math.max(0.5, Math.min(2, sizeMultiplier));
+
+    // PDF should have smaller dots for printing
+    return forPDF ? Math.max(1.5, scaledRadius * 0.6) : Math.max(3, scaledRadius);
+  };
+
+  // Calculate optimal font size based on dot radius
+  const calculateFontSize = (dotRadius: number): number => {
+    // Font size should be proportional to dot radius
+    return Math.max(8, Math.round(dotRadius * 2.2));
+  };
+
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -59,18 +81,24 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     // Draw the image centered
     ctx.drawImage(img, x, y, img.width, img.height);
 
+    // Calculate dynamic sizes based on number of dots and canvas size
+    const canvasArea = canvas.width * canvas.height;
+    const dotRadius = calculateDotRadius(dots.length, canvasArea, false);
+    const fontSize = calculateFontSize(dotRadius);
+    const offset = dotRadius + 2; // Offset for number placement
+
     // Draw the dots with numbers
     ctx.fillStyle = "red";
-    ctx.font = `12px ${font}`; // Use the selected font
+    ctx.font = `${fontSize}px ${font}`; // Use dynamic font size
 
     dots.forEach((dot, index) => {
       ctx.beginPath();
-      ctx.arc(dot.x, dot.y, 5, 0, Math.PI * 2);
+      ctx.arc(dot.x, dot.y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // Draw the sequential number next to each dot
       const label = (index + 1).toString();
-      ctx.fillText(label, dot.x + 7, dot.y - 7);
+      ctx.fillText(label, dot.x + offset, dot.y - offset);
     });
   };
 
@@ -82,8 +110,13 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
+    // Calculate current dot radius for hit detection
+    const canvasArea = canvas.width * canvas.height;
+    const dotRadius = calculateDotRadius(dots.length, canvasArea, false);
+    const hitRadius = Math.max(5, dotRadius + 2); // Slightly larger hit area for easier clicking
+
     // Check if a dot is clicked
-    const index = dots.findIndex((dot) => Math.hypot(dot.x - x, dot.y - y) < 5);
+    const index = dots.findIndex((dot) => Math.hypot(dot.x - x, dot.y - y) < hitRadius);
     if (index !== -1) {
       setDraggingDotIndex(index);
     }
@@ -141,10 +174,15 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     dotsCanvas.height = canvas.height;
     const dotsCtx = dotsCanvas.getContext("2d");
     if (dotsCtx) {
+      // Calculate dynamic sizes for PDF (smaller than canvas for printing)
+      const canvasArea = canvas.width * canvas.height;
+      const dotRadius = calculateDotRadius(dots.length, canvasArea, true);
+      const fontSize = calculateFontSize(dotRadius);
+      const offset = dotRadius + 1.5; // Offset for number placement
+
       // Resize dots and change their color to black for the PDF
-      const dotRadius = 2; // Smaller dot size for PDF
       dotsCtx.fillStyle = "black"; // Set dot color to black
-      dotsCtx.font = `8px ${font}`; // Use the selected font for PDF
+      dotsCtx.font = `${fontSize}px ${font}`; // Use dynamic font size for PDF
 
       dots.forEach((dot, index) => {
         dotsCtx.beginPath();
@@ -153,7 +191,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
         // Draw the sequential number next to each dot
         const label = (index + 1).toString();
-        dotsCtx.fillText(label, dot.x + 3, dot.y - 3); // Adjusted for smaller size
+        dotsCtx.fillText(label, dot.x + offset, dot.y - offset);
       });
 
       const dotsImgData = dotsCanvas.toDataURL("image/png");
@@ -214,7 +252,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
         <Button
           onPress={generatePDF}
           color="secondary"
-          isDisabled={!dots.length}
+          isDisabled={!image || !dots.length}
         >
           Generate PDF
         </Button>

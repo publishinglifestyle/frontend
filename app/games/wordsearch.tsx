@@ -535,15 +535,57 @@ export default function WordSearch({
     ctx.restore();
   }; // End drawWordSearchGridOnCanvas
 
+  // Validate all required fields and grid size
+  const isFormValid = (): boolean => {
+    // Check required fields
+    if (!words || words.length === 0 || words.every((w) => w.trim() === "")) {
+      return false; // Words are required
+    }
+
+    if (!grid_size || grid_size <= 0) {
+      return false; // Grid size is required
+    }
+
+    if (!fontSize || fontSize <= 0) {
+      return false; // Font size is required
+    }
+
+    if (!num_puzzles || num_puzzles <= 0) {
+      return false; // Number of puzzles is required
+    }
+
+    // Check custom name if not sequential
+    if (is_sequential === false && (!custom_name || custom_name.trim() === "")) {
+      return false; // Custom name is required when not sequential
+    }
+
+    // Validate grid size for word count
+    const validWords = words.filter(w => w.trim() !== "");
+    const totalLetters = validWords.reduce((sum, w) => sum + w.trim().length, 0);
+    const longestWord = Math.max(...validWords.map(w => w.trim().length), 0);
+    const wordsPerPuzzle = Math.ceil(validWords.length / num_puzzles);
+    const avgWordLength = totalLetters / validWords.length;
+    const totalLettersPerPuzzle = wordsPerPuzzle * avgWordLength;
+    const gridCapacity = grid_size * grid_size;
+    const utilizationRatio = totalLettersPerPuzzle / gridCapacity;
+
+    // Check if grid is too small for longest word
+    if (grid_size < longestWord) {
+      return false;
+    }
+
+    // Check if utilization ratio exceeds threshold
+    if (utilizationRatio > 0.65) {
+      return false;
+    }
+
+    return true;
+  };
+
   return (
     <div style={{ textAlign: "center", margin: "20px" }}>
       <Button
-        isDisabled={
-          !words ||
-          words.length === 0 ||
-          words.every((w) => w.trim() === "") ||
-          isGenerating
-        }
+        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
         onPress={handleGenerateImages}
       >

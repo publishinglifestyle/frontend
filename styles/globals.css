@@ -132,3 +132,290 @@ body.goog-te-hl {
 .pulse {
     animation: pulse 2s infinite;
 }
+
+/* ==========================================
+   Agent Hub - Glassmorphism & Glow Effects
+   ========================================== */
+
+/* Glass Panel Effect */
+.glass-panel {
+    background: rgba(30, 30, 30, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Agent Card Base Styles */
+.agent-card {
+    position: relative;
+    transition: all 0.3s ease-out;
+}
+
+.agent-card:hover {
+    transform: scale(1.05);
+}
+
+/* Agent Card Selected State */
+.agent-card-selected {
+    animation: agent-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes agent-glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--glow-color, rgba(147, 83, 211, 0.4));
+    }
+    50% {
+        box-shadow: 0 0 30px var(--glow-color, rgba(147, 83, 211, 0.6));
+    }
+}
+
+/* Pulse Glow Animation */
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Custom Scrollbar for Agent Hub */
+.agent-hub::-webkit-scrollbar {
+    height: 6px;
+}
+
+.agent-hub::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.agent-hub::-webkit-scrollbar-thumb {
+    background: rgba(147, 83, 211, 0.3);
+    border-radius: 3px;
+}
+
+.agent-hub::-webkit-scrollbar-thumb:hover {
+    background: rgba(147, 83, 211, 0.5);
+}
+
+/* Scrollbar for horizontal scroll container */
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Model-specific glow colors as CSS variables */
+:root {
+    --dalle-glow: #10A37F;
+    --midjourney-glow: #FF6B35;
+    --ideogram-glow: #7C3AED;
+    --gemini-glow: #4285F4;
+    --gpt-image-glow: #00A67E;
+    --text-agent-glow: #9353D3;
+}
+
+/* ==========================================
+   Immersive Chat - New Design System
+   ========================================== */
+
+/* Scale In Animation for Modals */
+@keyframes scale-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.2s ease-out forwards;
+}
+
+/* Slide In Animation for Drawer */
+@keyframes slide-in-left {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out forwards;
+}
+
+/* Slide In Right Animation */
+@keyframes slide-in-right {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.2s ease-out forwards;
+}
+
+/* Gradient Border Animation */
+@keyframes gradient-border {
+    0%, 100% {
+        border-color: rgba(147, 83, 211, 0.3);
+    }
+    50% {
+        border-color: rgba(147, 83, 211, 0.6);
+    }
+}
+
+.animate-gradient-border {
+    animation: gradient-border 2s ease-in-out infinite;
+}
+
+/* Message Bubble Animations */
+@keyframes message-appear {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-bubble {
+    animation: message-appear 0.3s ease-out forwards;
+}
+
+/* Bounce Animation for Typing Indicator */
+@keyframes typing-bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* Improved scrollbar for messages */
+.custom-scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.custom-scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Text Selection Color */
+::selection {
+    background: rgba(147, 83, 211, 0.4);
+    color: white;
+}
+
+/* Focus Ring for Accessibility */
+.focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(147, 83, 211, 0.5);
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glass Card Effect */
+.glass-card {
+    background: rgba(30, 30, 30, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #9353D3 0%, #7C3AED 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Shimmer Animation for Image Skeleton Loader */
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+}
