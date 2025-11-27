@@ -94,6 +94,13 @@ const BackIcon = () => (
   </svg>
 );
 
+const SearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="8" />
+    <path d="M21 21l-4.35-4.35" />
+  </svg>
+);
+
 // Custom Input Component
 const CustomInput = ({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
   <div className="space-y-2">
@@ -149,6 +156,7 @@ export default function AgentsPage() {
   const [errorModalMessage, setErrorModalMessage] = useState("");
 
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [agentName, setAgentName] = useState("");
   const [agentType, setAgentType] = useState("");
@@ -272,6 +280,10 @@ export default function AgentsPage() {
     setAgentTemperature(0);
     setAgentType("");
   };
+
+  const filteredAgents = agents.filter((agent) =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleNewAgent = () => {
     setSelectedAgentId("new");
@@ -546,8 +558,20 @@ export default function AgentsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
           >
-            {/* Table Header */}
-            <div className="px-6 py-4 border-b border-white/10">
+            {/* Search and Table Header */}
+            <div className="px-6 py-4 border-b border-white/10 space-y-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/40">
+                  <SearchIcon />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={translations?.search_agents || "Search agents..."}
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-200"
+                />
+              </div>
               <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider">
                 {translations?.name || "Name"}
               </h3>
@@ -555,7 +579,7 @@ export default function AgentsPage() {
 
             {/* Agents List */}
             <div className="divide-y divide-white/5">
-              {agents.map((agent, index) => (
+              {filteredAgents.map((agent, index) => (
                 <motion.div
                   key={agent.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -596,13 +620,19 @@ export default function AgentsPage() {
                 </motion.div>
               ))}
 
-              {agents.length === 0 && (
+              {filteredAgents.length === 0 && (
                 <div className="px-6 py-12 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30 text-purple-400">
-                    <AgentsIcon />
+                    {searchQuery ? <SearchIcon /> : <AgentsIcon />}
                   </div>
-                  <p className="text-white/50">No agents yet</p>
-                  <p className="text-sm text-white/30 mt-1">Create your first agent to get started</p>
+                  <p className="text-white/50">
+                    {searchQuery ? (translations?.no_results || "No agents found") : "No agents yet"}
+                  </p>
+                  <p className="text-sm text-white/30 mt-1">
+                    {searchQuery
+                      ? (translations?.try_different_search || "Try a different search term")
+                      : "Create your first agent to get started"}
+                  </p>
                 </div>
               )}
             </div>

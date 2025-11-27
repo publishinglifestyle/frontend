@@ -99,6 +99,7 @@ function ChatPageContent() {
   const [ideogramImageUrl, setIdeogramImageUrl] = useState("");
   const [ideogramInitialTab, setIdeogramInitialTab] = useState("");
   const [selectedConversations, setSelectedConversations] = useState<Set<string>>(new Set());
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
 
   const userId = user?.id;
   const fullName = user?.first_name + " " + user?.last_name;
@@ -235,15 +236,17 @@ function ChatPageContent() {
 
   // Send Message Handler
   const handleSendMessage = async () => {
-    if (!messageText.trim() && !pendingImageUrl) return;
+    if (!messageText.trim() && !pendingImageUrl && pendingImages.length === 0) return;
 
     // Capture current values before clearing
     const text = messageText;
     const referenceImageUrl = pendingImageUrl;
+    const referenceImages = [...pendingImages];
 
     // Clear inputs immediately
     setMessageText("");
     setPendingImageUrl("");
+    setPendingImages([]);
 
     // Create conversation if needed
     let conversationId = currentConversation;
@@ -558,70 +561,74 @@ function ChatPageContent() {
       socket.on("message", messageListener);
     }
 
-    socket.on("conversationTitleUpdate", ({ conversation_id, title }) => {
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === conversation_id
-            ? { ...c, name: title, last_activity: new Date().toISOString() }
-            : c
-        )
-      );
-    });
+    if (!socket.hasListeners("conversationTitleUpdate")) {
+      socket.on("conversationTitleUpdate", ({ conversation_id, title }) => {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === conversation_id
+              ? { ...c, name: title, last_activity: new Date().toISOString() }
+              : c
+          )
+        );
+      });
+    }
 
-    socket.on("midjourneyCallback", async (response) => {
-      if (response?.status === "failed" || !response.result) {
-        const msg = response?.failMessage || "Failed to generate image";
+    if (!socket.hasListeners("midjourneyCallback")) {
+      socket.on("midjourneyCallback", async (response) => {
+        if (response?.status === "failed" || !response.result) {
+          const msg = response?.failMessage || "Failed to generate image";
+          setMessages((prev) => [
+            ...prev.filter((m) => !m?.id?.startsWith("typing-")),
+            {
+              id: uuidv4(),
+              username: "LowContent AI",
+              text: msg,
+              conversation_id: currentConversation,
+              complete: true,
+              buttons: [],
+              ideogram_buttons: [],
+              messageId: "",
+              flags: 0,
+              prompt: "",
+              role: "assistant",
+              title: "",
+            },
+          ]);
+          setIsGeneratingResponse(false);
+          return;
+        }
+
+        const save_image_response = await saveMjImage(
+          response.result.prompt,
+          response.result.message_id,
+          response.conversation_id,
+          true,
+          response.result.url,
+          response.result.options,
+          response.result.flags,
+          selectedAgent?.id
+        );
+
         setMessages((prev) => [
           ...prev.filter((m) => !m?.id?.startsWith("typing-")),
           {
             id: uuidv4(),
             username: "LowContent AI",
-            text: msg,
-            conversation_id: currentConversation,
+            text: save_image_response.imageUrl,
+            conversation_id: response.conversation_id,
             complete: true,
-            buttons: [],
+            buttons: response.result.options || [],
             ideogram_buttons: [],
-            messageId: "",
-            flags: 0,
-            prompt: "",
+            messageId: response.result.message_id,
+            flags: response.result.flags,
+            prompt: response.result.prompt,
             role: "assistant",
             title: "",
           },
         ]);
         setIsGeneratingResponse(false);
-        return;
-      }
-
-      const save_image_response = await saveMjImage(
-        response.result.prompt,
-        response.result.message_id,
-        response.conversation_id,
-        true,
-        response.result.url,
-        response.result.options,
-        response.result.flags,
-        selectedAgent?.id
-      );
-
-      setMessages((prev) => [
-        ...prev.filter((m) => !m?.id?.startsWith("typing-")),
-        {
-          id: uuidv4(),
-          username: "LowContent AI",
-          text: save_image_response.imageUrl,
-          conversation_id: response.conversation_id,
-          complete: true,
-          buttons: response.result.options || [],
-          ideogram_buttons: [],
-          messageId: response.result.message_id,
-          flags: response.result.flags,
-          prompt: response.result.prompt,
-          role: "assistant",
-          title: "",
-        },
-      ]);
-      setIsGeneratingResponse(false);
-    });
+      });
+    }
 
     return () => {
       if (socket) {
@@ -779,7 +786,17 @@ function ChatPageContent() {
         isGenerating={isGeneratingResponse}
         isRecording={isRecording}
         pendingImageUrl={pendingImageUrl}
-        onRemoveImage={() => setPendingImageUrl("")}
+        pendingImages={pendingImages}
+        onRemoveImage={(index) => {
+          if (index === undefined || index === 0 && pendingImageUrl) {
+            // If no index or index 0 with pendingImageUrl, clear the single image
+            setPendingImageUrl("");
+          } else {
+            // Adjust index to account for pendingImageUrl being at index 0
+            const adjustedIndex = pendingImageUrl ? index - 1 : index;
+            setPendingImages(prev => prev.filter((_, i) => i !== adjustedIndex));
+          }
+        }}
         translations={translations}
       />
 
@@ -879,6 +896,7 @@ function ChatPageContent() {
         setUploadedImageUrl={setUploadedImageUrl}
         uploadedImageUrl={uploadedImageUrl}
         setPendingImageUrl={setPendingImageUrl}
+        setPendingImages={setPendingImages}
       />
     </div>
   );

@@ -18,7 +18,8 @@ interface FloatingInputBarProps {
   isGenerating: boolean;
   isRecording: boolean;
   pendingImageUrl?: string;
-  onRemoveImage?: () => void;
+  pendingImages?: string[];
+  onRemoveImage?: (index?: number) => void;
   disabled?: boolean;
   translations?: {
     type_message?: string;
@@ -118,6 +119,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
   isGenerating,
   isRecording,
   pendingImageUrl,
+  pendingImages = [],
   onRemoveImage,
   disabled,
   translations,
@@ -150,11 +152,16 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
     : null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && (value.trim() || pendingImageUrl)) {
+    if (e.key === "Enter" && !e.shiftKey && (value.trim() || pendingImageUrl || pendingImages.length > 0)) {
       e.preventDefault();
       onSend();
     }
   };
+
+  // Combine single pending image with multiple pending images
+  const allPendingImages = pendingImageUrl
+    ? [pendingImageUrl, ...pendingImages]
+    : pendingImages;
 
   const showCommands =
     selectedAgent?.model === "midjourney" ||
@@ -176,26 +183,39 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
         `}
       >
         {/* Pending Image Preview - Inside container */}
-        {pendingImageUrl && (
+        {allPendingImages.length > 0 && (
           <div className="px-4 pt-3 pb-2 border-b border-white/5">
-            <div className="inline-flex items-center gap-3 px-3 py-2 bg-white/5 border border-white/10 rounded-xl">
-              <img
-                key={pendingImageUrl}
-                src={pendingImageUrl}
-                alt="Attached reference"
-                className="h-12 w-auto rounded-lg border border-white/20"
-              />
-              <div className="flex flex-col">
-                <span className="text-xs text-white/50">Reference Image</span>
-                <span className="text-xs text-purple-400">Ready to send</span>
-              </div>
-              <button
-                onClick={onRemoveImage}
-                className="ml-2 p-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
-                title="Remove"
-              >
-                <CloseIcon />
-              </button>
+            <div className="flex flex-wrap gap-2">
+              {allPendingImages.map((imageUrl, index) => (
+                <div
+                  key={`${imageUrl}-${index}`}
+                  className="inline-flex items-center gap-2 px-2 py-1.5 bg-white/5 border border-white/10 rounded-xl group"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`Reference ${index + 1}`}
+                    className="h-10 w-auto rounded-lg border border-white/20"
+                  />
+                  {allPendingImages.length === 1 && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white/50">Reference Image</span>
+                      <span className="text-xs text-purple-400">Ready to send</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => onRemoveImage?.(index)}
+                    className="p-1 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
+                    title="Remove"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+              ))}
+              {allPendingImages.length > 1 && (
+                <div className="flex items-center px-2">
+                  <span className="text-xs text-purple-400">{allPendingImages.length} reference images</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -329,10 +349,10 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           ) : (
             <button
               onClick={onSend}
-              disabled={(!value.trim() && !pendingImageUrl) || disabled}
+              disabled={(!value.trim() && !pendingImageUrl && pendingImages.length === 0) || disabled}
               className={`
                 p-3 rounded-xl transition-all duration-200
-                ${value.trim() || pendingImageUrl
+                ${value.trim() || pendingImageUrl || pendingImages.length > 0
                   ? "bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
                   : "bg-white/5 text-white/30 cursor-not-allowed"
                 }
