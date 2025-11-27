@@ -221,11 +221,11 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
         )}
 
         {/* Agent Selector Button */}
-        <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-white/5">
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-white/5 overflow-x-auto scrollbar-none">
           <button
             onClick={onOpenAgentSelector}
             className={`
-              flex items-center gap-2 px-3 py-1.5 rounded-lg
+              flex items-center gap-2 px-3 py-1.5 rounded-lg flex-shrink-0
               transition-all duration-200
               ${selectedAgent
                 ? "bg-white/5 hover:bg-white/10"
@@ -255,7 +255,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           {showCommands && onOpenCommands && (
             <button
               onClick={onOpenCommands}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/70 hover:text-white flex-shrink-0"
             >
               <CommandIcon />
               <span className="text-sm">Commands</span>
@@ -265,7 +265,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           {selectedAgent?.model === "ideogram" && (
             <button
               onClick={() => window.open("https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt", "_blank")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 transition-colors text-purple-400 hover:text-purple-300"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 transition-colors text-purple-400 hover:text-purple-300 flex-shrink-0"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
