@@ -87,7 +87,7 @@ export default function Sudoku({
     }
 
     // --- Draw Numbers ---
-    ctx.font = `${gridFontSize}px ${gridFont}`;
+    ctx.font = `normal ${gridFontSize}px ${gridFont}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle"; // Crucial for vertical centering
     ctx.fillStyle = "#000000"; // Black numbers

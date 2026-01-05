@@ -82,7 +82,8 @@ export default function ScrambleWords({
       if (isSolution) {
         doc.text(originalWord, blankX, y);
       } else {
-        doc.text("_ _ _ _ _ _ _ _", blankX, y);
+        const blankLine = Array(originalWord.length).fill("_").join(" ");
+        doc.text(blankLine, blankX, y);
       }
 
       y += lineHeight;

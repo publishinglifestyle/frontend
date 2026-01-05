@@ -47,7 +47,6 @@ export default function WordSearch({
   const imageHeight = Math.round(imageWidth * imageRatio);
   const margin = 60; // Pixels inside the canvas
   const titleFontSize = 32; // Pixels
-  const listFontSize = 18; // Pixels
   const solutionTitleFontSize = 24; // Pixels for multi-solution page title
   const lineSpacing = 1.4;
   const solutionGridSpacing = 30; // Pixels between solution grids
@@ -195,7 +194,7 @@ export default function WordSearch({
       let currentY = titleY + titleFontSize * lineSpacing;
 
       // Grid Size/Position
-      const wordListEstimateHeight = isSolution ? 0 : 150;
+      const wordListEstimateHeight = isSolution ? 0 : fontSize * 8;
       const maxGridHeightAllowed =
         availableHeight -
         (currentY - margin) -
@@ -238,8 +237,8 @@ export default function WordSearch({
         ctx.fillStyle = "black";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.font = `${listFontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
-        const wordsPerLine = 5;
+        ctx.font = `${fontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
+        const wordsPerLine = 3;
         const columnSpacing = 30;
         const listColumnWidth = Math.floor(
           (availableWidth - (wordsPerLine - 1) * columnSpacing) / wordsPerLine
@@ -256,7 +255,7 @@ export default function WordSearch({
           const rowIndex = Math.floor(i / wordsPerLine);
           const wordX =
             wordListStartX + colIndex * (listColumnWidth + columnSpacing);
-          const wordY = currentY + rowIndex * (listFontSize * lineSpacing);
+          const wordY = currentY + rowIndex * (fontSize * lineSpacing);
           if (wordY < imageHeight - margin) {
             ctx.fillText(
               wordData.clean.toUpperCase(),
