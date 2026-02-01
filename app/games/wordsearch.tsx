@@ -4,6 +4,7 @@ import { generateWordSearch } from "@/managers/gamesManager";
 import { Button } from "@heroui/button";
 // No jsPDF needed
 import { useState } from "react";
+import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
 
 // Interfaces remain the same...
 interface Word {
@@ -87,6 +88,9 @@ export default function WordSearch({
   const handleGenerateImages = async () => {
     setIsGenerating(true);
     try {
+      // Ensure the font is loaded before drawing
+      await ensureFontLoaded(font);
+
       // Calculate optimal grid size if not provided
       const wordCount = words?.length || 0;
       const effectiveGridSize = grid_size ?? calculateOptimalGridSize(wordCount, fontSize);
@@ -188,7 +192,7 @@ export default function WordSearch({
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.font = `bold ${titleFontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
+      ctx.font = `bold ${titleFontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
       const titleY = margin;
       ctx.fillText(titleText, imageWidth / 2, titleY);
       let currentY = titleY + titleFontSize * lineSpacing;
@@ -237,31 +241,29 @@ export default function WordSearch({
         ctx.fillStyle = "black";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
-        ctx.font = `${fontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
+        ctx.font = `${fontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
         const wordsPerLine = 3;
-        const columnSpacing = 30;
-        const listColumnWidth = Math.floor(
-          (availableWidth - (wordsPerLine - 1) * columnSpacing) / wordsPerLine
-        );
-        const wordListTotalWidth =
-          wordsPerLine * listColumnWidth + (wordsPerLine - 1) * columnSpacing;
-        const wordListStartX =
-          margin + (availableWidth - wordListTotalWidth) / 2;
+
+        // Distribute columns evenly across the grid width
+        const columnWidth = gridWidthPx / wordsPerLine;
+
+        // Align with the visual left edge of the first grid column
+        // Grid letters are centered in cells, so we offset by half a cell minus half letter width
+        const wordListStartX = gridOffsetX + gridCellSizePx / 2 - fontSize / 3;
+
         const sortedWords = [...solutionWords].sort((a, b) =>
           a.clean.localeCompare(b.clean)
         );
         sortedWords.forEach((wordData, i) => {
           const colIndex = i % wordsPerLine;
           const rowIndex = Math.floor(i / wordsPerLine);
-          const wordX =
-            wordListStartX + colIndex * (listColumnWidth + columnSpacing);
+          const wordX = wordListStartX + colIndex * columnWidth;
           const wordY = currentY + rowIndex * (fontSize * lineSpacing);
           if (wordY < imageHeight - margin) {
             ctx.fillText(
               wordData.clean.toUpperCase(),
               wordX,
-              wordY,
-              listColumnWidth
+              wordY
             );
           } else if (
             rowIndex === Math.floor(i / wordsPerLine) &&
@@ -334,7 +336,7 @@ export default function WordSearch({
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.font = `bold ${solutionTitleFontSize}px "${font}", ${font}, Helvetica, Arial, sans-serif`;
+      ctx.font = `bold ${solutionTitleFontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
       const titleY = margin;
       ctx.fillText(titleText, imageWidth / 2, titleY);
       let currentContentY = titleY + solutionTitleFontSize * lineSpacing + 20;
@@ -517,7 +519,7 @@ export default function WordSearch({
     ctx.fillStyle = "black";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = `bold ${fontSizePx}px "${fontFamily}", ${fontFamily}, Helvetica, Arial, sans-serif`;
+    ctx.font = `bold ${fontSizePx}px ${getFontFamily(fontFamily)}, Helvetica, Arial, sans-serif`;
 
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {

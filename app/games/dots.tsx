@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState, useEffect, ChangeEvent } from "react";
+import React, { useRef, useState, useEffect, ChangeEvent, useCallback } from "react";
 import { Button } from "@heroui/button";
 import { Spacer } from "@heroui/spacer";
 import jsPDF from "jspdf";
+import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
 
 interface DotsToDotsProps {
   is_sequential: boolean;
@@ -89,7 +90,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
     // Draw the dots with numbers
     ctx.fillStyle = "red";
-    ctx.font = `${fontSize}px ${font}`; // Use dynamic font size
+    ctx.font = `${fontSize}px ${getFontFamily(font)}`; // Use dynamic font size
 
     dots.forEach((dot, index) => {
       ctx.beginPath();
@@ -155,7 +156,10 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     setDots([...dots, { x, y }]);
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
+    // Ensure font is loaded before generating PDF
+    await ensureFontLoaded(font);
+
     const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 10;
@@ -182,7 +186,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
       // Resize dots and change their color to black for the PDF
       dotsCtx.fillStyle = "black"; // Set dot color to black
-      dotsCtx.font = `${fontSize}px ${font}`; // Use dynamic font size for PDF
+      dotsCtx.font = `${fontSize}px ${getFontFamily(font)}`; // Use dynamic font size for PDF
 
       dots.forEach((dot, index) => {
         dotsCtx.beginPath();
@@ -214,8 +218,10 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     if (image) {
       const img = new Image();
       img.src = image as string;
-      img.onload = () => {
+      img.onload = async () => {
         imageRef.current = img;
+        // Ensure font is loaded before drawing
+        await ensureFontLoaded(font);
         drawCanvas();
       };
     }

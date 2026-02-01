@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Button } from "@heroui/button"; // Assuming this Button component exists
 import { generateSudoku } from "@/managers/gamesManager"; // Assuming this fetches Sudoku data
+import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
 
 // Helper function to download canvas content with high quality
 const downloadCanvasAsImage = (canvas: HTMLCanvasElement, filename: string) => {
@@ -58,7 +59,7 @@ export default function Sudoku({
 
     // --- Draw Title (Optional) ---
     if (title && titleFontSize) {
-      ctx.font = `bold ${titleFontSize}px ${gridFont}`;
+      ctx.font = `bold ${titleFontSize}px ${getFontFamily(gridFont)}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom"; // Align text bottom relative to Y
       // Center title above the grid
@@ -87,7 +88,7 @@ export default function Sudoku({
     }
 
     // --- Draw Numbers ---
-    ctx.font = `normal ${gridFontSize}px ${gridFont}`;
+    ctx.font = `normal ${gridFontSize}px ${getFontFamily(gridFont)}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle"; // Crucial for vertical centering
     ctx.fillStyle = "#000000"; // Black numbers
@@ -114,6 +115,9 @@ export default function Sudoku({
 
     setIsGenerating(true);
     try {
+      // Ensure the font is loaded before drawing
+      await ensureFontLoaded(font);
+
       const sudokuResponses = await generateSudoku(difficulty, num_puzzles);
 
       if (sudokuResponses && sudokuResponses.length > 0) {
@@ -254,7 +258,7 @@ export default function Sudoku({
             const pageTitle = is_sequential
               ? `Solutions ${startIdx + 1} - ${endIdx}`
               : custom_solution_name || `Solutions (Page ${page + 1})`;
-            ctx.font = `bold ${TITLE_FONT_SIZE}px ${font}`;
+            ctx.font = `bold ${TITLE_FONT_SIZE}px ${getFontFamily(font)}`;
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             ctx.fillStyle = "#000000";

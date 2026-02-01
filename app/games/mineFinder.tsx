@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@heroui/button"; // Assuming this Button component exists
 import { generateMinesweeper } from "@/managers/gamesManager"; // Assuming this fetches Minesweeper data
+import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
 
 // Assuming bombSymbol is correctly imported or defined.
 // If it's a local path, ensure your build process handles it (e.g., copies it to the output directory or uses a data URL).
@@ -82,7 +83,7 @@ export default function MineFinder({
 
     // --- Draw Title (Optional) ---
     if (title && titleFontSize) {
-      ctx.font = `bold ${titleFontSize}px ${gridFont}`;
+      ctx.font = `bold ${titleFontSize}px ${getFontFamily(gridFont)}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "bottom";
       ctx.fillStyle = "#000000";
@@ -93,7 +94,7 @@ export default function MineFinder({
     const numberFontSizeActual = cellSize * 0.6; // Font size relative to cell
     const bombImgSize = cellSize * 0.8; // Bomb image slightly smaller than cell
 
-    ctx.font = `${numberFontSizeActual}px ${gridFont}`;
+    ctx.font = `${numberFontSizeActual}px ${getFontFamily(gridFont)}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle"; // Center text vertically
 
@@ -180,6 +181,9 @@ export default function MineFinder({
 
     let bombImageElement: HTMLImageElement | null = null;
     try {
+      // Ensure the font is loaded before drawing
+      await ensureFontLoaded(font);
+
       // --- Preload Bomb Image ---
       bombImageElement = await loadImage(bombSymbol);
 
@@ -352,7 +356,7 @@ export default function MineFinder({
           const pageTitle = custom_solution_name
             ? `${custom_solution_name} (Page ${page + 1})`
             : `Solutions ${startIdx + 1} - ${endIdx}`;
-          ctx.font = `bold ${TITLE_FONT_SIZE}px ${font}`;
+          ctx.font = `bold ${TITLE_FONT_SIZE}px ${getFontFamily(font)}`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           ctx.fillStyle = "#000000";
