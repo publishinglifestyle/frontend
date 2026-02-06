@@ -30,6 +30,7 @@ import { baseURL } from "@/constant/urls";
 import {
   createConversation,
   deleteConversation,
+  getConversation,
   getConversations,
   saveMjImage,
   uploadImage,
@@ -338,39 +339,94 @@ function ChatPageContent() {
   // Handle Select Conversation
   const handleSelectConversation = async (conversation: Conversation) => {
     setCurrentConversation(conversation.id);
-
-    // Load conversation messages
-    const agent = agents.find((a) => a.id === conversation.agent_id);
-    if (agent) {
-      setSelectedAgent(agent);
-      setSelectedAgentId(agent.id);
-    }
-
-    // Build messages from context
-    const conversationMessages = conversation.context
-      .map((ctx, i) => {
-        const textMessage = i === 0 ? GREETING_MESSAGE : ctx.content;
-        if (!textMessage || textMessage === "NaN") return null;
-
-        return {
-          id: uuidv4(),
-          text: textMessage,
-          username: ctx.role === "user" ? fullName : "LowContent AI",
-          conversation_id: conversation.id,
-          complete: true,
-          title: "",
-          buttons: (ctx as any).buttons || [],
-          ideogram_buttons: (ctx as any).ideogram_buttons || [],
-          messageId: (ctx as any).messageId || "",
-          flags: (ctx as any).flags || 0,
-          prompt: (ctx as any).prompt || "",
-          role: ctx.role,
-        } as Message;
-      })
-      .filter(Boolean) as Message[];
-
-    setMessages(conversationMessages);
     setIsDrawerOpen(false);
+
+    try {
+      // Fetch fresh conversation data from the API
+      const freshConversation = await getConversation(conversation.id);
+
+      if (!freshConversation) {
+        setMessages([]);
+        return;
+      }
+
+      // Set agent from the fresh data
+      const agent = agents.find((a) => a.id === freshConversation.agent_id);
+      if (agent) {
+        setSelectedAgent(agent);
+        setSelectedAgentId(agent.id);
+      } else {
+        setSelectedAgent(undefined);
+        setSelectedAgentId("");
+      }
+
+      // Update the conversation in local state with fresh data
+      setConversations((prev) =>
+        prev.map((c) => (c.id === freshConversation.id ? freshConversation : c))
+      );
+
+      // Build messages from fresh context
+      const context = freshConversation.context || [];
+      const conversationMessages = context
+        .map((ctx: any, i: number) => {
+          const textMessage = i === 0 ? GREETING_MESSAGE : ctx.content;
+          if (!textMessage || textMessage === "NaN") return null;
+
+          return {
+            id: uuidv4(),
+            text: textMessage,
+            username: ctx.role === "user" ? fullName : "LowContent AI",
+            conversation_id: freshConversation.id,
+            complete: true,
+            title: "",
+            buttons: ctx.buttons || [],
+            ideogram_buttons: ctx.ideogram_buttons || [],
+            messageId: ctx.messageId || "",
+            flags: ctx.flags || 0,
+            prompt: ctx.prompt || "",
+            role: ctx.role,
+          } as Message;
+        })
+        .filter(Boolean) as Message[];
+
+      setMessages(conversationMessages);
+    } catch (error) {
+      console.error("Failed to fetch conversation:", error);
+      // Fallback to local data if API fails
+      const context = conversation.context || [];
+      const agent = agents.find((a) => a.id === conversation.agent_id);
+      if (agent) {
+        setSelectedAgent(agent);
+        setSelectedAgentId(agent.id);
+      } else {
+        setSelectedAgent(undefined);
+        setSelectedAgentId("");
+      }
+
+      const conversationMessages = context
+        .map((ctx: any, i: number) => {
+          const textMessage = i === 0 ? GREETING_MESSAGE : ctx.content;
+          if (!textMessage || textMessage === "NaN") return null;
+
+          return {
+            id: uuidv4(),
+            text: textMessage,
+            username: ctx.role === "user" ? fullName : "LowContent AI",
+            conversation_id: conversation.id,
+            complete: true,
+            title: "",
+            buttons: ctx.buttons || [],
+            ideogram_buttons: ctx.ideogram_buttons || [],
+            messageId: ctx.messageId || "",
+            flags: ctx.flags || 0,
+            prompt: ctx.prompt || "",
+            role: ctx.role,
+          } as Message;
+        })
+        .filter(Boolean) as Message[];
+
+      setMessages(conversationMessages);
+    }
   };
 
   // Handle Delete Conversation
