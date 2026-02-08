@@ -111,9 +111,14 @@ function ChatPageContent() {
   const userId = user?.id;
   const fullName = user?.first_name + " " + user?.last_name;
 
-  // Keep ref in sync with currentConversation state
+  // Keep ref in sync with currentConversation state and persist to localStorage
   useEffect(() => {
     currentConversationRef.current = currentConversation;
+    if (currentConversation) {
+      localStorage.setItem("currentConversationId", currentConversation);
+    } else {
+      localStorage.removeItem("currentConversationId");
+    }
   }, [currentConversation]);
 
   // Keep selectedAgentRef in sync
@@ -137,6 +142,7 @@ function ChatPageContent() {
         // Stream completed — clear buffer (full response saved to DB)
         streamingBufferRef.current.delete(message.conversation_id);
         generatingConversationsRef.current.delete(message.conversation_id);
+        pendingImageUserMessagesRef.current.delete(message.conversation_id);
       }
     }
 
@@ -187,9 +193,9 @@ function ChatPageContent() {
 
     // Clean up generation tracking for this conversation
     generatingConversationsRef.current.delete(convId);
-    pendingImageUserMessagesRef.current.delete(convId);
 
     // If user switched away, skip UI update — image is already saved to DB
+    // Keep pendingImageUserMessages so they can be restored on conversation switch-back
     if (convId !== currentConversationRef.current) {
       // Still show errors even if on a different conversation
       if (image_response.error) {
@@ -198,6 +204,9 @@ function ChatPageContent() {
       }
       return;
     }
+
+    // User is on this conversation — safe to clear pending messages
+    pendingImageUserMessagesRef.current.delete(convId);
 
     if (Array.isArray(image_response)) {
       setMessages((prevMessages) => {
@@ -386,6 +395,7 @@ function ChatPageContent() {
     } else {
       // Text agent or no agent - send via socket
       generatingConversationsRef.current.set(conversationId, selectedAgent?.type || "text");
+      pendingImageUserMessagesRef.current.set(conversationId, [userMessage]);
       socket?.emit("sendMessage", {
         senderId: userId,
         message: text,
@@ -423,6 +433,12 @@ function ChatPageContent() {
       setGeneratingAgentType(generatingType);
     }
     setIsDrawerOpen(false);
+
+    // Snapshot pending user messages before async call — protects against
+    // setImageResponse clearing the ref while getConversation is in-flight
+    const pendingMsgsSnapshot = pendingImageUserMessagesRef.current.has(conversation.id)
+      ? [...pendingImageUserMessagesRef.current.get(conversation.id)!]
+      : null;
 
     try {
       // Fetch fresh conversation data from the API
@@ -472,6 +488,23 @@ function ChatPageContent() {
         })
         .filter(Boolean) as Message[];
 
+      // Restore pending user messages that aren't in the API context yet
+      const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id) || pendingMsgsSnapshot;
+      if (pendingMsgs) {
+        const contextUserTexts = new Set(
+          conversationMessages.filter(m => m.role === "user").map(m => m.text)
+        );
+        for (const msg of pendingMsgs) {
+          if (!contextUserTexts.has(msg.text)) {
+            conversationMessages.push(msg);
+          }
+        }
+        // Clean up if generation already completed (snapshot case)
+        if (!generatingConversationsRef.current.has(conversation.id)) {
+          pendingImageUserMessagesRef.current.delete(conversation.id);
+        }
+      }
+
       // If there's buffered streaming content for this conversation, append it
       const buffer = streamingBufferRef.current.get(conversation.id);
       if (buffer) {
@@ -492,11 +525,6 @@ function ChatPageContent() {
         setIsGeneratingResponse(true);
         setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
       } else if (generatingConversationsRef.current.has(conversation.id)) {
-        // Append buffered user messages that aren't in the DB yet
-        const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id);
-        if (pendingMsgs) {
-          conversationMessages.push(...pendingMsgs);
-        }
         setIsGeneratingResponse(true);
         setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
       }
@@ -537,6 +565,22 @@ function ChatPageContent() {
         })
         .filter(Boolean) as Message[];
 
+      // Restore pending user messages that aren't in the API context yet
+      const pendingMsgsFallback = pendingImageUserMessagesRef.current.get(conversation.id) || pendingMsgsSnapshot;
+      if (pendingMsgsFallback) {
+        const contextUserTexts = new Set(
+          conversationMessages.filter(m => m.role === "user").map(m => m.text)
+        );
+        for (const msg of pendingMsgsFallback) {
+          if (!contextUserTexts.has(msg.text)) {
+            conversationMessages.push(msg);
+          }
+        }
+        if (!generatingConversationsRef.current.has(conversation.id)) {
+          pendingImageUserMessagesRef.current.delete(conversation.id);
+        }
+      }
+
       // If there's buffered streaming content for this conversation, append it
       const bufferFallback = streamingBufferRef.current.get(conversation.id);
       if (bufferFallback) {
@@ -557,11 +601,6 @@ function ChatPageContent() {
         setIsGeneratingResponse(true);
         setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
       } else if (generatingConversationsRef.current.has(conversation.id)) {
-        // Append buffered user messages that aren't in the DB yet
-        const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id);
-        if (pendingMsgs) {
-          conversationMessages.push(...pendingMsgs);
-        }
         setIsGeneratingResponse(true);
         setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
       }
@@ -796,10 +835,10 @@ function ChatPageContent() {
         if (response?.status === "failed" || !response.result) {
           const msg = response?.failMessage || "Failed to generate image";
           generatingConversationsRef.current.delete(responseConvId);
-          pendingImageUserMessagesRef.current.delete(responseConvId);
 
           // Only update UI if still on the same conversation
           if (responseConvId === currentConversationRef.current) {
+            pendingImageUserMessagesRef.current.delete(responseConvId);
             setMessages((prev) => [
               ...prev.filter((m) => !m?.id?.startsWith("typing-")),
               {
@@ -834,13 +873,13 @@ function ChatPageContent() {
         );
 
         generatingConversationsRef.current.delete(responseConvId);
-        pendingImageUserMessagesRef.current.delete(responseConvId);
 
         // Only update UI if still on the same conversation (image is saved to DB regardless)
         if (responseConvId !== currentConversationRef.current) {
           return;
         }
 
+        pendingImageUserMessagesRef.current.delete(responseConvId);
         setMessages((prev) => [
           ...prev.filter((m) => !m?.id?.startsWith("typing-")),
           {
@@ -907,7 +946,8 @@ function ChatPageContent() {
         setConversations(allConversations);
 
         if (allConversations.length > 0) {
-          const conv = allConversations[0];
+          const savedId = localStorage.getItem("currentConversationId");
+          const conv = (savedId && allConversations.find((c: Conversation) => c.id === savedId)) || allConversations[0];
           setCurrentConversation(conv.id);
 
           const agent = allAgents.find((a: Agent) => a.id === conv.agent_id);
