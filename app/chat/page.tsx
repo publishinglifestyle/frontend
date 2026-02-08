@@ -63,6 +63,11 @@ function ChatPageContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const currentConversationRef = useRef<string>("");
+  const streamingBufferRef = useRef<Map<string, { id: string; text: string }>>(new Map());
+  const generatingConversationsRef = useRef<Map<string, string>>(new Map());
+  const pendingImageUserMessagesRef = useRef<Map<string, Message[]>>(new Map());
+  const selectedAgentRef = useRef<Agent | undefined>(undefined);
 
   // UI State
   const [translations, setTranslations] = useState<Translations | null>(null);
@@ -93,6 +98,7 @@ function ChatPageContent() {
   const [currentConversation, setCurrentConversation] = useState<string>("");
   const [conversations, setConversations] = useState<Array<Conversation>>([]);
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
+  const [generatingAgentType, setGeneratingAgentType] = useState<string | undefined>(undefined);
   const [promptCommands, setPromptCommands] = useState<Command[]>([]);
   const [pendingImageUrl, setPendingImageUrl] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
@@ -105,8 +111,41 @@ function ChatPageContent() {
   const userId = user?.id;
   const fullName = user?.first_name + " " + user?.last_name;
 
+  // Keep ref in sync with currentConversation state
+  useEffect(() => {
+    currentConversationRef.current = currentConversation;
+  }, [currentConversation]);
+
+  // Keep selectedAgentRef in sync
+  useEffect(() => {
+    selectedAgentRef.current = selectedAgent;
+  }, [selectedAgent]);
+
   // Message Listener for Socket
   const messageListener = (message: Message) => {
+    // Always accumulate streaming text in buffer for ALL conversations
+    if (message.conversation_id) {
+      if (!message.complete) {
+        const buffer = streamingBufferRef.current;
+        const existing = buffer.get(message.conversation_id);
+        if (existing) {
+          existing.text += message.text;
+        } else {
+          buffer.set(message.conversation_id, { id: message.id, text: message.text });
+        }
+      } else {
+        // Stream completed — clear buffer (full response saved to DB)
+        streamingBufferRef.current.delete(message.conversation_id);
+        generatingConversationsRef.current.delete(message.conversation_id);
+      }
+    }
+
+    // Only update UI for current conversation
+    if (message.conversation_id && currentConversationRef.current &&
+        message.conversation_id !== currentConversationRef.current) {
+      return;
+    }
+
     setMessages((prevMessages): Message[] => {
       const existingMessageIndex = prevMessages.findIndex((m) => m.id === message.id);
       const updatedMessages = prevMessages.filter((m) => !m?.id?.startsWith("typing-"));
@@ -123,7 +162,10 @@ function ChatPageContent() {
     });
 
     if (message.complete) {
-      setIsGeneratingResponse(false);
+      // Only clear generating state if no image generation is in-flight for this conversation
+      if (!generatingConversationsRef.current.has(currentConversationRef.current)) {
+        setIsGeneratingResponse(false);
+      }
     }
 
     if (message.title) {
@@ -137,9 +179,25 @@ function ChatPageContent() {
     }
   };
 
-  // Image Response Handler
-  function setImageResponse(image_response: any) {
+  // Image Response Handler (conversation-scoped)
+  function setImageResponse(image_response: any, targetConversationId?: string) {
     if (!image_response) return;
+
+    const convId = targetConversationId || currentConversationRef.current;
+
+    // Clean up generation tracking for this conversation
+    generatingConversationsRef.current.delete(convId);
+    pendingImageUserMessagesRef.current.delete(convId);
+
+    // If user switched away, skip UI update — image is already saved to DB
+    if (convId !== currentConversationRef.current) {
+      // Still show errors even if on a different conversation
+      if (image_response.error) {
+        setErrorMessage(image_response.error);
+        setIsErrorModalOpen(true);
+      }
+      return;
+    }
 
     if (Array.isArray(image_response)) {
       setMessages((prevMessages) => {
@@ -148,7 +206,7 @@ function ChatPageContent() {
           id: imgResponse.messageId,
           username: "LowContent AI",
           text: imgResponse.response,
-          conversation_id: currentConversation,
+          conversation_id: convId,
           title: imgResponse.conversation_name,
           complete: true,
           buttons: [],
@@ -169,7 +227,7 @@ function ChatPageContent() {
         id: image_response.messageId,
         username: "LowContent AI",
         text: image_response.response,
-        conversation_id: currentConversation,
+        conversation_id: convId,
         title: image_response.conversation_name,
         complete: true,
         buttons: [],
@@ -261,7 +319,7 @@ function ChatPageContent() {
     // Add user message
     const userMessage: Message = {
       id: uuidv4(),
-      text: referenceImageUrl || text,
+      text: text,
       username: fullName,
       conversation_id: conversationId,
       complete: true,
@@ -272,12 +330,21 @@ function ChatPageContent() {
       flags: 0,
       prompt: "",
       role: "user",
+      image_urls: referenceImageUrl
+        ? [referenceImageUrl, ...referenceImages]
+        : referenceImages.length > 0
+        ? referenceImages
+        : undefined,
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsGeneratingResponse(true);
+    setGeneratingAgentType(selectedAgent?.type);
 
     // Handle based on agent type
     if (selectedAgent?.type === "image") {
+      // Buffer user message so it persists when switching conversations
+      pendingImageUserMessagesRef.current.set(conversationId, [userMessage]);
+      generatingConversationsRef.current.set(conversationId, "image");
       try {
         // Get size from promptCommands if available
         let size;
@@ -305,15 +372,20 @@ function ChatPageContent() {
           size,                           // size
           finalReferenceImage || undefined  // reference_image_url
         );
-        setImageResponse(response);
+        setImageResponse(response, conversationId);
       } catch (error: any) {
-        setIsGeneratingResponse(false);
+        generatingConversationsRef.current.delete(conversationId);
+        pendingImageUserMessagesRef.current.delete(conversationId);
+        if (currentConversationRef.current === conversationId) {
+          setIsGeneratingResponse(false);
+        }
         const msg = error?.response?.data?.error || "Failed to generate image. Please try again.";
         setErrorMessage(msg);
         setIsErrorModalOpen(true);
       }
     } else {
       // Text agent or no agent - send via socket
+      generatingConversationsRef.current.set(conversationId, selectedAgent?.type || "text");
       socket?.emit("sendMessage", {
         senderId: userId,
         message: text,
@@ -329,7 +401,9 @@ function ChatPageContent() {
     const newConversation = await createConversation();
     setConversations((prev) => [newConversation, ...prev]);
     setCurrentConversation(newConversation.id);
+    currentConversationRef.current = newConversation.id;
     setMessages([]);
+    setIsGeneratingResponse(false);
     setIsDrawerOpen(false);
     // Reset agent to "No Agent" for new conversations
     setSelectedAgentId("");
@@ -340,6 +414,14 @@ function ChatPageContent() {
   // Handle Select Conversation
   const handleSelectConversation = async (conversation: Conversation) => {
     setCurrentConversation(conversation.id);
+    currentConversationRef.current = conversation.id;
+    // Check if this conversation has an active generation
+    const generatingType = generatingConversationsRef.current.get(conversation.id);
+    const targetIsGenerating = generatingType !== undefined;
+    setIsGeneratingResponse(targetIsGenerating);
+    if (targetIsGenerating) {
+      setGeneratingAgentType(generatingType);
+    }
     setIsDrawerOpen(false);
 
     try {
@@ -390,6 +472,35 @@ function ChatPageContent() {
         })
         .filter(Boolean) as Message[];
 
+      // If there's buffered streaming content for this conversation, append it
+      const buffer = streamingBufferRef.current.get(conversation.id);
+      if (buffer) {
+        conversationMessages.push({
+          id: buffer.id,
+          text: buffer.text,
+          username: "LowContent AI",
+          conversation_id: conversation.id,
+          complete: false,
+          role: "assistant",
+          title: "",
+          buttons: [],
+          ideogram_buttons: [],
+          messageId: "",
+          flags: 0,
+          prompt: "",
+        } as Message);
+        setIsGeneratingResponse(true);
+        setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
+      } else if (generatingConversationsRef.current.has(conversation.id)) {
+        // Append buffered user messages that aren't in the DB yet
+        const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id);
+        if (pendingMsgs) {
+          conversationMessages.push(...pendingMsgs);
+        }
+        setIsGeneratingResponse(true);
+        setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
+      }
+
       setMessages(conversationMessages);
     } catch (error) {
       console.error("Failed to fetch conversation:", error);
@@ -426,12 +537,43 @@ function ChatPageContent() {
         })
         .filter(Boolean) as Message[];
 
+      // If there's buffered streaming content for this conversation, append it
+      const bufferFallback = streamingBufferRef.current.get(conversation.id);
+      if (bufferFallback) {
+        conversationMessages.push({
+          id: bufferFallback.id,
+          text: bufferFallback.text,
+          username: "LowContent AI",
+          conversation_id: conversation.id,
+          complete: false,
+          role: "assistant",
+          title: "",
+          buttons: [],
+          ideogram_buttons: [],
+          messageId: "",
+          flags: 0,
+          prompt: "",
+        } as Message);
+        setIsGeneratingResponse(true);
+        setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
+      } else if (generatingConversationsRef.current.has(conversation.id)) {
+        // Append buffered user messages that aren't in the DB yet
+        const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id);
+        if (pendingMsgs) {
+          conversationMessages.push(...pendingMsgs);
+        }
+        setIsGeneratingResponse(true);
+        setGeneratingAgentType(generatingConversationsRef.current.get(conversation.id));
+      }
+
       setMessages(conversationMessages);
     }
   };
 
   // Handle Delete Conversation
   const handleDeleteConversation = async (conversationId: string) => {
+    generatingConversationsRef.current.delete(conversationId);
+    pendingImageUserMessagesRef.current.delete(conversationId);
     await deleteConversation(conversationId);
     setConversations((prev) => prev.filter((c) => c.id !== conversationId));
     if (currentConversation === conversationId) {
@@ -480,6 +622,7 @@ function ChatPageContent() {
 
   // Handle Image Actions (Ideogram)
   const handleImageAction = async (action: string, message: Message) => {
+    const convId = currentConversationRef.current;
     if (action === "remix") {
       setIdeogramInitialPrompt(message.prompt || "");
       setIdeogramImageUrl(message.text);
@@ -487,29 +630,42 @@ function ChatPageContent() {
       setIsIdeogramModalOpen(true);
     } else if (action === "upscale") {
       setIsGeneratingResponse(true);
+      setGeneratingAgentType("image");
+      generatingConversationsRef.current.set(convId, "image");
       try {
-        const response = await upscaleImage(currentConversation, message.text, message.prompt || "");
-        setImageResponse(response);
+        const response = await upscaleImage(convId, message.text, message.prompt || "");
+        setImageResponse(response, convId);
       } catch {
-        setIsGeneratingResponse(false);
+        generatingConversationsRef.current.delete(convId);
+        if (currentConversationRef.current === convId) {
+          setIsGeneratingResponse(false);
+        }
       }
     } else if (action === "describe") {
       setIsGeneratingResponse(true);
+      setGeneratingAgentType(selectedAgent?.type);
+      generatingConversationsRef.current.set(convId, selectedAgent?.type || "image");
       try {
-        const response = await describeImage(currentConversation, message.text, selectedAgent?.id || "");
-        setImageResponse(response);
+        const response = await describeImage(convId, message.text, selectedAgent?.id || "");
+        setImageResponse(response, convId);
       } catch {
-        setIsGeneratingResponse(false);
+        generatingConversationsRef.current.delete(convId);
+        if (currentConversationRef.current === convId) {
+          setIsGeneratingResponse(false);
+        }
       }
     }
   };
 
   // Handle Midjourney Button Click
   const handleButtonClick = async (button: any, message: Message) => {
+    const convId = currentConversationRef.current;
     setIsGeneratingResponse(true);
+    setGeneratingAgentType("image");
+    generatingConversationsRef.current.set(convId, "image");
     try {
       await sendAction(
-        currentConversation,      // conversation_id
+        convId,                   // conversation_id
         message.messageId,        // message_id
         button.custom,            // custom_id
         message.prompt || "",     // prompt
@@ -518,7 +674,10 @@ function ChatPageContent() {
         socket?.id                // socket_id
       );
     } catch {
-      setIsGeneratingResponse(false);
+      generatingConversationsRef.current.delete(convId);
+      if (currentConversationRef.current === convId) {
+        setIsGeneratingResponse(false);
+      }
     }
   };
 
@@ -632,39 +791,55 @@ function ChatPageContent() {
 
     if (!socket.hasListeners("midjourneyCallback")) {
       socket.on("midjourneyCallback", async (response) => {
+        const responseConvId = response.conversation_id;
+
         if (response?.status === "failed" || !response.result) {
           const msg = response?.failMessage || "Failed to generate image";
-          setMessages((prev) => [
-            ...prev.filter((m) => !m?.id?.startsWith("typing-")),
-            {
-              id: uuidv4(),
-              username: "LowContent AI",
-              text: msg,
-              conversation_id: currentConversation,
-              complete: true,
-              buttons: [],
-              ideogram_buttons: [],
-              messageId: "",
-              flags: 0,
-              prompt: "",
-              role: "assistant",
-              title: "",
-            },
-          ]);
-          setIsGeneratingResponse(false);
+          generatingConversationsRef.current.delete(responseConvId);
+          pendingImageUserMessagesRef.current.delete(responseConvId);
+
+          // Only update UI if still on the same conversation
+          if (responseConvId === currentConversationRef.current) {
+            setMessages((prev) => [
+              ...prev.filter((m) => !m?.id?.startsWith("typing-")),
+              {
+                id: uuidv4(),
+                username: "LowContent AI",
+                text: msg,
+                conversation_id: responseConvId,
+                complete: true,
+                buttons: [],
+                ideogram_buttons: [],
+                messageId: "",
+                flags: 0,
+                prompt: "",
+                role: "assistant",
+                title: "",
+              },
+            ]);
+            setIsGeneratingResponse(false);
+          }
           return;
         }
 
         const save_image_response = await saveMjImage(
           response.result.prompt,
           response.result.message_id,
-          response.conversation_id,
+          responseConvId,
           true,
           response.result.url,
           response.result.options,
           response.result.flags,
-          selectedAgent?.id
+          selectedAgentRef.current?.id
         );
+
+        generatingConversationsRef.current.delete(responseConvId);
+        pendingImageUserMessagesRef.current.delete(responseConvId);
+
+        // Only update UI if still on the same conversation (image is saved to DB regardless)
+        if (responseConvId !== currentConversationRef.current) {
+          return;
+        }
 
         setMessages((prev) => [
           ...prev.filter((m) => !m?.id?.startsWith("typing-")),
@@ -672,7 +847,7 @@ function ChatPageContent() {
             id: uuidv4(),
             username: "LowContent AI",
             text: save_image_response.imageUrl,
-            conversation_id: response.conversation_id,
+            conversation_id: responseConvId,
             complete: true,
             buttons: response.result.options || [],
             ideogram_buttons: [],
@@ -819,6 +994,7 @@ function ChatPageContent() {
         messages={messages}
         currentUser={fullName}
         isGenerating={isGeneratingResponse}
+        generatingAgentType={generatingAgentType}
         selectedAgent={selectedAgent}
         onCopyMessage={handleCopyMessage}
         onImageAction={handleImageAction}
@@ -834,6 +1010,8 @@ function ChatPageContent() {
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
         onStopGeneration={() => {
+          generatingConversationsRef.current.delete(currentConversationRef.current);
+          pendingImageUserMessagesRef.current.delete(currentConversationRef.current);
           setIsGeneratingResponse(false);
           socket?.disconnect();
         }}

@@ -52,7 +52,7 @@ interface ChatModals {
   setConversations: React.Dispatch<React.SetStateAction<any[]>>;
   conversations: Conversation[];
   setMessageText: React.Dispatch<React.SetStateAction<string>>;
-  setImageResponse: React.Dispatch<React.SetStateAction<any>>;
+  setImageResponse: (response: any, conversationId?: string) => void;
   setIsGeneratingResponse: React.Dispatch<React.SetStateAction<boolean>>;
   setPromptCommands: React.Dispatch<React.SetStateAction<any[]>>;
   selectedAgent?: Agent;
@@ -227,18 +227,19 @@ const ChatModals = ({
             setIsIdeogramModalOpen(false);
 
             if (selectedTab == "remix") {
+              const convId = currentConversation;
               setIsGeneratingResponse(true);
 
               createMessageText(remixPrompt);
               const image_response = await remixImage(
-                currentConversation,
+                convId,
                 remixPrompt,
                 uploadedImageUrl,
                 selected_commands,
                 selectedAgent?.id
               );
 
-              setImageResponse(image_response);
+              setImageResponse(image_response, convId);
             } else if (selectedTab == "describe") {
               // Put the description text into the chat input
               // remixPrompt contains the description text from the modal
@@ -289,18 +290,19 @@ const ChatModals = ({
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
         onSuccess={async (prompt) => {
+          const convId = currentConversation;
           setIsPromptModalOpen(false);
           setIsGeneratingResponse(true);
           createMessageText(prompt);
           const image_response = await remixImage(
-            currentConversation,
+            convId,
             prompt,
             ideogramImageUrl,
             promptCommands,
             selectedAgent?.id
           );
 
-          setImageResponse(image_response);
+          setImageResponse(image_response, convId);
         }}
       />
 

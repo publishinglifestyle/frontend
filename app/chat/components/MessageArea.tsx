@@ -9,6 +9,7 @@ interface MessageAreaProps {
   messages: Message[];
   currentUser: string;
   isGenerating: boolean;
+  generatingAgentType?: string;
   selectedAgent?: Agent;
   onCopyMessage: (text: string) => void;
   onImageAction?: (action: string, message: Message) => void;
@@ -281,10 +282,27 @@ const MessageBubble: React.FC<{
             ? "bg-gradient-to-br from-purple-600 to-violet-700 text-white"
             : "bg-white/5 border border-white/10 text-white/90"
           }
-          ${isImage ? "p-0" : "px-4 py-3"}
+          ${isImage && !message.image_urls?.length ? "p-0" : "px-4 py-3"}
         `}
       >
-        {isImage ? (
+        {/* User-attached images */}
+        {message.image_urls && message.image_urls.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {message.image_urls.map((url, i) => (
+              <img
+                key={i}
+                src={url}
+                alt={`Attached ${i + 1}`}
+                className="max-w-full max-h-48 object-contain rounded-xl cursor-pointer"
+                onClick={() => onImageClick?.(url)}
+                loading="lazy"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* AI-generated image (stored in message.text) */}
+        {isImage && !message.image_urls?.length ? (
           <div className="relative cursor-pointer" onClick={() => onImageClick?.(message.text)}>
             <img
               src={message.text}
@@ -300,12 +318,12 @@ const MessageBubble: React.FC<{
               </div>
             </div>
           </div>
-        ) : (
+        ) : message.text ? (
           <div
             className="break-words text-sm leading-relaxed [&>strong]:font-bold [&>em]:italic [&>code]:bg-white/10 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:font-mono [&>code]:text-xs [&>pre]:bg-white/10 [&>pre]:p-3 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>pre]:my-2"
             dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }}
           />
-        )}
+        ) : null}
 
         {/* Copy button for text messages */}
         {!isImage && !isUser && (
@@ -374,6 +392,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({
   messages,
   currentUser,
   isGenerating,
+  generatingAgentType,
   selectedAgent,
   onCopyMessage,
   onImageAction,
@@ -449,7 +468,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({
           {/* Loading indicator - show image skeleton for image agents, typing indicator for text */}
           {isGenerating && (
             <div className="flex items-start gap-3 max-w-2xl">
-              {selectedAgent?.type === "image" ? (
+              {generatingAgentType === "image" ? (
                 <ImageSkeletonLoader />
               ) : (
                 <div className="bg-white/5 border border-white/10 rounded-2xl">

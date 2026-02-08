@@ -34,6 +34,7 @@ export interface Message {
   messageId: string;
   flags: number;
   prompt: string;
+  image_urls?: string[];
 }
 
 export interface Conversation {
