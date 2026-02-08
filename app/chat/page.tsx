@@ -306,9 +306,10 @@ function ChatPageContent() {
           finalReferenceImage || undefined  // reference_image_url
         );
         setImageResponse(response);
-      } catch (error) {
+      } catch (error: any) {
         setIsGeneratingResponse(false);
-        setErrorMessage("Failed to generate image");
+        const msg = error?.response?.data?.error || "Failed to generate image. Please try again.";
+        setErrorMessage(msg);
         setIsErrorModalOpen(true);
       }
     } else {
