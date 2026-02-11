@@ -244,9 +244,6 @@ export default function WordSearch({
         ctx.font = `${fontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
         const wordsPerLine = 3;
 
-        // Distribute columns evenly across the grid width
-        const columnWidth = gridWidthPx / wordsPerLine;
-
         // Align with the visual left edge of the first grid column
         // Grid letters are centered in cells, so we offset by half a cell minus half letter width
         const wordListStartX = gridOffsetX + gridCellSizePx / 2 - fontSize / 3;
@@ -257,8 +254,20 @@ export default function WordSearch({
         sortedWords.forEach((wordData, i) => {
           const colIndex = i % wordsPerLine;
           const rowIndex = Math.floor(i / wordsPerLine);
-          const wordX = wordListStartX + colIndex * columnWidth;
           const wordY = currentY + rowIndex * (fontSize * lineSpacing);
+
+          let wordX: number;
+          if (colIndex === 0) {
+            ctx.textAlign = "left";
+            wordX = wordListStartX;
+          } else if (colIndex === 1) {
+            ctx.textAlign = "center";
+            wordX = gridOffsetX + gridWidthPx / 2;
+          } else {
+            ctx.textAlign = "right";
+            wordX = gridOffsetX + gridWidthPx - gridCellSizePx / 2 + fontSize / 3;
+          }
+
           if (wordY < imageHeight - margin) {
             ctx.fillText(
               wordData.clean.toUpperCase(),
