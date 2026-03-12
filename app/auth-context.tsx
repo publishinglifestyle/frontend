@@ -1,3 +1,4 @@
+import { getSubscription } from "@/managers/subscriptionManager";
 import { getProfilePic, getUser } from "@/managers/userManager";
 import { IUser } from "@/types/user.types";
 import Cookies from "js-cookie";
@@ -8,6 +9,7 @@ import React, {
   Dispatch,
   ReactNode,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -17,6 +19,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user?: IUser | null;
   profilePic?: string | null;
+  subscription?: any;
+  refreshSubscription: () => Promise<void>;
   login: (token: string) => void;
   logout: () => void;
   setProfilePic: Dispatch<SetStateAction<string | undefined>>;
@@ -46,7 +50,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
   const [user, setUser] = useState<IUser | null>(null);
   const [profilePic, setProfilePic] = useState<string | undefined>(defaultPic);
+  const [subscription, setSubscription] = useState<any>(null);
   const router = useRouter();
+
+  const refreshSubscription = useCallback(async () => {
+    try {
+      const sub = await getSubscription();
+      setSubscription(sub);
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   useEffect(() => {
     const token = Cookies.get("authToken");
@@ -73,6 +87,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } catch (error) {
             console.error(error);
           }
+
+          try {
+            const sub = await getSubscription();
+            setSubscription(sub);
+          } catch (error) {
+            console.error(error);
+          }
         })();
       }
     }
@@ -86,6 +107,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setProfilePic(defaultPic);
+    setSubscription(null);
     Cookies.remove("authToken");
     Cookies.remove("user_id");
     Cookies.remove("user_name");
@@ -102,6 +124,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user,
         profilePic,
         setProfilePic,
+        subscription,
+        refreshSubscription,
       }}
     >
       {children}

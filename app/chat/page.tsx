@@ -25,7 +25,6 @@ import {
   Conversation,
   Message,
 } from "@/types/chat.types";
-import { getSubscription } from "@/managers/subscriptionManager";
 import { baseURL } from "@/constant/urls";
 import {
   createConversation,
@@ -56,7 +55,7 @@ export default function ChatPage() {
 function ChatPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const { user } = useAuth();
+  const { user, subscription, refreshSubscription } = useAuth();
   const { copy } = useClipboard();
 
   const pageLoadedRef = useRef(false);
@@ -915,18 +914,18 @@ function ChatPageContent() {
     };
   }, [user?.id, pageLoadedRef]);
 
-  // Subscription Check
+  // Subscription Check (uses cached subscription from auth context)
   useEffect(() => {
     if (pageLoadedRef.current && userId) {
       if (sessionId) {
         setIsSuccessModalOpen(true);
       } else if (user?.role !== "owner") {
-        getSubscription().then((sub) => {
-          if (!sub?.is_active) setShowSubscriptionModal(true);
-        });
+        if (subscription !== null && !subscription?.is_active) {
+          setShowSubscriptionModal(true);
+        }
       }
     }
-  }, [sessionId, pageLoadedRef, userId]);
+  }, [sessionId, pageLoadedRef, userId, subscription]);
 
   // Data Fetching
   useEffect(() => {
