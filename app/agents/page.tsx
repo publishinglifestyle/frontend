@@ -46,12 +46,17 @@ const agent_types = [
   { value: "image", label: "Image" },
 ];
 
-const agent_models = [
+const agent_models_image = [
   { value: "dall-e", label: "Dall-E" },
   { value: "gpt-image", label: "GPT Image" },
   { value: "midjourney", label: "Midjourney" },
   { value: "gemini", label: "Google Gemini" },
   { value: "ideogram", label: "Ideogram" },
+];
+
+const agent_models_text = [
+  { value: "gpt-5.2", label: "GPT" },
+  { value: "claude-sonnet-4-6-20250514", label: "Claude" },
 ];
 
 const agent_levels = [
@@ -426,20 +431,20 @@ export default function AgentsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {agentType === "image" ? (
-                  <CustomSelect
-                    label={translations?.model || "Model"}
-                    value={agentModel}
-                    onChange={(e) => setAgentModel(e.target.value)}
-                  >
-                    <option value="" className="bg-zinc-900">Select model</option>
-                    {agent_models.map((model) => (
-                      <option key={model.value} value={model.value} className="bg-zinc-900">
-                        {model.label}
-                      </option>
-                    ))}
-                  </CustomSelect>
-                ) : (
+                <CustomSelect
+                  label={translations?.model || "Model"}
+                  value={agentModel}
+                  onChange={(e) => setAgentModel(e.target.value)}
+                >
+                  <option value="" className="bg-zinc-900">Select model</option>
+                  {(agentType === "image" ? agent_models_image : agent_models_text).map((model) => (
+                    <option key={model.value} value={model.value} className="bg-zinc-900">
+                      {model.label}
+                    </option>
+                  ))}
+                </CustomSelect>
+
+                {agentType !== "image" && (
                   <CustomInput
                     label={translations?.temperature || "Temperature"}
                     type="number"
