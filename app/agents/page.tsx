@@ -56,7 +56,7 @@ const agent_models_image = [
 
 const agent_models_text = [
   { value: "gpt-5.2", label: "GPT" },
-  { value: "claude-sonnet-4-6-20250514", label: "Claude" },
+  { value: "claude-sonnet-4-5-20241022", label: "Claude" },
 ];
 
 const agent_levels = [
