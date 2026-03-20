@@ -86,21 +86,152 @@ const isImageUrl = (text: string) => {
 const formatMessageText = (text: string): string => {
   if (!text) return "";
 
-  // Convert bold markdown **text** to <strong>
-  let formatted = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // Process line by line for block-level elements
+  const lines = text.split("\n");
+  const htmlLines: string[] = [];
+  let inList = false;
+  let inOrderedList = false;
+  let inBlockquote = false;
+  let inTable = false;
 
-  // Convert italic markdown *text* or _text_ to <em>
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Headers (must be processed before inline formatting)
+    if (/^#### (.+)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (inBlockquote) { htmlLines.push("</blockquote>"); inBlockquote = false; }
+      htmlLines.push(`<h4>${formatInline(line.replace(/^#### /, ""))}</h4>`);
+      continue;
+    }
+    if (/^### (.+)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (inBlockquote) { htmlLines.push("</blockquote>"); inBlockquote = false; }
+      htmlLines.push(`<h3>${formatInline(line.replace(/^### /, ""))}</h3>`);
+      continue;
+    }
+    if (/^## (.+)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (inBlockquote) { htmlLines.push("</blockquote>"); inBlockquote = false; }
+      htmlLines.push(`<h2>${formatInline(line.replace(/^## /, ""))}</h2>`);
+      continue;
+    }
+    if (/^# (.+)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (inBlockquote) { htmlLines.push("</blockquote>"); inBlockquote = false; }
+      htmlLines.push(`<h1>${formatInline(line.replace(/^# /, ""))}</h1>`);
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (inBlockquote) { htmlLines.push("</blockquote>"); inBlockquote = false; }
+      htmlLines.push("<hr>");
+      continue;
+    }
+
+    // Blockquotes
+    if (/^>\s?(.*)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (!inBlockquote) { htmlLines.push("<blockquote>"); inBlockquote = true; }
+      htmlLines.push(formatInline(line.replace(/^>\s?/, "")) + "<br>");
+      continue;
+    } else if (inBlockquote) {
+      htmlLines.push("</blockquote>");
+      inBlockquote = false;
+    }
+
+    // Unordered list items (- or *)
+    if (/^\s*[-*]\s+(.+)$/.test(line)) {
+      if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
+      if (!inList) { htmlLines.push("<ul>"); inList = true; }
+      const content = line.replace(/^\s*[-*]\s+/, "");
+      htmlLines.push(`<li>${formatInline(content)}</li>`);
+      continue;
+    } else if (inList) {
+      htmlLines.push("</ul>");
+      inList = false;
+    }
+
+    // Ordered list items (1. 2. etc)
+    if (/^\s*\d+\.\s+(.+)$/.test(line)) {
+      if (inList) { htmlLines.push("</ul>"); inList = false; }
+      if (!inOrderedList) { htmlLines.push("<ol>"); inOrderedList = true; }
+      const content = line.replace(/^\s*\d+\.\s+/, "");
+      htmlLines.push(`<li>${formatInline(content)}</li>`);
+      continue;
+    } else if (inOrderedList) {
+      htmlLines.push("</ol>");
+      inOrderedList = false;
+    }
+
+    // Table rows (lines starting with |)
+    if (/^\|(.+)\|$/.test(line.trim())) {
+      const trimmed = line.trim();
+      // Check if separator row (|---|---|)
+      if (/^\|[\s\-:|]+\|$/.test(trimmed)) {
+        // Skip separator row, it's already handled by thead/tbody
+        continue;
+      }
+      const cells = trimmed.slice(1, -1).split("|").map(c => c.trim());
+      if (!inTable) {
+        // First row = header
+        htmlLines.push("<table>");
+        htmlLines.push("<thead><tr>" + cells.map(c => `<th>${formatInline(c)}</th>`).join("") + "</tr></thead>");
+        htmlLines.push("<tbody>");
+        inTable = true;
+      } else {
+        htmlLines.push("<tr>" + cells.map(c => `<td>${formatInline(c)}</td>`).join("") + "</tr>");
+      }
+      continue;
+    } else if (inTable) {
+      htmlLines.push("</tbody></table>");
+      inTable = false;
+    }
+
+    // Empty lines
+    if (line.trim() === "") {
+      htmlLines.push("<br>");
+      continue;
+    }
+
+    // Regular text
+    htmlLines.push(formatInline(line) + "<br>");
+  }
+
+  // Close any open tags
+  if (inList) htmlLines.push("</ul>");
+  if (inOrderedList) htmlLines.push("</ol>");
+  if (inBlockquote) htmlLines.push("</blockquote>");
+  if (inTable) htmlLines.push("</tbody></table>");
+
+  return htmlLines.join("\n");
+};
+
+// Format inline markdown elements
+const formatInline = (text: string): string => {
+  // Code blocks ```code``` to <pre><code>
+  let formatted = text.replace(/```([^`]+)```/g, "<pre><code>$1</code></pre>");
+
+  // Inline code `code` to <code>
+  formatted = formatted.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  // Bold **text**
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Italic *text* or _text_
   formatted = formatted.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
   formatted = formatted.replace(/(?<!_)_([^_]+)_(?!_)/g, "<em>$1</em>");
 
-  // Convert code blocks ```code``` to <pre><code>
-  formatted = formatted.replace(/```([^`]+)```/g, "<pre><code>$1</code></pre>");
-
-  // Convert inline code `code` to <code>
-  formatted = formatted.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-  // Convert newlines to <br>
-  formatted = formatted.replace(/\n/g, "<br>");
+  // Links [text](url)
+  formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
   return formatted;
 };
@@ -320,7 +451,7 @@ const MessageBubble: React.FC<{
           </div>
         ) : message.text ? (
           <div
-            className="break-words text-sm leading-relaxed [&>strong]:font-bold [&>em]:italic [&>code]:bg-white/10 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:font-mono [&>code]:text-xs [&>pre]:bg-white/10 [&>pre]:p-3 [&>pre]:rounded-lg [&>pre]:overflow-x-auto [&>pre]:my-2"
+            className="break-words text-sm leading-relaxed [&_strong]:font-bold [&_em]:italic [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-xs [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2.5 [&_h3]:mb-1 [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_blockquote]:border-l-3 [&_blockquote]:border-white/30 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_hr]:border-white/20 [&_hr]:my-3 [&_a]:underline [&_a]:text-blue-300 hover:[&_a]:text-blue-200 [&_table]:w-full [&_table]:my-2 [&_table]:border-collapse [&_table]:text-xs [&_th]:border [&_th]:border-white/20 [&_th]:px-2 [&_th]:py-1.5 [&_th]:bg-white/10 [&_th]:font-semibold [&_th]:text-left [&_td]:border [&_td]:border-white/20 [&_td]:px-2 [&_td]:py-1.5"
             dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }}
           />
         ) : null}
