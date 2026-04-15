@@ -27,8 +27,9 @@ export async function getSubscription() {
     const response = await axiosInstance.get(BACKEND_URLS.subscription.getSubscription)
 
     if (response) {
-        return response.data.response;
+        return response.data.response ?? null;
     }
+    return null;
 }
 
 export async function getPortal() {

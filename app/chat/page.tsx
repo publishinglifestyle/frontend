@@ -58,6 +58,7 @@ function ChatPageContent() {
   const { user, subscription, refreshSubscription } = useAuth();
   const { copy } = useClipboard();
 
+
   const pageLoadedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -920,7 +921,7 @@ function ChatPageContent() {
       if (sessionId) {
         setIsSuccessModalOpen(true);
       } else if (user?.role !== "owner") {
-        if (subscription !== null && !subscription?.is_active) {
+        if (subscription && !subscription?.is_active) {
           setShowSubscriptionModal(true);
         }
       }

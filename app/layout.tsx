@@ -7,7 +7,6 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
-import { ImpersonationBanner } from "@/components/impersonation-banner";
 
 // Structured Data for SEO (JSON-LD)
 const structuredData = {
@@ -134,7 +133,6 @@ export default function RootLayout({
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           {/* Flex container to ensure the footer sticks to the bottom */}
           <div className="flex flex-col min-h-screen">
-            <ImpersonationBanner />
             <Navbar />
             {/* Main Content */}
             <main className="w-full flex-grow">

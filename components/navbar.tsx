@@ -64,7 +64,7 @@ const landingNavItems = [
 export const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated: isAuthenticatedClient, logout } = useAuth();
+  const { isAuthenticated: isAuthenticatedClient, logout, isImpersonating, user: authUser, returnToAdmin } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [isLandingPage, setIsLandingPage] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -257,6 +257,21 @@ export const Navbar = () => {
 
             {/* User Profile / CTA (Desktop) */}
             <div className="hidden lg:flex items-center gap-3">
+              {/* Impersonation indicator */}
+              {isImpersonating && authUser && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-amber-400 font-medium">
+                    Viewing as {authUser.first_name} ({authUser.email})
+                  </span>
+                  <button
+                    onClick={async () => { await returnToAdmin(); router.push("/admin"); }}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 text-black text-xs font-semibold hover:bg-amber-400 transition-colors"
+                  >
+                    Return to Admin
+                  </button>
+                </div>
+              )}
+
               {/* Landing Page CTA */}
               {isLandingPage && !isAuthenticatedClient && (
                 <>
@@ -493,6 +508,15 @@ export const Navbar = () => {
 
                 {/* Bottom Actions */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-zinc-900/50">
+                  {isImpersonating && authUser && (
+                    <button
+                      onClick={async () => { await returnToAdmin(); router.push("/admin"); setMobileMenuOpen(false); }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-all duration-200 mb-2"
+                    >
+                      <span className="font-medium">Return to Admin</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       router.push("/profile");

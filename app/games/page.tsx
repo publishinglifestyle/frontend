@@ -135,7 +135,7 @@ export default function GamesPage() {
 
   const showModalIfNoActiveSubscription = async () => {
     const currentSubscription = await getSubscription();
-    if (!currentSubscription?.is_active) {
+    if (currentSubscription && !currentSubscription?.is_active) {
       setShowSubscriptionModal(true);
     }
   };
