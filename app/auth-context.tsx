@@ -24,8 +24,8 @@ interface AuthContextType {
   refreshSubscription: () => Promise<void>;
   login: (token: string) => void;
   logout: () => void;
-  impersonate: (token: string) => void;
-  returnToAdmin: () => void;
+  impersonate: (token: string) => Promise<void>;
+  returnToAdmin: () => Promise<void>;
   setProfilePic: Dispatch<SetStateAction<string | undefined>>;
 }
 
@@ -111,25 +111,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(true);
   };
 
-  const impersonate = (token: string) => {
+  const impersonate = async (token: string) => {
     const currentToken = Cookies.get("authToken");
     if (currentToken) {
       Cookies.set("adminToken", currentToken);
     }
     Cookies.set("authToken", token);
-    setUser(null);
     setIsImpersonating(true);
-    setAuthRefreshKey((k) => k + 1);
+    // Fetch new user data before navigating (avoids race condition)
+    try {
+      const newUser = await getUser(true);
+      setUser(newUser);
+      const sub = await getSubscription();
+      setSubscription(sub);
+      const logo = await getProfilePic();
+      setProfilePic(logo);
+    } catch (error) {
+      console.error("Impersonate fetch error:", error);
+    }
   };
 
-  const returnToAdmin = () => {
+  const returnToAdmin = async () => {
     const adminToken = Cookies.get("adminToken");
     if (adminToken) {
       Cookies.set("authToken", adminToken);
       Cookies.remove("adminToken");
-      setUser(null);
       setIsImpersonating(false);
-      setAuthRefreshKey((k) => k + 1);
+      try {
+        const newUser = await getUser(true);
+        setUser(newUser);
+        const sub = await getSubscription();
+        setSubscription(sub);
+        const logo = await getProfilePic();
+        setProfilePic(logo);
+      } catch (error) {
+        console.error("Return to admin fetch error:", error);
+      }
     }
   };
 

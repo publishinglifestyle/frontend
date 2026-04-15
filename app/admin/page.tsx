@@ -20,6 +20,9 @@ interface AdminUser {
   subscription_credits: number | null;
   subscription_active: boolean;
   credits_remaining: number;
+  total_requests: number;
+  total_api_cost: number;
+  total_credits_used: number;
 }
 
 interface Bucket {
@@ -36,6 +39,16 @@ interface AgentInfo {
   type: string;
 }
 
+interface UsageUserInfo {
+  first_name: string;
+  last_name: string;
+  email: string;
+  subscription_name: string | null;
+  subscription_price: number | null;
+  subscription_type: string | null;
+  subscription_active: boolean;
+}
+
 interface UsageData {
   totals: { totalApiCost: number; totalCredits: number; totalRequests: number };
   byService: Record<string, Bucket>;
@@ -44,6 +57,7 @@ interface UsageData {
   byAgent: Record<string, Bucket>;
   byOperation: Record<string, Bucket>;
   agents: Record<string, AgentInfo>;
+  users: Record<string, UsageUserInfo>;
 }
 
 interface UserDetailData {
@@ -81,8 +95,7 @@ type UserStatus = "paying" | "trial" | "churned" | "free";
 
 function getUserStatus(u: AdminUser): UserStatus {
   if (u.subscription_active) return "paying";
-  if (u.has_used_free_trial && !u.subscription_active) return "churned";
-  if (u.has_used_free_credits) return "free";
+  if (u.subscription_name || u.subscription_price) return "churned";
   return "free";
 }
 
@@ -214,7 +227,9 @@ export default function AdminPage() {
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => fetchUsers(1, value), 400);
+    searchTimer.current = setTimeout(() => {
+      fetchUsers(1, value);
+    }, 300);
   };
 
   const fetchUsageStats = async (from?: string, to?: string) => {
@@ -232,7 +247,7 @@ export default function AdminPage() {
     try {
       setImpersonating(targetUserId);
       const token = await impersonateUser(targetUserId);
-      if (token) { impersonate(token); router.push("/chat"); }
+      if (token) { await impersonate(token); router.push("/chat"); }
     } catch { setError("Failed to impersonate user"); setImpersonating(null); }
   };
 
@@ -249,7 +264,7 @@ export default function AdminPage() {
     return Object.entries(usageData.byAgent)
       .map(([agentId, stats]) => {
         const info = usageData.agents[agentId];
-        return { agentId, name: info?.name || agentId.slice(0, 8), model: info?.model || "—", type: info?.type || "—", ...stats };
+        return { agentId, name: info?.name || agentId.slice(0, 8), model: info?.model || "gpt-5.1 (default)", type: info?.type || "—", ...stats };
       })
       .sort((a, b) => b.requests - a.requests);
   }, [usageData]);
@@ -325,7 +340,7 @@ export default function AdminPage() {
           {usageData && operationRows.length > 0 && (
             <>
               <h2 className="text-lg font-semibold text-white mb-3">Feature Breakdown</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+              <div className="grid gap-3 mb-8" style={{ gridTemplateColumns: `repeat(${Math.min(operationRows.length, 6)}, 1fr)` }}>
                 {operationRows.map(op => (
                   <div key={op.operation} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4">
                     <p className="text-xs text-white/40 capitalize mb-1">{op.operation.replace(/_/g, " ")}</p>
@@ -434,7 +449,6 @@ export default function AdminPage() {
                     {users.map(u => {
                       const status = getUserStatus(u);
                       const sc = statusConfig[status];
-                      const usage = usageData?.byUser[u.id];
                       return (
                         <tr key={u.id} onClick={() => openUserDetail(u.id)} className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer">
                           <td className="px-5 py-3">
@@ -458,9 +472,9 @@ export default function AdminPage() {
                             ) : <span className="text-white/20 text-xs">—</span>}
                           </td>
                           <td className="px-5 py-3 text-sm text-white/60 text-right">{fmt.credits(u.credits_remaining || 0)}</td>
-                          <td className="px-5 py-3 text-sm text-white/60 text-right">{usage?.requests?.toLocaleString() || "0"}</td>
+                          <td className="px-5 py-3 text-sm text-white/60 text-right">{(u.total_requests || 0).toLocaleString()}</td>
                           <td className="px-5 py-3 text-sm text-right">
-                            {usage?.api_cost ? <span className="text-red-400">{fmt.cost(usage.api_cost)}</span> : <span className="text-white/20">$0</span>}
+                            {u.total_api_cost > 0 ? <span className="text-red-400">{fmt.cost(u.total_api_cost)}</span> : <span className="text-white/20">$0</span>}
                           </td>
                           <td className="px-5 py-3 text-right">
                             <button onClick={() => handleImpersonate(u.id)}
@@ -680,6 +694,7 @@ export default function AdminPage() {
                     <thead>
                       <tr className="border-b border-white/10">
                         <th className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase">User</th>
+                        <th className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase">Email</th>
                         <th className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase">Plan</th>
                         <th className="text-right px-5 py-3 text-xs font-medium text-white/40 uppercase">Sub Price</th>
                         <th className="text-right px-5 py-3 text-xs font-medium text-white/40 uppercase">API Cost</th>
@@ -689,7 +704,7 @@ export default function AdminPage() {
                     <tbody>
                       {Object.entries(usageData.byUser)
                         .map(([uid, stats]) => {
-                          const u = users.find(x => x.id === uid);
+                          const u = usageData.users?.[uid];
                           const subPrice = u?.subscription_price ?? null;
                           const subType = u?.subscription_type ?? null;
                           const monthlyRev = subPrice != null ? Number(subPrice) / (subType === "year" ? 12 : 1) : 0;
@@ -700,8 +715,8 @@ export default function AdminPage() {
                           <tr key={r.uid} className="border-b border-white/5 hover:bg-white/5">
                             <td className="px-5 py-3">
                               <div className="text-sm text-white font-medium">{r.name}</div>
-                              <div className="text-[11px] text-white/30">{r.email}</div>
                             </td>
+                            <td className="px-5 py-3 text-sm text-white/50">{r.email}</td>
                             <td className="px-5 py-3 text-xs text-white/50">{r.subName || "—"}</td>
                             <td className="px-5 py-3 text-sm text-white/70 text-right">{fmt.price(r.subPrice, r.subType)}</td>
                             <td className="px-5 py-3 text-sm text-red-400 text-right">{fmt.cost(r.apiCost)}</td>

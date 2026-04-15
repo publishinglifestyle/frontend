@@ -9,8 +9,8 @@ export const ImpersonationBanner = () => {
 
   if (!isImpersonating || !user) return null;
 
-  const handleReturn = () => {
-    returnToAdmin();
+  const handleReturn = async () => {
+    await returnToAdmin();
     router.push("/admin");
   };
 
