@@ -145,6 +145,51 @@ export async function resetPassword(token, password_1, password_2) {
     }
 }
 
+export async function getUserDetail(userId) {
+    const response = await axiosInstance.get(`${BACKEND_URLS.auth.userDetail}/${userId}`);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function getAdminOverview() {
+    const response = await axiosInstance.get(BACKEND_URLS.auth.adminOverview);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function getAllUsers({ page = 1, limit = 50, search = '', role = '', status = '', sortBy = 'created_at', sortDir = 'desc' } = {}) {
+    const params = [`page=${page}`, `limit=${limit}`, `sortBy=${sortBy}`, `sortDir=${sortDir}`];
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (role && role !== 'all') params.push(`role=${role}`);
+    if (status && status !== 'all') params.push(`status=${status}`);
+    const url = `${BACKEND_URLS.auth.getUsers}?${params.join('&')}`;
+    const response = await axiosInstance.get(url);
+    if (response) {
+        return response.data;
+    }
+}
+
+export async function getUsageStats(from, to) {
+    let url = BACKEND_URLS.auth.usageStats;
+    const params = [];
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+    if (params.length) url += `?${params.join('&')}`;
+    const response = await axiosInstance.get(url);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function impersonateUser(target_user_id) {
+    const response = await axiosInstance.post(BACKEND_URLS.auth.impersonate, { target_user_id });
+    if (response) {
+        return response.data.token;
+    }
+}
+
 export async function logInGoogle(access_token, req_type) {
     let response = await axiosInstance.post(
         BACKEND_URLS.auth.signupGoogle,

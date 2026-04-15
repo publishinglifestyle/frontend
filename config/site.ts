@@ -88,6 +88,20 @@ export const siteConfig = {
       'allow_user': true,
       'language': 'en'
     },
+    {
+      'value': 'Admin',
+      'label': 'Admin',
+      'href': '/admin',
+      'allow_user': false,
+      'language': 'en'
+    },
+    {
+      'value': 'Admin',
+      'label': 'Admin',
+      'href': '/admin',
+      'allow_user': false,
+      'language': 'it'
+    },
   ],
   navMenuItems: [
     {
@@ -173,6 +187,20 @@ export const siteConfig = {
       'href': 'https://low-content-ai-parameter-list.gitbook.io/low-content-ai',
       'allow_user': true,
       'language': 'en'
+    },
+    {
+      'value': 'Admin',
+      'label': 'Admin',
+      'href': '/admin',
+      'allow_user': false,
+      'language': 'en'
+    },
+    {
+      'value': 'Admin',
+      'label': 'Admin',
+      'href': '/admin',
+      'allow_user': false,
+      'language': 'it'
     },
   ]
 };

@@ -20,9 +20,12 @@ interface AuthContextType {
   user?: IUser | null;
   profilePic?: string | null;
   subscription?: any;
+  isImpersonating: boolean;
   refreshSubscription: () => Promise<void>;
   login: (token: string) => void;
   logout: () => void;
+  impersonate: (token: string) => void;
+  returnToAdmin: () => void;
   setProfilePic: Dispatch<SetStateAction<string | undefined>>;
 }
 
@@ -51,6 +54,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [profilePic, setProfilePic] = useState<string | undefined>(defaultPic);
   const [subscription, setSubscription] = useState<any>(null);
+  const [isImpersonating, setIsImpersonating] = useState<boolean>(
+    !!Cookies.get("adminToken")
+  );
+  const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const router = useRouter();
 
   const refreshSubscription = useCallback(async () => {
@@ -97,18 +104,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })();
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authRefreshKey]);
 
   const login = (token: string) => {
     Cookies.set("authToken", token);
     setIsAuthenticated(true);
   };
 
+  const impersonate = (token: string) => {
+    const currentToken = Cookies.get("authToken");
+    if (currentToken) {
+      Cookies.set("adminToken", currentToken);
+    }
+    Cookies.set("authToken", token);
+    setUser(null);
+    setIsImpersonating(true);
+    setAuthRefreshKey((k) => k + 1);
+  };
+
+  const returnToAdmin = () => {
+    const adminToken = Cookies.get("adminToken");
+    if (adminToken) {
+      Cookies.set("authToken", adminToken);
+      Cookies.remove("adminToken");
+      setUser(null);
+      setIsImpersonating(false);
+      setAuthRefreshKey((k) => k + 1);
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setProfilePic(defaultPic);
     setSubscription(null);
+    setIsImpersonating(false);
     Cookies.remove("authToken");
+    Cookies.remove("adminToken");
     Cookies.remove("user_id");
     Cookies.remove("user_name");
     setIsAuthenticated(false);
@@ -121,6 +152,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated,
         login,
         logout,
+        impersonate,
+        returnToAdmin,
+        isImpersonating,
         user,
         profilePic,
         setProfilePic,

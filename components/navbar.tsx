@@ -126,6 +126,10 @@ export const Navbar = () => {
         setCurrentPage("profile");
         setShowMenu(true);
         break;
+      case "/admin":
+        setCurrentPage("admin");
+        setShowMenu(true);
+        break;
       default:
         setShowMenu(false);
         break;
