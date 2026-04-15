@@ -3,7 +3,7 @@
 import { useAuth } from "@/app/auth-context";
 import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats } from "@/managers/userManager";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────
 interface AdminUser {
@@ -50,7 +50,7 @@ interface UsageUserInfo {
 }
 
 interface UsageData {
-  totals: { totalApiCost: number; totalCredits: number; totalRequests: number };
+  totals: { totalApiCost: number; totalCredits: number; totalRequests: number; creditsRevenue: number };
   byService: Record<string, Bucket>;
   byModel: Record<string, Bucket>;
   byUser: Record<string, Bucket>;
@@ -69,8 +69,6 @@ interface UserDetailData {
 }
 
 // ── Helpers ────────────────────────────────────────────
-const REVENUE_PER_CREDIT = 0.74 / 1_000_000;
-
 const fmt = {
   cost: (usd: number) => `$${usd.toFixed(4)}`,
   costShort: (usd: number) => usd >= 1 ? `$${usd.toFixed(2)}` : `$${usd.toFixed(4)}`,
@@ -162,7 +160,6 @@ export default function AdminPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const PAGE_SIZE = 50;
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // User detail panel
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userDetail, setUserDetail] = useState<UserDetailData | null>(null);
@@ -224,12 +221,8 @@ export default function AdminPage() {
     } catch (err) { console.error("Failed to load overview", err); }
   };
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      fetchUsers(1, value);
-    }, 300);
+  const handleSearchSubmit = () => {
+    fetchUsers(1, searchQuery);
   };
 
   const fetchUsageStats = async (from?: string, to?: string) => {
@@ -400,8 +393,9 @@ export default function AdminPage() {
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div className="flex-1 min-w-[200px] max-w-md">
               <label className="block text-xs text-white/40 mb-1">Search</label>
-              <input type="text" placeholder="Name or email..." value={searchQuery}
-                onChange={e => handleSearch(e.target.value)}
+              <input type="text" placeholder="Name or email... (press Enter)" value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleSearchSubmit(); }}
                 className="w-full px-4 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
             </div>
             <div>
@@ -616,10 +610,10 @@ export default function AdminPage() {
               {/* Overview cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                 <Card label="Total API Cost" value={fmt.costShort(usageData.totals.totalApiCost)} color="text-red-400" />
-                <Card label="Credits Revenue" value={fmt.costShort(usageData.totals.totalCredits * REVENUE_PER_CREDIT)} color="text-green-400" />
+                <Card label="Credits Revenue" value={fmt.costShort(usageData.totals.creditsRevenue)} color="text-green-400" />
                 <Card label="Margin" color="text-white"
-                  value={usageData.totals.totalApiCost > 0 && usageData.totals.totalCredits > 0
-                    ? fmt.pct(((usageData.totals.totalCredits * REVENUE_PER_CREDIT - usageData.totals.totalApiCost) / (usageData.totals.totalCredits * REVENUE_PER_CREDIT)) * 100)
+                  value={usageData.totals.totalApiCost > 0 && usageData.totals.creditsRevenue > 0
+                    ? fmt.pct(((usageData.totals.creditsRevenue - usageData.totals.totalApiCost) / usageData.totals.creditsRevenue) * 100)
                     : "N/A"} />
                 <Card label="Total Requests" value={usageData.totals.totalRequests.toLocaleString()} color="text-purple-400" />
               </div>
