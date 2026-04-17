@@ -799,6 +799,54 @@ export default function AdminPage() {
                   </div>
                 )}
 
+                {/* ── Margin & Markup ── */}
+                {userDetail.usage && userDetail.user.subscription_price != null && (() => {
+                  const planPrice = Number(userDetail.user.subscription_price);
+                  const apiCost = userDetail.usage.totals.totalApiCost;
+                  const margin = planPrice - apiCost;
+                  const marginPct = planPrice > 0 ? (margin / planPrice) * 100 : 0;
+                  const totalCredits = (userDetail.subscription?.credits || 0) + userDetail.usage.totals.totalCredits;
+                  const usedCredits = userDetail.usage.totals.totalCredits;
+                  const usedPct = totalCredits > 0 ? (usedCredits / totalCredits) * 100 : 0;
+                  // Estimate tokens saved by summarization
+                  const convsWithSummary = userDetail.conversations.filter((c: any) => c.has_summary).length;
+                  const totalSummarizedMsgs = userDetail.conversations.reduce((sum: number, c: any) => sum + (c.summarized_up_to || 0), 0);
+                  return (
+                    <div className="bg-zinc-800/50 rounded-xl p-4 border border-white/5">
+                      <h4 className="text-xs text-white/40 uppercase tracking-wider mb-3">Margin & Markup</h4>
+                      <div className="grid grid-cols-3 gap-3 mb-3">
+                        <div><p className="text-[11px] text-white/30">Revenue</p><p className="text-lg font-bold text-green-400">${planPrice.toFixed(2)}</p></div>
+                        <div><p className="text-[11px] text-white/30">API Cost</p><p className="text-lg font-bold text-red-400">{fmt.cost(apiCost)}</p></div>
+                        <div><p className="text-[11px] text-white/30">Margin</p><p className={`text-lg font-bold ${margin >= 0 ? "text-green-400" : "text-red-400"}`}>${margin.toFixed(2)}</p></div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
+                        <div><p className="text-[11px] text-white/30">Margin %</p><p className={`text-sm font-medium ${marginPct >= 0 ? "text-green-400/80" : "text-red-400/80"}`}>{marginPct.toFixed(1)}%</p></div>
+                        <div><p className="text-[11px] text-white/30">Credit Markup</p><p className="text-sm font-medium text-white/70">2x</p></div>
+                      </div>
+                      {/* Credit usage bar */}
+                      <div className="mt-3 pt-3 border-t border-white/5">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <p className="text-[11px] text-white/30">Credit Usage</p>
+                          <p className="text-[11px] text-white/40">{fmt.credits(usedCredits)} / {fmt.credits(totalCredits)} ({usedPct.toFixed(0)}%)</p>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div className={`h-full rounded-full transition-all ${usedPct > 90 ? "bg-red-500" : usedPct > 70 ? "bg-yellow-500" : "bg-purple-500"}`} style={{ width: `${Math.min(usedPct, 100)}%` }} />
+                        </div>
+                      </div>
+                      {/* Summary savings */}
+                      {convsWithSummary > 0 && (
+                        <div className="mt-3 pt-3 border-t border-white/5">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[11px] text-white/30">Context Summarization</p>
+                            <p className="text-[11px] text-green-400/70">{convsWithSummary} conversations summarized</p>
+                          </div>
+                          <p className="text-[11px] text-white/25 mt-1">{totalSummarizedMsgs.toLocaleString()} older messages compressed — saving tokens on every request</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* ── By Service ── */}
                 {userDetail.usage && Object.keys(userDetail.usage.byService).length > 0 && (
                   <div className="bg-zinc-800/50 rounded-xl p-4 border border-white/5">
@@ -887,13 +935,28 @@ export default function AdminPage() {
                   <div className="bg-zinc-800/50 rounded-xl p-4 border border-white/5">
                     <h4 className="text-xs text-white/40 uppercase tracking-wider mb-3">Conversations ({userDetail.conversations.length})</h4>
                     <div className="space-y-1.5 max-h-72 overflow-y-auto">
-                      {userDetail.conversations.map(c => (
-                        <div key={c.id} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">{c.name || "Untitled"}</p>
-                            <p className="text-[11px] text-white/25">{c.agent_name || "—"} &middot; {c.message_count} msgs</p>
+                      {userDetail.conversations.map((c: any) => (
+                        <div key={c.id} className="py-1.5 border-b border-white/5 last:border-0">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white truncate">{c.name || "Untitled"}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[11px] text-white/25">{c.agent_name || "—"} &middot; {c.message_count} msgs</p>
+                                {c.has_summary && (
+                                  <span className="inline-flex px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-500/15 text-green-400/70">
+                                    summarized ({c.summarized_up_to} msgs)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-[11px] text-white/20 ml-3 shrink-0">{c.last_activity ? new Date(c.last_activity).toLocaleDateString() : "—"}</span>
                           </div>
-                          <span className="text-[11px] text-white/20 ml-3 shrink-0">{c.last_activity ? new Date(c.last_activity).toLocaleDateString() : "—"}</span>
+                          {c.summary_text && (
+                            <details className="mt-1">
+                              <summary className="text-[10px] text-white/20 cursor-pointer hover:text-white/40 transition-colors">View summary</summary>
+                              <p className="text-[11px] text-white/30 mt-1 pl-2 border-l border-white/10 leading-relaxed">{c.summary_text}</p>
+                            </details>
+                          )}
                         </div>
                       ))}
                     </div>
