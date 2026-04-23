@@ -20,6 +20,8 @@ export const BACKEND_URLS = {
     getUsers: "/auth/get-users",
     impersonate: "/auth/impersonate",
     usageStats: "/auth/usage-stats",
+    platformCosts: "/auth/platform-costs",
+    pnl: "/auth/pnl",
     addMjUser: "/auth/add-mj-users",
     addSingleMjUser: "/auth/add-mj-user",
   },

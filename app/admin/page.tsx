@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/app/auth-context";
-import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats } from "@/managers/userManager";
+import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats, getPlatformCosts, createPlatformCost, updatePlatformCost, deletePlatformCost, getPnl } from "@/managers/userManager";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -135,8 +135,50 @@ const Card = ({ label, value, sub, color = "text-white" }: { label: string; valu
   </div>
 );
 
+// ── P&L Types ──────────────────────────────────────────
+interface PlatformCost {
+  id: string;
+  vendor_name: string;
+  description: string | null;
+  monthly_cost_cents: number;
+  monthly_cost: number;
+  monthly_cost_eur: number;
+  currency: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface CostBreakdownItem {
+  vendor: string;
+  description: string | null;
+  monthlyCost: number;
+  currency: string;
+  originalCurrency: string;
+  originalAmount: number;
+  type: string;
+}
+
+interface PnlData {
+  revenueMRR: number;
+  creditsRevenueEur: number;
+  totalRevenue: number;
+  totalCosts: number;
+  profitLoss: number;
+  margin: number;
+  manualCostsTotalEur: number;
+  apiCostEur: number;
+  apiCostUsd: number;
+  costBreakdown: CostBreakdownItem[];
+  usdToEurRate: number;
+  periodFrom: string | null;
+  periodTo: string | null;
+}
+
+const fmtEur = (n: number) => `€${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 // ── Component ──────────────────────────────────────────
-type Tab = "overview" | "users" | "agents" | "costs";
+type Tab = "overview" | "users" | "agents" | "costs" | "pnl";
 
 export default function AdminPage() {
   const { user, impersonate } = useAuth();
@@ -164,6 +206,17 @@ export default function AdminPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userDetail, setUserDetail] = useState<UserDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  // P&L / platform costs
+  const [platformCosts, setPlatformCosts] = useState<PlatformCost[]>([]);
+  const [pnl, setPnl] = useState<PnlData | null>(null);
+  const [pnlLoading, setPnlLoading] = useState(false);
+  const [costModalOpen, setCostModalOpen] = useState(false);
+  const [editingCost, setEditingCost] = useState<PlatformCost | null>(null);
+  const [costFormName, setCostFormName] = useState("");
+  const [costFormDesc, setCostFormDesc] = useState("");
+  const [costFormAmount, setCostFormAmount] = useState("");
+  const [costFormCurrency, setCostFormCurrency] = useState<"EUR" | "USD">("EUR");
+  const [costSaving, setCostSaving] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "owner") { router.push("/chat"); return; }
@@ -231,6 +284,91 @@ export default function AdminPage() {
     finally { setUsageLoading(false); }
   };
 
+  const fetchPnl = async (from?: string, to?: string) => {
+    try {
+      setPnlLoading(true);
+      const [costsRes, pnlRes] = await Promise.all([
+        getPlatformCosts(),
+        getPnl(from, to),
+      ]);
+      if (costsRes) setPlatformCosts(costsRes.costs || []);
+      if (pnlRes) setPnl(pnlRes);
+    } catch (err) {
+      console.error("Failed to load P&L", err);
+    } finally {
+      setPnlLoading(false);
+    }
+  };
+
+  const openNewCostModal = () => {
+    setEditingCost(null);
+    setCostFormName("");
+    setCostFormDesc("");
+    setCostFormAmount("");
+    setCostFormCurrency("EUR");
+    setCostModalOpen(true);
+  };
+
+  const openEditCostModal = (cost: PlatformCost) => {
+    setEditingCost(cost);
+    setCostFormName(cost.vendor_name);
+    setCostFormDesc(cost.description || "");
+    setCostFormAmount(String(cost.monthly_cost));
+    setCostFormCurrency((cost.currency?.toUpperCase() === "USD" ? "USD" : "EUR"));
+    setCostModalOpen(true);
+  };
+
+  const handleSaveCost = async () => {
+    if (!costFormName.trim() || costFormAmount === "") return;
+    const amount = Number(costFormAmount);
+    if (Number.isNaN(amount) || amount < 0) return;
+    try {
+      setCostSaving(true);
+      const payload = {
+        vendor_name: costFormName.trim(),
+        description: costFormDesc.trim() || null,
+        monthly_cost: amount,
+        currency: costFormCurrency,
+      };
+      if (editingCost) {
+        await updatePlatformCost(editingCost.id, payload);
+      } else {
+        await createPlatformCost(payload);
+      }
+      setCostModalOpen(false);
+      await fetchPnl(dateRange.from || undefined, dateRange.to || undefined);
+    } catch (err) {
+      console.error("Failed to save cost", err);
+    } finally {
+      setCostSaving(false);
+    }
+  };
+
+  const handleDeleteCost = async (id: string) => {
+    if (!confirm("Delete this cost? This cannot be undone.")) return;
+    try {
+      await deletePlatformCost(id);
+      await fetchPnl(dateRange.from || undefined, dateRange.to || undefined);
+    } catch (err) {
+      console.error("Failed to delete cost", err);
+    }
+  };
+
+  const handleToggleCostActive = async (cost: PlatformCost) => {
+    try {
+      await updatePlatformCost(cost.id, { is_active: !cost.is_active });
+      await fetchPnl(dateRange.from || undefined, dateRange.to || undefined);
+    } catch (err) {
+      console.error("Failed to toggle cost", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user && user.role === "owner" && activeTab === "pnl") {
+      fetchPnl(dateRange.from || undefined, dateRange.to || undefined);
+    }
+  }, [activeTab, user]);
+
   const handleSort = (key: UserSortKey) => {
     if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
     else { setSortKey(key); setSortDir(key === "name" || key === "email" ? "asc" : "desc"); }
@@ -277,6 +415,7 @@ export default function AdminPage() {
     { key: "users", label: "Users" },
     { key: "agents", label: "Agents" },
     { key: "costs", label: "Costs & Models" },
+    { key: "pnl", label: "P&L" },
   ];
 
   return (
@@ -731,6 +870,210 @@ export default function AdminPage() {
           )}
         </>
       )}
+      {/* ══════════ P&L TAB ══════════ */}
+      {activeTab === "pnl" && (
+        <>
+          {/* Date filter — filters the measured AI API cost for the period */}
+          <div className="flex flex-wrap items-end gap-3 mb-6">
+            <div>
+              <label className="block text-xs text-white/40 mb-1">From</label>
+              <input type="date" value={dateRange.from} onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))}
+                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+            </div>
+            <div>
+              <label className="block text-xs text-white/40 mb-1">To</label>
+              <input type="date" value={dateRange.to} onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))}
+                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+            </div>
+            <button onClick={() => fetchPnl(dateRange.from || undefined, dateRange.to || undefined)}
+              className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium">Filter</button>
+            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchPnl(); }}
+              className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm">Clear</button>
+            <div className="ml-auto">
+              <button onClick={openNewCostModal}
+                className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-sm font-medium">
+                + Add Manual Cost
+              </button>
+            </div>
+          </div>
+
+          {pnlLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+            </div>
+          ) : (
+            <>
+              {/* P&L cards */}
+              {pnl && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                    <Card label="Revenue (EUR)" value={fmtEur(pnl.totalRevenue)} color="text-green-400" sub={`MRR ${fmtEur(pnl.revenueMRR)} + credits ${fmtEur(pnl.creditsRevenueEur)}`} />
+                    <Card label="Total Costs (EUR)" value={fmtEur(pnl.totalCosts)} color="text-red-400" sub={`Manual ${fmtEur(pnl.manualCostsTotalEur)} + API ${fmtEur(pnl.apiCostEur)}`} />
+                    <Card label="Profit / Loss" value={`${pnl.profitLoss >= 0 ? "+" : "-"}${fmtEur(Math.abs(pnl.profitLoss))}`} color={pnl.profitLoss >= 0 ? "text-green-400" : "text-red-400"} />
+                    <Card label="Margin" value={`${pnl.margin.toFixed(1)}%`} color={pnl.margin >= 0 ? "text-green-400" : "text-red-400"} />
+                  </div>
+                  <p className="text-[11px] text-white/30 mb-8">
+                    USD amounts converted to EUR at an estimated rate of {pnl.usdToEurRate}. Measured API cost reflects the selected date range; manual costs and MRR are monthly totals.
+                  </p>
+                </>
+              )}
+
+              {/* Cost breakdown bars */}
+              {pnl && pnl.costBreakdown.length > 0 && (
+                <>
+                  <h2 className="text-lg font-semibold text-white mb-3">Cost Breakdown</h2>
+                  <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-5 mb-8 space-y-3">
+                    {(() => {
+                      const max = Math.max(...pnl.costBreakdown.map(c => c.monthlyCost), 1);
+                      return pnl.costBreakdown.map((c, i) => (
+                        <div key={`${c.vendor}-${i}`}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div>
+                              <span className="text-sm text-white font-medium">{c.vendor}</span>
+                              {c.type === "variable" && <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-400/70">variable</span>}
+                              {c.description && <span className="ml-2 text-[11px] text-white/30">{c.description}</span>}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-white">{fmtEur(c.monthlyCost)}</p>
+                              {c.originalCurrency !== "EUR" && c.originalAmount > 0 && (
+                                <p className="text-[10px] text-white/25">${c.originalAmount.toFixed(2)} USD</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${c.type === "variable" ? "bg-amber-500/70" : "bg-purple-500/70"}`}
+                              style={{ width: `${max > 0 ? Math.max((c.monthlyCost / max) * 100, 2) : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </>
+              )}
+
+              {/* Manual vendor costs table */}
+              <h2 className="text-lg font-semibold text-white mb-3">Manual Vendor Costs</h2>
+              <div className="bg-zinc-900/50 border border-white/10 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase">Vendor</th>
+                        <th className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase">Description</th>
+                        <th className="text-right px-5 py-3 text-xs font-medium text-white/40 uppercase">Original</th>
+                        <th className="text-right px-5 py-3 text-xs font-medium text-white/40 uppercase">EUR/mo</th>
+                        <th className="text-center px-5 py-3 text-xs font-medium text-white/40 uppercase">Status</th>
+                        <th className="text-right px-5 py-3 text-xs font-medium text-white/40 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {platformCosts.map(c => (
+                        <tr key={c.id} className="border-b border-white/5 hover:bg-white/5">
+                          <td className="px-5 py-3 text-sm text-white font-medium">{c.vendor_name}</td>
+                          <td className="px-5 py-3 text-sm text-white/50">{c.description || "—"}</td>
+                          <td className="px-5 py-3 text-sm text-white/60 text-right font-mono text-xs">
+                            {c.currency === "USD" ? `$${c.monthly_cost.toFixed(2)}` : `€${c.monthly_cost.toFixed(2)}`}
+                          </td>
+                          <td className="px-5 py-3 text-sm text-white text-right font-medium">{fmtEur(c.monthly_cost_eur)}</td>
+                          <td className="px-5 py-3 text-center">
+                            <button onClick={() => handleToggleCostActive(c)}
+                              className={`inline-flex px-2 py-0.5 rounded text-xs font-medium transition-all ${c.is_active ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" : "bg-zinc-700/50 text-white/40 hover:bg-zinc-700/70"}`}>
+                              {c.is_active ? "Active" : "Inactive"}
+                            </button>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex gap-2 justify-end">
+                              <button onClick={() => openEditCostModal(c)}
+                                className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-white/70 hover:bg-white/10 transition-all">
+                                Edit
+                              </button>
+                              <button onClick={() => handleDeleteCost(c.id)}
+                                className="px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {platformCosts.length === 0 && (
+                        <tr><td colSpan={6} className="px-5 py-12 text-center text-white/40 text-sm">No manual costs yet — click "+ Add Manual Cost" to add one.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ══════════ ADD / EDIT COST MODAL ══════════ */}
+      {costModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !costSaving && setCostModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl">
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">{editingCost ? "Edit Manual Cost" : "Add Manual Cost"}</h3>
+              <button onClick={() => !costSaving && setCostModalOpen(false)} className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs text-white/40 mb-1">Vendor Name *</label>
+                <input type="text" value={costFormName} onChange={e => setCostFormName(e.target.value)}
+                  placeholder="e.g. Supabase"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              </div>
+              <div>
+                <label className="block text-xs text-white/40 mb-1">Description</label>
+                <input type="text" value={costFormDesc} onChange={e => setCostFormDesc(e.target.value)}
+                  placeholder="e.g. Database + storage hosting"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs text-white/40 mb-1">Monthly Cost *</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">
+                      {costFormCurrency === "EUR" ? "€" : "$"}
+                    </span>
+                    <input type="number" step="0.01" min="0" value={costFormAmount} onChange={e => setCostFormAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-7 pr-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-white/40 mb-1">Currency</label>
+                  <select value={costFormCurrency} onChange={e => setCostFormCurrency(e.target.value as "EUR" | "USD")}
+                    className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+              {costFormCurrency === "USD" && costFormAmount && !Number.isNaN(Number(costFormAmount)) && pnl && (
+                <p className="text-[11px] text-white/40">
+                  ≈ {fmtEur(Number(costFormAmount) * pnl.usdToEurRate)} at estimated rate {pnl.usdToEurRate}
+                </p>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3">
+              <button onClick={() => setCostModalOpen(false)} disabled={costSaving}
+                className="px-4 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30">
+                Cancel
+              </button>
+              <button onClick={handleSaveCost} disabled={costSaving || !costFormName.trim() || costFormAmount === ""}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                {costSaving ? "Saving..." : editingCost ? "Save Changes" : "Add Cost"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ══════════ USER DETAIL PANEL ══════════ */}
       {selectedUserId && (
         <div className="fixed inset-0 z-50 flex justify-end">

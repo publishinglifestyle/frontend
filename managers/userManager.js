@@ -190,6 +190,46 @@ export async function impersonateUser(target_user_id) {
     }
 }
 
+export async function getPlatformCosts() {
+    const response = await axiosInstance.get(BACKEND_URLS.auth.platformCosts);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function createPlatformCost(payload) {
+    const response = await axiosInstance.post(BACKEND_URLS.auth.platformCosts, payload);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function updatePlatformCost(id, payload) {
+    const response = await axiosInstance.put(`${BACKEND_URLS.auth.platformCosts}/${id}`, payload);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function deletePlatformCost(id) {
+    const response = await axiosInstance.delete(`${BACKEND_URLS.auth.platformCosts}/${id}`);
+    if (response) {
+        return response.data.response;
+    }
+}
+
+export async function getPnl(from, to) {
+    let url = BACKEND_URLS.auth.pnl;
+    const params = [];
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+    if (params.length) url += `?${params.join('&')}`;
+    const response = await axiosInstance.get(url);
+    if (response) {
+        return response.data.response;
+    }
+}
+
 export async function logInGoogle(access_token, req_type) {
     let response = await axiosInstance.post(
         BACKEND_URLS.auth.signupGoogle,
