@@ -220,7 +220,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (user && user.role !== "owner") { router.push("/chat"); return; }
-    if (user) { fetchOverview(); fetchUsers(1); fetchUsageStats(); }
+    if (user) { fetchOverview(); fetchUsers(1); fetchUsageStats(); fetchPnl(); }
   }, [user]);
 
   // Re-fetch when filters or sort change
@@ -412,16 +412,17 @@ export default function AdminPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "overview", label: "Overview" },
+    { key: "pnl", label: "P&L" },
+    { key: "costs", label: "AI Usage" },
     { key: "users", label: "Users" },
     { key: "agents", label: "Agents" },
-    { key: "costs", label: "Costs & Models" },
-    { key: "pnl", label: "P&L" },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+        <p className="text-sm text-white/40 mt-1">Financial health, user base, and AI usage — all figures in EUR.</p>
       </div>
 
       {error && (
@@ -440,17 +441,7 @@ export default function AdminPage() {
       {/* ══════════ OVERVIEW TAB ══════════ */}
       {activeTab === "overview" && (
         <>
-          {/* KPI row */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-            <Card label="Total Users" value={overview ? overview.total.toLocaleString() : "—"} color="text-white" />
-            <Card label="Paying" value={overview ? overview.paying.toLocaleString() : "—"} color="text-green-400" />
-            <Card label="Churned" value={overview ? overview.churned.toLocaleString() : "—"} color="text-red-400" />
-            <Card label="Free" value={overview ? overview.free.toLocaleString() : "—"} color="text-white/60" />
-            <Card label="MRR" value={overview ? `$${overview.mrr.toFixed(2)}` : "—"} color="text-green-400" sub="Monthly recurring" />
-            <Card label="API Cost" value={usageData ? fmt.costShort(usageData.totals.totalApiCost) : "—"} color="text-red-400" sub={usageData ? `${usageData.totals.totalRequests.toLocaleString()} requests` : ""} />
-          </div>
-
-          {/* Date filter for usage data */}
+          {/* Shared date filter — applies to financial + usage metrics */}
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div>
               <label className="block text-xs text-white/40 mb-1">From</label>
@@ -462,17 +453,151 @@ export default function AdminPage() {
               <input type="date" value={dateRange.to} onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))}
                 className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
             </div>
-            <button onClick={() => fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined)}
+            <button onClick={() => { fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined); fetchPnl(dateRange.from || undefined, dateRange.to || undefined); }}
               className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium">Filter</button>
-            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); }}
+            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); fetchPnl(); }}
               className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm">Clear</button>
+            <div className="ml-auto text-[11px] text-white/30 self-center">
+              All figures in EUR{pnl ? ` · USD→EUR @ ${pnl.usdToEurRate}` : ""}
+            </div>
           </div>
 
-          {/* Feature breakdown */}
+          {/* ─── Financial Hero ─── */}
+          {pnl ? (
+            <div className="mb-6 bg-gradient-to-br from-zinc-900 to-zinc-900/60 border border-white/10 rounded-2xl p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">Financial Summary</h2>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${pnl.profitLoss >= 0 ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${pnl.profitLoss >= 0 ? "bg-green-400" : "bg-red-400"}`} />
+                    {pnl.profitLoss >= 0 ? "Profitable" : "Operating at a loss"}
+                  </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div>
+                  <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Revenue</p>
+                  <p className="text-3xl font-bold text-green-400">{fmtEur(pnl.totalRevenue)}</p>
+                  <p className="text-[11px] text-white/30 mt-1">MRR {fmtEur(pnl.revenueMRR)} · credits {fmtEur(pnl.creditsRevenueEur)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Total Costs</p>
+                  <p className="text-3xl font-bold text-red-400">{fmtEur(pnl.totalCosts)}</p>
+                  <p className="text-[11px] text-white/30 mt-1">Manual {fmtEur(pnl.manualCostsTotalEur)} · AI {fmtEur(pnl.apiCostEur)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Profit / Loss</p>
+                  <p className={`text-3xl font-bold ${pnl.profitLoss >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {pnl.profitLoss >= 0 ? "+" : "-"}{fmtEur(Math.abs(pnl.profitLoss))}
+                  </p>
+                  <p className="text-[11px] text-white/30 mt-1">Revenue − Costs</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1.5">Margin</p>
+                  <p className={`text-3xl font-bold ${pnl.margin >= 0 ? "text-green-400" : "text-red-400"}`}>
+                    {pnl.margin.toFixed(1)}%
+                  </p>
+                  <p className="text-[11px] text-white/30 mt-1">Profit / Revenue</p>
+                </div>
+              </div>
+
+              {/* Cost-to-revenue bar */}
+              {pnl.totalRevenue > 0 && (
+                <div className="mt-6 pt-5 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-2 text-[11px] text-white/40">
+                    <span>Costs vs Revenue</span>
+                    <span>{Math.min(Math.round((pnl.totalCosts / pnl.totalRevenue) * 100), 999)}% of revenue</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-white/5 overflow-hidden flex">
+                    <div
+                      className={`h-full ${pnl.totalCosts > pnl.totalRevenue ? "bg-red-500/70" : "bg-amber-500/60"}`}
+                      style={{ width: `${Math.min((pnl.totalCosts / pnl.totalRevenue) * 100, 100)}%` }}
+                    />
+                    {pnl.totalCosts <= pnl.totalRevenue && (
+                      <div className="h-full bg-green-500/60" style={{ width: `${100 - (pnl.totalCosts / pnl.totalRevenue) * 100}%` }} />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mb-6 bg-zinc-900/50 border border-white/10 rounded-2xl p-6 text-center text-white/40 text-sm">
+              Loading financial summary…
+            </div>
+          )}
+
+          {/* ─── Revenue & Cost Breakdown (side by side) ─── */}
+          {pnl && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {/* Revenue breakdown */}
+              <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-5">
+                <h3 className="text-xs text-white/40 uppercase tracking-wider mb-4">Revenue Breakdown</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Monthly Recurring Revenue</p>
+                      <p className="text-[11px] text-white/30">Active subscriptions · monthly + yearly/12</p>
+                    </div>
+                    <p className="text-sm font-semibold text-white">{fmtEur(pnl.revenueMRR)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Credit Package Revenue</p>
+                      <p className="text-[11px] text-white/30">Credits consumed in period</p>
+                    </div>
+                    <p className="text-sm font-semibold text-white">{fmtEur(pnl.creditsRevenueEur)}</p>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <p className="text-sm text-white/60 font-medium">Total</p>
+                    <p className="text-base font-bold text-green-400">{fmtEur(pnl.totalRevenue)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cost breakdown */}
+              <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-5">
+                <h3 className="text-xs text-white/40 uppercase tracking-wider mb-4">Cost Breakdown</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">Manual Vendor Costs</p>
+                      <p className="text-[11px] text-white/30">Fixed — managed in P&amp;L tab</p>
+                    </div>
+                    <p className="text-sm font-semibold text-white">{fmtEur(pnl.manualCostsTotalEur)}</p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white">AI API Usage</p>
+                      <p className="text-[11px] text-white/30">Variable — measured in AI Usage tab</p>
+                    </div>
+                    <p className="text-sm font-semibold text-white">{fmtEur(pnl.apiCostEur)}</p>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <p className="text-sm text-white/60 font-medium">Total</p>
+                    <p className="text-base font-bold text-red-400">{fmtEur(pnl.totalCosts)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── User KPIs ─── */}
+          <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">User Base</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+            <Card label="Total Users" value={overview ? overview.total.toLocaleString() : "—"} color="text-white" />
+            <Card label="Paying" value={overview ? overview.paying.toLocaleString() : "—"} color="text-green-400"
+              sub={overview && overview.total > 0 ? `${((overview.paying / overview.total) * 100).toFixed(1)}% conversion` : ""} />
+            <Card label="Churned" value={overview ? overview.churned.toLocaleString() : "—"} color="text-red-400" />
+            <Card label="Free" value={overview ? overview.free.toLocaleString() : "—"} color="text-white/60" />
+            <Card label="API Requests" value={usageData ? usageData.totals.totalRequests.toLocaleString() : "—"} color="text-purple-400"
+              sub={usageData && usageData.totals.totalRequests > 0 ? `${fmt.costShort(usageData.totals.totalApiCost / usageData.totals.totalRequests)} avg` : ""} />
+          </div>
+
+          {/* ─── Feature Breakdown ─── */}
           {usageData && operationRows.length > 0 && (
             <>
-              <h2 className="text-lg font-semibold text-white mb-3">Feature Breakdown</h2>
-              <div className="grid gap-3 mb-8" style={{ gridTemplateColumns: `repeat(${Math.min(operationRows.length, 6)}, 1fr)` }}>
+              <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">Feature Usage</h2>
+              <div className="grid gap-3 mb-8 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
                 {operationRows.map(op => (
                   <div key={op.operation} className="bg-zinc-900/50 border border-white/10 rounded-xl p-4">
                     <p className="text-xs text-white/40 capitalize mb-1">{op.operation.replace(/_/g, " ")}</p>
@@ -484,10 +609,14 @@ export default function AdminPage() {
             </>
           )}
 
-          {/* Top agents */}
+          {/* ─── Top Agents ─── */}
           {agentRows.length > 0 && (
             <>
-              <h2 className="text-lg font-semibold text-white mb-3">Top Agents</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">Top Agents</h2>
+                <button onClick={() => setActiveTab("agents")}
+                  className="text-xs text-purple-400 hover:text-purple-300">View all →</button>
+              </div>
               <div className="bg-zinc-900/50 border border-white/10 rounded-2xl overflow-hidden mb-8">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -501,7 +630,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {agentRows.slice(0, 10).map(a => (
+                      {agentRows.slice(0, 5).map(a => (
                         <tr key={a.agentId} className="border-b border-white/5 hover:bg-white/5">
                           <td className="px-5 py-3 text-sm text-white font-medium">{a.name}</td>
                           <td className="px-5 py-3 text-sm text-white/50 font-mono text-xs">{a.model}</td>
@@ -517,7 +646,7 @@ export default function AdminPage() {
             </>
           )}
 
-          {usageLoading && (
+          {(usageLoading || pnlLoading) && !pnl && (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
             </div>
