@@ -396,6 +396,26 @@ function ChatPageContent() {
       // Text agent or no agent - send via socket
       generatingConversationsRef.current.set(conversationId, selectedAgent?.type || "text");
       pendingImageUserMessagesRef.current.set(conversationId, [userMessage]);
+
+      // After a long idle, the socket may be disconnected. Force a fresh
+      // connection and wait for it before emitting, so the message can't
+      // sit forever in the disconnected outgoing buffer.
+      if (socket && !socket.connected) {
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            socket?.off("connect", onConnect);
+            resolve();
+          }, 10000);
+          const onConnect = () => {
+            clearTimeout(timeout);
+            socket?.off("connect", onConnect);
+            resolve();
+          };
+          socket?.once("connect", onConnect);
+          socket?.connect();
+        });
+      }
+
       socket?.emit("sendMessage", {
         senderId: userId,
         message: text,
@@ -802,15 +822,25 @@ function ChatPageContent() {
 
     socket = io(baseURL, {
       query: { user_id: userId },
-      reconnection: false,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
     });
 
     socket.on("connect", () => console.log("Socket connected:", socket?.id));
     socket.on("disconnect", (reason) => {
       console.log("Socket disconnected:", reason);
-      socket?.connect();
+      // Server-initiated disconnect won't auto-reconnect; trigger manually.
+      // For all other reasons, Socket.IO's reconnection: true handles retry.
+      if (reason === "io server disconnect") {
+        socket?.connect();
+      }
     });
     socket.on("connect_error", (error) => console.error("Connection error:", error));
+    socket.io.on("reconnect", (attempt) => console.log("Socket reconnected after", attempt, "attempts:", socket?.id));
+    socket.io.on("reconnect_error", (error) => console.error("Reconnect error:", error.message));
 
     if (!socket.hasListeners("message")) {
       socket.on("message", messageListener);
