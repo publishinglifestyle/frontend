@@ -178,16 +178,16 @@ const ChatModals = ({
       <DalleImageSizeModal
         isOpen={isDalleImageSizeModalOpen}
         onClose={() => setIsDalleImageSizeModalOpen(false)}
-        onConfirm={(imageSize, referenceImage) => {
-          console.log("Selected DALL-E image size:", imageSize, "Reference:", referenceImage);
+        onConfirm={(imageSize, referenceImages) => {
+          console.log("Selected DALL-E image size:", imageSize, "References:", referenceImages);
           const selected_commands = [
             { command: "size", value: imageSize },
-            { command: "referenceImage", value: referenceImage || "" },
+            { command: "referenceImages", value: JSON.stringify(referenceImages || []) },
           ];
           setPromptCommands(selected_commands);
-          // Show reference image in the input bar (same as attachment)
-          if (referenceImage) {
-            setPendingImageUrl(referenceImage);
+          // Show reference images in the input bar (same as attachment)
+          if (referenceImages && referenceImages.length > 0) {
+            setPendingImages(referenceImages);
           }
           setIsDalleImageSizeModalOpen(false);
         }}

@@ -436,7 +436,7 @@ const ChatMessageList = ({
           }
           
           // Check if we have a reference image for Gemini or gpt-image
-          let referenceImageUrl = null;
+          let referenceImageUrl: string | string[] | null = null;
           let messageTextForGemini = text;
 
           // For Gemini, extract the image URL from the message if it's combined
@@ -456,15 +456,28 @@ const ChatMessageList = ({
             }
           }
 
-          // For gpt-image (Vector Illustrator), check for referenceImage in commands
+          // For gpt-image, prefer the new referenceImages array (JSON) and
+          // fall back to the legacy single referenceImage command.
           if (current_agent?.model === "gpt-image" && commands) {
-            const refImageCommand = commands.find(cmd => cmd.command === "referenceImage");
-            if (refImageCommand && refImageCommand.value) {
-              referenceImageUrl = refImageCommand.value;
-              console.log("Using reference image for gpt-image:", referenceImageUrl);
+            const refImagesCommand = commands.find(cmd => cmd.command === "referenceImages");
+            if (refImagesCommand && refImagesCommand.value) {
+              try {
+                const parsed = JSON.parse(refImagesCommand.value);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  referenceImageUrl = parsed.filter(Boolean);
+                  console.log("Using reference images for gpt-image:", referenceImageUrl);
+                }
+              } catch {}
+            }
+            if (!referenceImageUrl) {
+              const refImageCommand = commands.find(cmd => cmd.command === "referenceImage");
+              if (refImageCommand && refImageCommand.value) {
+                referenceImageUrl = refImageCommand.value;
+                console.log("Using reference image for gpt-image:", referenceImageUrl);
+              }
             }
           }
-          
+
           image_response = await generateImage(
             current_agent?.model === "gemini" ? messageTextForGemini : text,
             selectedAgentId,

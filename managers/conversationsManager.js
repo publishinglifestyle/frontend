@@ -35,8 +35,23 @@ export async function deleteConversation(conversation_id) {
 }
 
 export async function generateImage(msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size, reference_image_url) {
-    const response = await axiosInstance.post(BACKEND_URLS.imageGen.generateImage,
-        { msg, agent_id, conversation_id, save_user_prompt, prompt_commands, socket_id, n_images, size, reference_image_url })
+    // reference_image_url accepts either a single URL string or an array of URLs.
+    // The backend reads `reference_image_urls` (array) and `reference_image_url` (string)
+    // — we forward both so all callers keep working.
+    const isArray = Array.isArray(reference_image_url);
+    const payload = {
+        msg,
+        agent_id,
+        conversation_id,
+        save_user_prompt,
+        prompt_commands,
+        socket_id,
+        n_images,
+        size,
+        reference_image_url: isArray ? reference_image_url[0] : reference_image_url,
+        reference_image_urls: isArray ? reference_image_url : (reference_image_url ? [reference_image_url] : []),
+    };
+    const response = await axiosInstance.post(BACKEND_URLS.imageGen.generateImage, payload);
 
     if (response) {
         return response.data;

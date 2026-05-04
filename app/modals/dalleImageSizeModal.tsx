@@ -8,7 +8,7 @@ import { uploadImage } from "@/managers/conversationsManager";
 interface DalleImageSizeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (imageSize: string, referenceImage: string | null) => void;
+  onConfirm: (imageSize: string, referenceImages: string[]) => void;
   conversationId?: string;
 }
 
@@ -52,6 +52,9 @@ const imageSizeOptions = [
   { value: "1536x1024", label: "3:2 (Landscape)", ratio: "3:2", description: "Standard landscape orientation" },
   { value: "1024x1536", label: "2:3 (Portrait)", ratio: "2:3", description: "Standard portrait orientation" },
 ];
+
+// gpt-image-2 supports up to 16 reference images via the images.edit endpoint.
+const MAX_REFERENCE_IMAGES = 16;
 
 // Aspect Ratio Visual Preview Component
 const AspectRatioPreview = ({ ratio, isSelected }: { ratio: string; isSelected: boolean }) => {
@@ -104,7 +107,7 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 }) => {
   const [translations, setTranslations] = useState<Translations | null>(null);
   const [selectedSize, setSelectedSize] = useState("1024x1024");
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImages, setReferenceImages] = useState<{ id: string; url: string }[]>([]);
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
   useEffect(() => {
@@ -119,34 +122,57 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
   // Reset state when conversation changes
   useEffect(() => {
     setSelectedSize("1024x1024");
-    setReferenceImage(null);
+    setReferenceImages([]);
   }, [conversationId]);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const file = e.target.files[0];
-    if (!file.type.startsWith("image/")) return;
+    const files = Array.from(e.target.files);
+    const remainingSlots = MAX_REFERENCE_IMAGES - referenceImages.length;
+    const filesToUpload = files.slice(0, remainingSlots);
+
+    if (filesToUpload.length === 0) return;
 
     setIsUploading(true);
 
     try {
-      const imageUrl = await uploadImage(file);
-      setReferenceImage(imageUrl);
+      const uploadPromises = filesToUpload.map(async (file) => {
+        if (file.type.startsWith("image/")) {
+          const imageUrl = await uploadImage(file);
+          return imageUrl;
+        }
+        return null;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter((url): url is string => url !== null);
+
+      const newImages = validUrls.map((url) => ({
+        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        url,
+      }));
+
+      setReferenceImages((prev) => [...prev, ...newImages]);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error uploading images:", error);
     } finally {
       setIsUploading(false);
       if (e.target) e.target.value = "";
     }
   };
 
-  const handleRemoveImage = () => {
-    setReferenceImage(null);
+  const handleRemoveImage = (index: number) => {
+    setReferenceImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearAllImages = () => {
+    setReferenceImages([]);
   };
 
   const handleConfirm = () => {
-    onConfirm(selectedSize, referenceImage);
+    const imageUrls = referenceImages.map((img) => img.url);
+    onConfirm(selectedSize, imageUrls);
     onClose();
   };
 
@@ -166,7 +192,7 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <div
           className="
-            relative w-full max-w-xl max-h-[85vh]
+            relative w-full max-w-2xl max-h-[85vh]
             bg-gradient-to-b from-zinc-800/95 to-zinc-900/95
             backdrop-blur-xl
             rounded-3xl
@@ -206,43 +232,46 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Reference Image Section */}
+            {/* Reference Images Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ImageIcon />
                   <label className="block text-sm font-medium text-white/70">
-                    Reference Image
+                    Reference Images
                   </label>
                   <span className="text-xs text-white/40">
-                    (optional)
+                    ({referenceImages.length}/{MAX_REFERENCE_IMAGES})
                   </span>
                 </div>
-                {referenceImage && (
+                {referenceImages.length > 0 && (
                   <button
-                    onClick={handleRemoveImage}
+                    onClick={handleClearAllImages}
                     className="text-xs text-red-400 hover:text-red-300 transition-colors"
                   >
-                    Remove
+                    Clear all
                   </button>
                 )}
               </div>
 
               <p className="text-xs text-white/40">
-                Upload a reference image for style guidance or image editing
+                Upload up to {MAX_REFERENCE_IMAGES} reference images for style guidance or image editing
               </p>
 
-              {/* Image Upload Area */}
-              <div className="flex gap-3">
-                {referenceImage ? (
-                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-white/10 group">
+              {/* Image Grid */}
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-2">
+                {referenceImages.map((img, index) => (
+                  <div
+                    key={img.id}
+                    className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group"
+                  >
                     <img
-                      src={referenceImage}
-                      alt="Reference"
+                      src={`${img.url}${img.url.includes('?') ? '&' : '?'}cb=${img.id}`}
+                      alt={`Reference ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={handleRemoveImage}
+                      onClick={() => handleRemoveImage(index)}
                       className="
                         absolute top-1 right-1 p-1 rounded-full
                         bg-black/60 text-white/70 hover:text-red-400
@@ -252,11 +281,16 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                     >
                       <SmallCloseIcon />
                     </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white/70 text-xs text-center py-0.5">
+                      {index + 1}
+                    </div>
                   </div>
-                ) : (
+                ))}
+
+                {referenceImages.length < MAX_REFERENCE_IMAGES && (
                   <label
                     className={`
-                      w-24 h-24 rounded-lg border-2 border-dashed
+                      aspect-square rounded-lg border-2 border-dashed
                       flex flex-col items-center justify-center gap-1
                       cursor-pointer transition-all duration-200
                       ${isUploading
@@ -270,12 +304,13 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                     ) : (
                       <>
                         <UploadIcon />
-                        <span className="text-xs text-white/50">Upload</span>
+                        <span className="text-xs text-white/50">Add</span>
                       </>
                     )}
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={handleImageUpload}
                       disabled={isUploading}
