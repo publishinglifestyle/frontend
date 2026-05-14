@@ -475,8 +475,8 @@ export default function AgentsPage() {
                 placeholder="Enter the system prompt for this agent..."
               />
 
-              {/* Bypass Prompt Improvement (DALL-E / Ideogram only) */}
-              {agentType === "image" && (agentModel === "dall-e" || agentModel === "ideogram") && (
+              {/* Bypass Prompt Improvement (all image agents) */}
+              {agentType === "image" && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-white/70">Prompt Processing</label>
                   <button
