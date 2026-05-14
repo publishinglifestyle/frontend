@@ -25,6 +25,7 @@ interface Agent {
   model: string;
   n_buttons: number;
   buttons: Button[];
+  bypass_prompt_improvement?: boolean;
 }
 
 interface Button {
@@ -172,6 +173,7 @@ export default function AgentsPage() {
   const [agentNButtons, setAgentNButtons] = useState(0);
   const [agentButtons, setAgentButtons] = useState<Button[]>([]);
   const [agentLanguage, setAgentLanguage] = useState("");
+  const [agentBypassPromptImprovement, setAgentBypassPromptImprovement] = useState(false);
 
   useEffect(() => {
     const detectLanguage = async () => {
@@ -216,6 +218,7 @@ export default function AgentsPage() {
       setAgentNButtons(current_agent.n_buttons);
       setAgentButtons(current_agent.buttons || []);
       setAgentLanguage(current_agent.language);
+      setAgentBypassPromptImprovement(!!current_agent.bypass_prompt_improvement);
     } catch (error) {
       console.error("Failed to load agent:", error);
     } finally {
@@ -251,7 +254,8 @@ export default function AgentsPage() {
           agentModel,
           agentNButtons,
           agentButtons,
-          agentLanguage
+          agentLanguage,
+          agentBypassPromptImprovement
         );
       } else {
         await updateAgent(
@@ -264,7 +268,8 @@ export default function AgentsPage() {
           agentModel,
           agentNButtons,
           agentButtons,
-          agentLanguage
+          agentLanguage,
+          agentBypassPromptImprovement
         );
       }
       const all_agents = await getAllAgents();
@@ -301,6 +306,7 @@ export default function AgentsPage() {
     setAgentNButtons(0);
     setAgentButtons([]);
     setAgentLanguage("both");
+    setAgentBypassPromptImprovement(false);
   };
 
   if (isLoading) {
@@ -468,6 +474,34 @@ export default function AgentsPage() {
                 onChange={(e) => setAgentPrompt(e.target.value)}
                 placeholder="Enter the system prompt for this agent..."
               />
+
+              {/* Bypass Prompt Improvement (DALL-E / Ideogram only) */}
+              {agentType === "image" && (agentModel === "dall-e" || agentModel === "ideogram") && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-white/70">Prompt Processing</label>
+                  <button
+                    type="button"
+                    onClick={() => setAgentBypassPromptImprovement(!agentBypassPromptImprovement)}
+                    className={`w-full flex items-center justify-between gap-4 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      agentBypassPromptImprovement
+                        ? "border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/20"
+                        : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="text-left">
+                      <p className={`font-medium ${agentBypassPromptImprovement ? "text-purple-300" : "text-white"}`}>
+                        Send prompt verbatim
+                      </p>
+                      <p className="text-sm text-white/50">
+                        Bypass prompt enhancement — the user&apos;s input is sent directly to the model
+                      </p>
+                    </div>
+                    <div className={`relative shrink-0 w-12 h-6 rounded-full transition-colors ${agentBypassPromptImprovement ? "bg-purple-500" : "bg-white/15"}`}>
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${agentBypassPromptImprovement ? "translate-x-[26px]" : "translate-x-0.5"}`} />
+                    </div>
+                  </button>
+                </div>
+              )}
 
               {/* Number of Buttons */}
               <div>

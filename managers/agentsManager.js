@@ -2,18 +2,18 @@ import { axiosInstance } from '@/utils/axios';
 import { BACKEND_URLS } from '@/constant/urls';
 
 
-export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons, language) {
+export async function createAgent(name, type, prompt, temperature, level, model, n_buttons, buttons, language, bypass_prompt_improvement) {
     const response = await axiosInstance.post(BACKEND_URLS.agent.createAgent,
-        { name, temperature, type, level, prompt, model, n_buttons, buttons, language });
+        { name, temperature, type, level, prompt, model, n_buttons, buttons, language, bypass_prompt_improvement });
 
     if (response) {
         return response.data.response;
     }
 }
 
-export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language) {
+export async function updateAgent(agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language, bypass_prompt_improvement) {
     const response = await axiosInstance.post(BACKEND_URLS.agent.updateAgent,
-        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language });
+        { agent_id, name, temperature, type, level, prompt, model, n_buttons, buttons, language, bypass_prompt_improvement });
 
     if (response) {
         return response.data.response;
