@@ -230,6 +230,18 @@ export async function getPnl(from, to) {
     }
 }
 
+export async function getTransactions(from, to) {
+    let url = BACKEND_URLS.stripe.transactions;
+    const params = [];
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+    if (params.length) url += `?${params.join('&')}`;
+    const response = await axiosInstance.get(url);
+    if (response) {
+        return response.data.response;
+    }
+}
+
 export async function logInGoogle(access_token, req_type) {
     let response = await axiosInstance.post(
         BACKEND_URLS.auth.signupGoogle,

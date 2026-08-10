@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/app/auth-context";
-import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats, getPlatformCosts, createPlatformCost, updatePlatformCost, deletePlatformCost, getPnl } from "@/managers/userManager";
+import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats, getPlatformCosts, createPlatformCost, updatePlatformCost, deletePlatformCost, getPnl, getTransactions } from "@/managers/userManager";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -177,8 +177,46 @@ interface PnlData {
 
 const fmtEur = (n: number) => `€${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+interface Transaction {
+  created: string;
+  customerEmail: string;
+  planInterval: string;
+  planAmountFormatted: string;
+  numeroAcquisto: number;
+  funnel: string;
+  amountRefunded: number;
+  fee: number;
+  transactionId: string;
+  currency: string;
+  status: string;
+}
+
+// CSV columns, in the exact order requested for the export.
+const TRANSACTION_COLUMNS: { header: string; value: (t: Transaction) => string | number }[] = [
+  { header: "Created", value: t => t.created },
+  { header: "Customer Email", value: t => t.customerEmail },
+  { header: "Plan Interval", value: t => t.planInterval },
+  { header: "Plan Amount Formatted", value: t => t.planAmountFormatted },
+  { header: "Numero Acquisto", value: t => t.numeroAcquisto },
+  { header: "Funnel", value: t => t.funnel },
+  { header: "Amount Refunded", value: t => t.amountRefunded.toFixed(2) },
+  { header: "Fee", value: t => t.fee.toFixed(2) },
+  { header: "Transaction ID", value: t => t.transactionId },
+  // Appended after the requested columns so their order stays exactly as asked.
+  { header: "Status", value: t => t.status },
+];
+
+// Quote every field so commas, quotes and newlines inside values stay intact.
+const csvCell = (value: string | number) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+const buildTransactionsCsv = (rows: Transaction[]) =>
+  [
+    TRANSACTION_COLUMNS.map(c => csvCell(c.header)).join(","),
+    ...rows.map(r => TRANSACTION_COLUMNS.map(c => csvCell(c.value(r))).join(",")),
+  ].join("\r\n");
+
 // ── Component ──────────────────────────────────────────
-type Tab = "overview" | "users" | "agents" | "costs" | "pnl";
+type Tab = "overview" | "users" | "agents" | "costs" | "pnl" | "transactions";
 
 export default function AdminPage() {
   const { user, impersonate } = useAuth();
@@ -217,6 +255,13 @@ export default function AdminPage() {
   const [costFormAmount, setCostFormAmount] = useState("");
   const [costFormCurrency, setCostFormCurrency] = useState<"EUR" | "USD">("EUR");
   const [costSaving, setCostSaving] = useState(false);
+  // Transactions export
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
+  const [txLoaded, setTxLoaded] = useState(false);
+  const [txRange, setTxRange] = useState({ from: "", to: "" });
+  const [txError, setTxError] = useState("");
+  const [txTruncated, setTxTruncated] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== "owner") { router.push("/chat"); return; }
@@ -282,6 +327,35 @@ export default function AdminPage() {
     try { setUsageLoading(true); setUsageData((await getUsageStats(from, to)) || null); }
     catch (err) { console.error("Failed to load usage stats", err); }
     finally { setUsageLoading(false); }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      setTxLoading(true);
+      setTxError("");
+      const data = await getTransactions(txRange.from, txRange.to);
+      setTransactions(data?.transactions || []);
+      setTxTruncated(Boolean(data?.truncated));
+      setTxLoaded(true);
+    } catch (err) {
+      console.error("Failed to load transactions", err);
+      setTxError("Failed to load transactions from Stripe");
+    } finally { setTxLoading(false); }
+  };
+
+  const downloadTransactionsCsv = () => {
+    if (!transactions.length) return;
+    // BOM so Excel opens the € sign and accented emails correctly.
+    const blob = new Blob(["﻿" + buildTransactionsCsv(transactions)], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const suffix = txRange.from || txRange.to ? `_${txRange.from || "start"}_${txRange.to || "today"}` : "";
+    link.href = url;
+    link.download = `transactions${suffix}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const fetchPnl = async (from?: string, to?: string) => {
@@ -416,6 +490,7 @@ export default function AdminPage() {
     { key: "costs", label: "AI Usage" },
     { key: "users", label: "Users" },
     { key: "agents", label: "Agents" },
+    { key: "transactions", label: "Transactions" },
   ];
 
   return (
@@ -844,6 +919,85 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className="text-center py-20 text-white/40">No agent usage data yet</div>
+          )}
+        </>
+      )}
+
+      {/* ══════════ TRANSACTIONS TAB ══════════ */}
+      {activeTab === "transactions" && (
+        <>
+          <div className="flex flex-wrap items-end gap-3 mb-6">
+            <div>
+              <label className="block text-xs text-white/40 mb-1">From</label>
+              <input type="date" value={txRange.from} onChange={e => setTxRange(r => ({ ...r, from: e.target.value }))}
+                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+            </div>
+            <div>
+              <label className="block text-xs text-white/40 mb-1">To</label>
+              <input type="date" value={txRange.to} onChange={e => setTxRange(r => ({ ...r, to: e.target.value }))}
+                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+            </div>
+            <button onClick={fetchTransactions} disabled={txLoading}
+              className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 text-sm font-medium hover:bg-purple-500/30 disabled:opacity-50">
+              {txLoading ? "Loading…" : "Load transactions"}
+            </button>
+            <button onClick={downloadTransactionsCsv} disabled={!transactions.length}
+              className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed">
+              Download CSV
+            </button>
+            {txLoaded && !txLoading && (
+              <span className="text-xs text-white/40 pb-2">{transactions.length.toLocaleString()} transactions</span>
+            )}
+          </div>
+
+          {txError && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{txError}</div>
+          )}
+
+          {txTruncated && !txLoading && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+              This period hit the export limit, so the list is incomplete and purchase numbers may be too low. Narrow the date range.
+            </div>
+          )}
+
+          {txLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500" />
+            </div>
+          ) : transactions.length > 0 ? (
+            <div className="bg-zinc-900/50 border border-white/10 rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      {TRANSACTION_COLUMNS.map(c => (
+                        <th key={c.header} className="text-left px-5 py-3 text-xs font-medium text-white/40 uppercase whitespace-nowrap">{c.header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map(t => (
+                      <tr key={t.transactionId} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="px-5 py-3 text-sm text-white/70 whitespace-nowrap">{new Date(t.created).toLocaleString()}</td>
+                        <td className="px-5 py-3 text-sm text-white">{t.customerEmail || "—"}</td>
+                        <td className="px-5 py-3 text-sm text-white/50">{t.planInterval || "—"}</td>
+                        <td className="px-5 py-3 text-sm text-white/70">{t.planAmountFormatted}</td>
+                        <td className="px-5 py-3 text-sm text-white/70">{t.numeroAcquisto}</td>
+                        <td className="px-5 py-3 text-sm text-white/50">{t.funnel || "—"}</td>
+                        <td className="px-5 py-3 text-sm text-white/70">{t.amountRefunded.toFixed(2)}</td>
+                        <td className="px-5 py-3 text-sm text-white/70">{t.fee.toFixed(2)}</td>
+                        <td className="px-5 py-3 text-xs text-white/40 font-mono">{t.transactionId}</td>
+                        <td className={`px-5 py-3 text-sm whitespace-nowrap ${t.status === "succeeded" ? "text-white/50" : "text-amber-400"}`}>{t.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-20 text-white/40">
+              {txLoaded ? "No transactions in this period" : "Pick a period and load transactions to export them as CSV"}
+            </div>
           )}
         </>
       )}
