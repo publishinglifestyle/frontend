@@ -4,17 +4,26 @@
  */
 
 const UTM_STORAGE_KEY = 'utm_data';
-const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+// Everything an ad or funnel may arrive with. `funnel` matters most: the CSV export
+// reads it before any utm_* key, so dropping it here meant the Funnel column could
+// never be filled. Click ids let a purchase be traced back when utm_* are absent.
+const UTM_PARAMS = [
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
+  'funnel', 'gclid', 'fbclid', 'ttclid',
+];
 
 /**
- * Capture UTM parameters from URL and store in localStorage (first-touch attribution)
- * @param {URLSearchParams} searchParams - URL search parameters
+ * Capture UTM parameters from URL and store in localStorage (first-touch attribution).
+ * @param {URLSearchParams} [searchParams] - URL search parameters; read from the current
+ *   URL when omitted, so this works from any entry point without a Suspense boundary.
  * @returns {object|null} The captured UTM data or null if none found or already exists
  */
 export function captureUtmParams(searchParams) {
   if (typeof window === 'undefined') {
     return null;
   }
+
+  const params = searchParams ?? new URLSearchParams(window.location.search);
 
   // First-touch attribution: only capture if no UTM data exists
   if (localStorage.getItem(UTM_STORAGE_KEY)) {
@@ -25,7 +34,7 @@ export function captureUtmParams(searchParams) {
   let hasUtmParams = false;
 
   UTM_PARAMS.forEach((param) => {
-    const value = searchParams.get(param);
+    const value = params.get(param);
     if (value) {
       utmData[param] = value;
       hasUtmParams = true;

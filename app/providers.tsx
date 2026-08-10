@@ -7,6 +7,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProviderProps } from "next-themes/dist/types";
 import { AuthProvider } from "./auth-context";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { captureUtmParams } from "@/utils/utm";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -15,6 +16,13 @@ export interface ProvidersProps {
 
 export function Providers({ children, themeProps }: ProvidersProps) {
   const router = useRouter();
+
+  // Attribution has to be captured wherever the visitor lands. Doing this only on the
+  // home page meant anyone arriving straight at /auth, /pricing or from an external
+  // funnel was never attributed, which is why Users.utm_data was empty for everyone.
+  useEffect(() => {
+    captureUtmParams();
+  }, []);
 
   useEffect(() => {
     // Dynamically load the Post Affiliate Pro tracking script
