@@ -9,7 +9,7 @@ const UTM_STORAGE_KEY = 'utm_data';
 // never be filled. Click ids let a purchase be traced back when utm_* are absent.
 const UTM_PARAMS = [
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
-  'funnel', 'gclid', 'fbclid', 'ttclid',
+  'funnel', 'gclid', 'fbclid', 'ttclid', 'variant',
 ];
 
 /**
@@ -25,8 +25,22 @@ export function captureUtmParams(searchParams) {
 
   const params = searchParams ?? new URLSearchParams(window.location.search);
 
-  // First-touch attribution: only capture if no UTM data exists
-  if (localStorage.getItem(UTM_STORAGE_KEY)) {
+  // Keep existing first-touch UTMs, but use the variant on the current
+  // landing link so each signup is attributed to the experiment page they saw.
+  const existing = localStorage.getItem(UTM_STORAGE_KEY);
+  if (existing) {
+    const variant = params.get('variant');
+    if (variant && ['A', 'B'].includes(variant.toUpperCase())) {
+      try {
+        const storedData = JSON.parse(existing);
+        if (storedData && typeof storedData === 'object' && !Array.isArray(storedData)) {
+          storedData.variant = variant.toUpperCase();
+          localStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(storedData));
+        }
+      } catch (e) {
+        console.error('Error parsing stored UTM data:', e);
+      }
+    }
     return null;
   }
 
@@ -36,7 +50,7 @@ export function captureUtmParams(searchParams) {
   UTM_PARAMS.forEach((param) => {
     const value = params.get(param);
     if (value) {
-      utmData[param] = value;
+      utmData[param] = param === 'variant' ? value.toUpperCase() : value;
       hasUtmParams = true;
     }
   });
