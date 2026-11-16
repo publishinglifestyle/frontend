@@ -153,7 +153,11 @@ export default function Home() {
     const searchParams = new URLSearchParams(window.location.search);
 
     captureUtmParams(searchParams);
-  }, []);
+    // Signup links may point at the landing page; the signup form lives on /home.
+    if (searchParams.get("mode") === "signup" || searchParams.get("signup") === "1") {
+      router.replace(`/home${window.location.search}`);
+    }
+  }, [router]);
 
   const onFrequencyChange = (selectedKey: Key) => {
     const frequencyIndex = frequencies.findIndex((f) => f.key === selectedKey);
