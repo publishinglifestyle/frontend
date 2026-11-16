@@ -3,14 +3,18 @@ import { BACKEND_URLS } from "@/constant/urls";
 import { axiosInstance } from "@/utils/axios";
 
 
-export async function signUp(first_name, last_name, email, password, password_2) {
+/**
+ * @param {object | null} [utmData]
+ */
+export async function signUp(first_name, last_name, email, password, password_2, utmData = null) {
     const response = await axiosInstance.post(BACKEND_URLS.auth.signup,
         {
             "first_name": first_name,
             "last_name": last_name,
             "email": email,
             "password": password,
-            "password_2": password_2
+            "password_2": password_2,
+            "utmData": utmData
         });
 
     if (response) {
@@ -242,11 +246,14 @@ export async function getTransactions(from, to) {
     }
 }
 
-export async function logInGoogle(access_token, req_type) {
+/**
+ * @param {object | null} [utmData]
+ */
+export async function logInGoogle(access_token, req_type, utmData = null) {
     let response = await axiosInstance.post(
         BACKEND_URLS.auth.signupGoogle,
         {
-            access_token, req_type
+            access_token, req_type, utmData
         });
 
     return {
