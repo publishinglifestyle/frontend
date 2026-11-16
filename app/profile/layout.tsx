@@ -44,7 +44,6 @@ export default function ProfileLayout({
                     />
                     <meta content="/og-image.jpg" name="twitter:image" />
                     <script
-                        type="application/ld+json"
                         dangerouslySetInnerHTML={{
                             __html: JSON.stringify({
                                 "@context": "https://schema.org",
@@ -59,6 +58,7 @@ export default function ProfileLayout({
                                 },
                             }),
                         }}
+                        type="application/ld+json"
                     />
                 </head>
             )}

@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { Button } from "@heroui/button";
-import { generateNurikabe } from "@/managers/gamesManager";
 import jsPDF from "jspdf";
+
+import { generateNurikabe } from "@/managers/gamesManager";
 
 interface NurikabeProps {
   size?: number;
@@ -79,6 +80,7 @@ export default function Nurikabe({ size, font }: NurikabeProps) {
     );
 
     const pdfDataUrl = doc.output("bloburl");
+
     window.open(pdfDataUrl, "_blank");
   };
 
@@ -163,8 +165,8 @@ export default function Nurikabe({ size, font }: NurikabeProps) {
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateNurikabe}
       >
         {isGenerating ? "Generating..." : "Generate Nurikabe PDF"}

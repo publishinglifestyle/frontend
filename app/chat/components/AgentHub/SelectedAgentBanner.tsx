@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { Agent } from "@/types/chat.types";
+
 import { getAgentConfig, ImageTypeIcon, TextTypeIcon } from "../agent-icons";
+
+import { Agent } from "@/types/chat.types";
 
 interface SelectedAgentBannerProps {
   selectedAgent?: Agent;
@@ -26,8 +28,8 @@ export const SelectedAgentBanner: React.FC<SelectedAgentBannerProps> = ({
           {translations?.no_agent || "No agent selected"}
         </span>
         <button
-          onClick={onChangeAgent}
           className="text-xs text-secondary hover:text-secondary/80 font-medium transition-colors"
+          onClick={onChangeAgent}
         >
           {translations?.change || "Select"}
         </button>
@@ -89,11 +91,11 @@ export const SelectedAgentBanner: React.FC<SelectedAgentBannerProps> = ({
 
       {/* Change button */}
       <button
-        onClick={onChangeAgent}
         className="text-xs px-2 py-1 rounded-md
                    bg-white/5 hover:bg-white/10
                    text-white/70 hover:text-white
                    transition-colors duration-200"
+        onClick={onChangeAgent}
       >
         {translations?.change || "Change"}
       </button>

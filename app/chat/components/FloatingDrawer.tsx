@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@heroui/react";
+
 import { Conversation } from "@/types/chat.types";
 
 interface FloatingDrawerProps {
@@ -25,41 +26,41 @@ interface FloatingDrawerProps {
 
 // Icons
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const PlusIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
 
 const ChatIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
 const CheckboxIcon = ({ checked, indeterminate }: { checked: boolean; indeterminate?: boolean }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" className={checked || indeterminate ? "fill-purple-500 stroke-purple-500" : ""} />
-    {checked && <path d="M9 12l2 2 4-4" className="stroke-white" strokeWidth="2" />}
-    {indeterminate && !checked && <path d="M8 12h8" className="stroke-white" strokeWidth="2" />}
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
+    <rect className={checked || indeterminate ? "fill-purple-500 stroke-purple-500" : ""} height="18" rx="2" width="18" x="3" y="3" />
+    {checked && <path className="stroke-white" d="M9 12l2 2 4-4" strokeWidth="2" />}
+    {indeterminate && !checked && <path className="stroke-white" d="M8 12h8" strokeWidth="2" />}
   </svg>
 );
 
@@ -100,6 +101,7 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
     if (diffDays < 7) return `${diffDays} days ago`;
+
     return date.toLocaleDateString();
   };
 
@@ -135,8 +137,8 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
             {translations?.conversations || "Conversations"}
           </h2>
           <button
-            onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+            onClick={onClose}
           >
             <CloseIcon />
           </button>
@@ -146,15 +148,15 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
         {conversations.length > 0 && selectedConversations.size > 0 && (
           <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
             <button
-              onClick={onSelectAll}
               className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+              onClick={onSelectAll}
             >
               <CheckboxIcon checked={isAllSelected} indeterminate={isPartiallySelected} />
               <span>Select All</span>
             </button>
             <button
-              onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors text-sm font-medium"
+              onClick={() => setShowDeleteConfirm(true)}
             >
               <TrashIcon />
               Delete ({selectedConversations.size})
@@ -191,16 +193,16 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
             >
               {/* Checkbox - Show on hover or when any item is selected */}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleSelect(conversation.id);
-                }}
                 className={`
                   flex-shrink-0 p-0.5 hover:bg-white/10 rounded transition-all
                   ${selectedConversations.size > 0 || selectedConversations.has(conversation.id)
                     ? "opacity-100 w-5"
                     : "opacity-0 group-hover:opacity-100 w-0 group-hover:w-5 overflow-hidden"}
                 `}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSelect(conversation.id);
+                }}
               >
                 <CheckboxIcon checked={selectedConversations.has(conversation.id)} />
               </button>
@@ -231,22 +233,22 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
               {/* Action Buttons - Always visible */}
               <div className="flex items-center gap-0.5 flex-shrink-0">
                 <button
+                  className="p-1.5 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                  title="Rename"
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditConversation(conversation);
                   }}
-                  className="p-1.5 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition-colors"
-                  title="Rename"
                 >
                   <EditIcon />
                 </button>
                 <button
+                  className="p-1.5 rounded-md hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
+                  title="Delete"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteConversation(conversation.id);
                   }}
-                  className="p-1.5 rounded-md hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors"
-                  title="Delete"
                 >
                   <TrashIcon />
                 </button>
@@ -273,17 +275,17 @@ export const FloatingDrawer: React.FC<FloatingDrawerProps> = ({
             </p>
             <div className="flex gap-3 justify-end">
               <Button
-                variant="flat"
                 className="bg-white/10 text-white"
-                onPress={() => setShowDeleteConfirm(false)}
                 isDisabled={isDeleting}
+                variant="flat"
+                onPress={() => setShowDeleteConfirm(false)}
               >
                 Cancel
               </Button>
               <Button
                 className="bg-red-500 text-white min-w-[100px]"
-                onPress={handleConfirmDelete}
                 isLoading={isDeleting}
+                onPress={handleConfirmDelete}
               >
                 Delete
               </Button>

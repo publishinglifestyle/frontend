@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
-import { Agent } from "@/types/chat.types";
-import { AgentCard } from "./AgentCard";
+
 import { ChevronUpIcon, ChevronDownIcon } from "../agent-icons";
+
+import { AgentCard } from "./AgentCard";
+
+import { Agent } from "@/types/chat.types";
 
 interface AgentHubProps {
   agents: Agent[];
@@ -59,11 +62,11 @@ export const AgentHub: React.FC<AgentHubProps> = ({
         </div>
 
         <button
-          onClick={onToggleExpanded}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg
                      bg-white/5 hover:bg-white/10
                      transition-colors duration-200
                      text-white/70 hover:text-white"
+          onClick={onToggleExpanded}
         >
           <span className="text-xs">
             {isExpanded

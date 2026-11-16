@@ -1,9 +1,10 @@
 "use client";
 
-import { scrambleWords } from "@/managers/gamesManager";
 import { Button } from "@heroui/button";
 import jsPDF from "jspdf";
 import { useState } from "react";
+
+import { scrambleWords } from "@/managers/gamesManager";
 
 interface ScrambleWordsProps {
   words?: string[];
@@ -36,6 +37,7 @@ export default function ScrambleWords({
     setIsGenerating(true);
     const cleanedWords = cleanWords(words || []);
     const scrambledWordsResponse = await scrambleWords(cleanedWords);
+
     setScrambledWords(scrambledWordsResponse);
 
     if (scrambledWordsResponse) {
@@ -83,6 +85,7 @@ export default function ScrambleWords({
         doc.text(originalWord, blankX, y);
       } else {
         const blankLine = Array(originalWord.length).fill("_").join(" ");
+
         doc.text(blankLine, blankX, y);
       }
 
@@ -109,6 +112,7 @@ export default function ScrambleWords({
   const generatePDF = (scrambledWords: ScrambledWord[]) => {
     const doc = new jsPDF("p", "mm", "a4");
     const margin = 20;
+
     doc.setFont(font || "times", "italic");
     doc.setFontSize(14);
 
@@ -144,6 +148,7 @@ export default function ScrambleWords({
     addContentToPDF(doc, gameContent, startY, true);
 
     const pdfDataUrl = doc.output("bloburl");
+
     window.open(pdfDataUrl, "_blank");
   };
 
@@ -160,8 +165,8 @@ export default function ScrambleWords({
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateScrambledWords}
       >
         {isGenerating ? "Generating..." : "Generate PDF"}

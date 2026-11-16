@@ -4,18 +4,19 @@ import React, { useState, useEffect, Key } from "react";
 import Head from "next/head";
 import { Button, Chip, Tab, Tabs } from "@heroui/react";
 import { useRouter } from "next/navigation";
-import { captureUtmParams } from "../utils/utm";
 import { motion } from "framer-motion";
+
+import { captureUtmParams } from "../utils/utm";
 
 // Icons
 const SparklesIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="48" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="48">
     <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
   </svg>
 );
 
 const AmazonIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="48" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="48">
     <path d="M21 12.5c0 2.5-3.5 5-9.5 5s-9.5-2.5-9.5-5" />
     <path d="M3 7.5c0-2.5 3.5-5 9.5-5s9.5 2.5 9.5 5" />
     <path d="M3 7.5v5" />
@@ -26,26 +27,26 @@ const AmazonIcon = () => (
 );
 
 const ClockIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="48" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="48">
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M20 6L9 17l-5-5" />
   </svg>
 );
 
 const QuoteIcon = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" className="opacity-20">
+  <svg className="opacity-20" fill="currentColor" height="32" viewBox="0 0 24 24" width="32">
     <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
   </svg>
 );
 
 const StarIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400">
+  <svg className="text-yellow-400" fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
   </svg>
 );
@@ -150,11 +151,13 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
     const searchParams = new URLSearchParams(window.location.search);
+
     captureUtmParams(searchParams);
   }, []);
 
   const onFrequencyChange = (selectedKey: Key) => {
     const frequencyIndex = frequencies.findIndex((f) => f.key === selectedKey);
+
     setSelectedFrequency(frequencies[frequencyIndex]);
   };
 
@@ -196,7 +199,7 @@ export default function Home() {
           transition={{ duration: 0.8 }}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-8">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+            <svg className="text-purple-400" fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
               <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
             </svg>
             <span className="text-purple-400 text-sm font-medium">AI-Powered Book Creation</span>
@@ -217,18 +220,18 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               className="px-8 py-6 text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-105"
-              onPress={() => router.push("/home")}
               size="lg"
+              onPress={() => router.push("/home")}
             >
               Get Started Now
             </Button>
             <Button
               className="px-8 py-6 text-lg font-semibold bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-all duration-300"
+              size="lg"
+              variant="bordered"
               onPress={() => {
                 document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" });
               }}
-              size="lg"
-              variant="bordered"
             >
               View Pricing
             </Button>
@@ -268,9 +271,9 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <motion.div
+                key={index}
                 className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 p-8 hover:border-purple-500/30 transition-all duration-300 group"
                 initial={{ opacity: 0, y: 20 }}
-                key={index}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 viewport={{ once: true }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -311,9 +314,9 @@ export default function Home() {
                   tabList: "bg-transparent gap-0",
                   cursor: "bg-gradient-to-r from-purple-600 to-violet-600",
                 }}
-                onSelectionChange={onFrequencyChange}
                 radius="full"
                 size="lg"
+                onSelectionChange={onFrequencyChange}
               >
                 {frequencies.map((frequency) => (
                   <Tab
@@ -337,13 +340,13 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {tiers.map((tier, index) => (
               <motion.div
+                key={tier.key}
                 className={`relative bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border overflow-hidden transition-all duration-300 ${
                   tier.mostPopular
                     ? "border-purple-500/50 scale-105 shadow-2xl shadow-purple-500/20"
                     : "border-white/10 hover:border-purple-500/30"
                 }`}
                 initial={{ opacity: 0, y: 20 }}
-                key={tier.key}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 viewport={{ once: true }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -373,15 +376,15 @@ export default function Home() {
                         ? "bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white shadow-lg shadow-purple-500/25"
                         : "bg-white/5 hover:bg-white/10 border border-white/10 text-white"
                     }`}
-                    onPress={() => router.push("/home")}
                     size="lg"
+                    onPress={() => router.push("/home")}
                   >
                     Get Started
                   </Button>
 
                   <div className="mt-8 space-y-4">
                     {tier.features.map((feature, featureIndex) => (
-                      <div className="flex items-center gap-3" key={featureIndex}>
+                      <div key={featureIndex} className="flex items-center gap-3">
                         <div className="w-5 h-5 bg-purple-500/20 rounded-full flex items-center justify-center text-purple-400">
                           <CheckIcon />
                         </div>
@@ -417,9 +420,9 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
               <motion.div
+                key={index}
                 className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 p-8 hover:border-purple-500/30 transition-all duration-300"
                 initial={{ opacity: 0, y: 20 }}
-                key={index}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 viewport={{ once: true }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -464,8 +467,8 @@ export default function Home() {
             </p>
             <Button
               className="px-10 py-6 text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-105"
-              onPress={() => router.push("/home")}
               size="lg"
+              onPress={() => router.push("/home")}
             >
               Get Started for Free
             </Button>

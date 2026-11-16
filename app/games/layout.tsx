@@ -22,42 +22,41 @@ export default function GamesLayout({
             Generation
           </title>
           <meta
-            name="description"
             content="Create and play a variety of interactive games like Sudoku, Crossword, and Word Search with Low Content AI. Customize and generate games with ease using advanced AI tools."
+            name="description"
           />
           <meta
-            name="keywords"
             content="Low Content AI, AI game creator, interactive games, Sudoku, Crossword, Word Search, Hangman, game creation tools"
+            name="keywords"
           />
-          <meta name="robots" content="index, follow" />
+          <meta content="index, follow" name="robots" />
           <meta
-            name="viewport"
             content="width=device-width, initial-scale=1.0"
+            name="viewport"
           />
-          <link rel="canonical" href="https://www.lowcontent.ai/games" />
+          <link href="https://www.lowcontent.ai/games" rel="canonical" />
           <meta
+            content="Play and Create Games with Low Content AI"
             property="og:title"
-            content="Play and Create Games with Low Content AI"
           />
           <meta
-            property="og:description"
             content="Create and play a variety of games with AI. Customize your game experience with Low Content AI's interactive tools."
+            property="og:description"
           />
-          <meta property="og:url" content="https://www.lowcontent.ai/games" />
-          <meta property="og:image" content="/og-image.jpg" />
-          <meta name="twitter:card" content="summary_large_image" />
+          <meta content="https://www.lowcontent.ai/games" property="og:url" />
+          <meta content="/og-image.jpg" property="og:image" />
+          <meta content="summary_large_image" name="twitter:card" />
           <meta
-            name="twitter:title"
             content="Play and Create Games with Low Content AI"
+            name="twitter:title"
           />
           <meta
-            name="twitter:description"
             content="Explore interactive game creation and play with Low Content AI. Generate Sudoku, Crossword, and more using AI tools."
+            name="twitter:description"
           />
-          <meta name="twitter:image" content="/og-image.jpg" />
+          <meta content="/og-image.jpg" name="twitter:image" />
           {/* Structured Data for SEO */}
           <script
-            type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
@@ -74,6 +73,7 @@ export default function GamesLayout({
                 },
               }),
             }}
+            type="application/ld+json"
           />
         </head>
       )}

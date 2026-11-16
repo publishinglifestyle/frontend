@@ -9,6 +9,7 @@ import {
   ModalFooter,
 } from "@heroui/modal";
 import { Button, Input } from "@heroui/react";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 
@@ -41,10 +42,12 @@ const PromptModal: React.FC<PromptModalProps> = ({
     const detectLanguage = async () => {
       // Detect browser language
       const browserLanguage = navigator.language;
+
       setLanguage(browserLanguage);
 
       // Get translations for the detected language
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
 
@@ -57,11 +60,11 @@ const PromptModal: React.FC<PromptModalProps> = ({
 
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="sm"
       isDismissable={false}
       isKeyboardDismissDisabled={true}
+      isOpen={isOpen}
+      size="sm"
+      onClose={onClose}
     >
       <ModalContent>
         <ModalHeader className="modal-header justify-center">
@@ -77,21 +80,21 @@ const PromptModal: React.FC<PromptModalProps> = ({
           }}
         >
           <Input
+            fullWidth
+            placeholder={translations?.enter_your_prompt_here}
+            radius="lg"
+            size="lg"
             value={prompt}
             onChange={handleInputChange}
-            placeholder={translations?.enter_your_prompt_here}
-            fullWidth
-            size="lg"
-            radius="lg"
           />
         </ModalBody>
         <ModalFooter>
           <Button
-            variant="ghost"
             fullWidth
             color="secondary"
             radius="lg"
             size="md"
+            variant="ghost"
             onPress={onClose}
           >
             {translations?.cancel}

@@ -13,7 +13,6 @@ import SingleConversationRow from "./conversation-history-row";
 
 import { Column, Conversation, Message } from "@/types/chat.types";
 import {
-  createConversation,
   deleteConversation,
   getConversation,
 } from "@/managers/conversationsManager";
@@ -62,6 +61,7 @@ const ChatSidebar = ({
         const current_agent = agents.find(
           (agent: any) => agent.id === conversation.agent_id
         );
+
         setSelectedAgent(current_agent);
       }
       
@@ -118,6 +118,7 @@ const ChatSidebar = ({
       prompt: "",
       role: "assistant",
     };
+
     console.log("Setting greeting message:", greetingMessage);
     setMessages([greetingMessage as Message]);
   };
@@ -197,6 +198,7 @@ const ChatSidebar = ({
                           const current_agent = agents.find(
                             (agent: any) => agent.id === conversation.agent_id
                           );
+
                           setSelectedAgent(current_agent);
                         } else {
                           setSelectedAgentId("");
@@ -239,6 +241,7 @@ const ChatSidebar = ({
                         const s_agent = agents.find(
                           (agent) => agent.id === conversation?.agent_id
                         );
+
                         setSelectedAgent(s_agent);
                         setIsLoading(false);
                       }}

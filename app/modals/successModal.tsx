@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
+
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
@@ -21,10 +22,12 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message })
         const detectLanguage = async () => {
             // Detect browser language
             const browserLanguage = navigator.language;
+
             setLanguage(browserLanguage);
 
             // Get translations for the detected language
             const translations = await getTranslations(browserLanguage);
+
             setTranslations(translations);
         };
 
@@ -32,7 +35,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message })
     }, []);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="md">
+        <Modal isOpen={isOpen} size="md" onClose={onClose}>
             <ModalContent>
                 <ModalHeader className="modal-header justify-center">
                     <h1 style={{ fontSize: "26px", textAlign: "center", justifyContent: "center" }}>{translations?.success}</h1>

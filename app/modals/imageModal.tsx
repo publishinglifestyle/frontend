@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
@@ -12,28 +13,28 @@ interface ImageModalProps {
 
 // Icons
 const CheckIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
         <path d="M20 6L9 17l-5-5" />
     </svg>
 );
 
 const ImageIcon = () => (
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <svg fill="none" height="32" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="32">
+        <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
         <circle cx="8.5" cy="8.5" r="1.5" />
         <polyline points="21 15 16 10 5 21" />
     </svg>
 );
 
 const CopyIcon = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+    <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
+        <rect height="13" rx="2" ry="2" width="13" x="9" y="9" />
         <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
     </svg>
 );
 
 const CloseIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
         <path d="M18 6L6 18M6 6l12 12" />
     </svg>
 );
@@ -49,8 +50,10 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
         const detectLanguage = async () => {
             const browserLanguage = navigator.language;
             const translations = await getTranslations(browserLanguage);
+
             setTranslations(translations);
         };
+
         detectLanguage();
     }, []);
 
@@ -101,8 +104,8 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
 
                     {/* Close button */}
                     <button
-                        onClick={onClose}
                         className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/10 transition-colors text-white/50 hover:text-white z-10"
+                        onClick={onClose}
                     >
                         <CloseIcon />
                     </button>
@@ -132,10 +135,10 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                         <div className="bg-black/30 rounded-2xl p-3 mb-6 border border-white/5">
                             <img
                                 key={imageUrl}
-                                src={displayImageUrl}
                                 alt="Uploaded content"
                                 className="w-full max-h-48 object-contain rounded-xl"
                                 crossOrigin="anonymous"
+                                src={displayImageUrl}
                             />
                         </div>
 
@@ -147,7 +150,6 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                         {/* Buttons */}
                         <div className="flex gap-3">
                             <button
-                                onClick={handleCopyToClipboard}
                                 className="
                                     flex-1 flex items-center justify-center gap-2
                                     px-4 py-3 rounded-xl
@@ -156,6 +158,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                                     text-white/80 hover:text-white
                                     transition-all duration-200
                                 "
+                                onClick={handleCopyToClipboard}
                             >
                                 {copied ? <CheckIcon /> : <CopyIcon />}
                                 <span className="text-sm font-medium">
@@ -164,7 +167,6 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                             </button>
 
                             <button
-                                onClick={onClose}
                                 className="
                                     flex-[2] px-6 py-3 rounded-xl
                                     bg-gradient-to-r from-purple-600 to-violet-600
@@ -174,6 +176,7 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
                                     shadow-lg shadow-purple-500/25
                                     hover:shadow-purple-500/40
                                 "
+                                onClick={onClose}
                             >
                                 Continue
                             </button>

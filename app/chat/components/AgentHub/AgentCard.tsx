@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { Agent } from "@/types/chat.types";
+
 import { getAgentConfig, CheckIcon, ImageTypeIcon, TextTypeIcon } from "../agent-icons";
+
+import { Agent } from "@/types/chat.types";
 
 interface AgentCardProps {
   agent: Agent;
@@ -20,7 +22,6 @@ export const AgentCard: React.FC<AgentCardProps> = ({
 
   return (
     <button
-      onClick={onSelect}
       className={`
         agent-card relative flex flex-col items-center justify-center
         w-28 h-28 rounded-xl cursor-pointer
@@ -38,6 +39,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           : "0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
         ["--glow-color" as string]: glowColor,
       }}
+      onClick={onSelect}
     >
       {/* Glass overlay */}
       <div className="absolute inset-0 rounded-xl bg-white/5 backdrop-blur-sm" />
@@ -48,7 +50,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
           style={{ backgroundColor: glowColor }}
         >
-          <CheckIcon size={12} className="text-white" />
+          <CheckIcon className="text-white" size={12} />
         </div>
       )}
 
@@ -77,9 +79,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({
         }}
       >
         {agent.type === "image" ? (
-          <ImageTypeIcon size={10} className="opacity-80" />
+          <ImageTypeIcon className="opacity-80" size={10} />
         ) : (
-          <TextTypeIcon size={10} className="opacity-80" />
+          <TextTypeIcon className="opacity-80" size={10} />
         )}
         <span className="uppercase tracking-wide font-medium">{label}</span>
       </div>

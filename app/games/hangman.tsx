@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@heroui/button";
 import jsPDF from "jspdf";
+
 import { generateHangman } from "@/managers/gamesManager";
 
 interface HangmanProps {
@@ -28,6 +29,7 @@ export default function Hangman({
 
     if (hangmanResponse?.response) {
       const base64Image = await getBase64Image("./hangman.png"); // Use the uploaded hangman.png
+
       generatePDF(hangmanResponse.response, base64Image);
     }
 
@@ -38,15 +40,19 @@ export default function Hangman({
   const getBase64Image = (imgUrl: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
+
       img.crossOrigin = "Anonymous";
       img.src = imgUrl;
       img.onload = () => {
         const canvas = document.createElement("canvas");
+
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext("2d");
+
         ctx?.drawImage(img, 0, 0);
         const dataURL = canvas.toDataURL("image/png");
+
         resolve(dataURL);
       };
       img.onerror = (error) => {
@@ -96,12 +102,14 @@ export default function Hangman({
 
         for (let i = 0; i < wordLength; i++) {
           const dashX = startX + i * wordSpacing;
+
           doc.text("_", dashX, dashY);
         }
       }
 
       // Add custom name or sequential number as title
       const titleText = is_sequential ? `Game ${index + 1}` : custom_name || "";
+
       doc.setFontSize(20);
       doc.text(titleText, pageWidth / 2, margin - 10, { align: "center" });
 
@@ -116,6 +124,7 @@ export default function Hangman({
     addSolutionsPage(doc, hangmanGames, custom_solution_name || "Solutions");
 
     const pdfDataUrl = doc.output("bloburl");
+
     window.open(pdfDataUrl, "_blank");
   };
 
@@ -124,6 +133,7 @@ export default function Hangman({
     const fontSize = 12;
     const letterSpacing = 10;
     const lettersPerRow = 13;
+
     doc.setFontSize(fontSize);
 
     const totalRowWidth = lettersPerRow * letterSpacing;
@@ -207,6 +217,7 @@ export default function Hangman({
 
       // Calculate X position based on current column
       const xPosition = margin + currentColumn * (columnWidth + margin);
+
       doc.text(solutionText, xPosition, currentY);
 
       // Increment Y position for next line
@@ -232,8 +243,8 @@ export default function Hangman({
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateHangman}
       >
         {isGenerating ? "Generating..." : "Generate Hangman PDF"}

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef, ChangeEvent } from "react";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
+
 import { describeImage, uploadImage } from "@/managers/conversationsManager";
 
 interface IdeogramModalProps {
@@ -27,41 +29,41 @@ interface IdeogramModalProps {
 
 // Icons
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const IdeogramIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="28" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="28">
     <circle cx="12" cy="12" r="10" />
     <path d="M12 16v-4M12 8h.01" />
   </svg>
 );
 
 const SettingsIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <circle cx="12" cy="12" r="3" />
     <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" />
   </svg>
 );
 
 const RemixIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M21 12a9 9 0 11-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
     <path d="M21 3v5h-5" />
   </svg>
 );
 
 const DescribeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
     <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
   </svg>
 );
 
 const UploadIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
   </svg>
 );
@@ -99,13 +101,13 @@ const CustomSelect = ({ label, value, onChange, options }: {
   <div className="space-y-2">
     <label className="block text-sm font-medium text-white/70">{label}</label>
     <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
       className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-200 appearance-none cursor-pointer"
       style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
     >
       {options.map((opt) => (
-        <option key={opt.key} value={opt.key} className="bg-zinc-900">
+        <option key={opt.key} className="bg-zinc-900" value={opt.key}>
           {opt.label}
         </option>
       ))}
@@ -160,8 +162,10 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
+
     detectLanguage();
 
     // Set default negative prompts for specific agents
@@ -176,10 +180,12 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
         "6eabf9e5-79b3-4aff-9325-52d4305f95f5",
         "20a151e9-1853-48ba-b888-6a59d9cbda5c"
       ];
+
       if (agentIds.includes(agentId)) {
         let negative_prompt = agentId === "88ab4ff2-dca1-4753-b3f4-2f34b564e4a5"
           ? "No thin lines. No fine details. No intricate textures. No delicate strokes. No light or faint outlines. No shading. No complex patterns. No background elements. No realism. No soft edges."
           : "no details";
+
         if (agentId === "20a151e9-1853-48ba-b888-6a59d9cbda5c") {
           negative_prompt = "No shading, gradients, or greyscale effects.";
           setStyleType("GENERAL");
@@ -235,6 +241,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+
       setSelectedImage(file);
 
       try {
@@ -331,8 +338,8 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
               </div>
             </div>
             <button
-              onClick={onClose}
               className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+              onClick={onClose}
             >
               <CloseIcon />
             </button>
@@ -344,7 +351,6 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => handleTabChange(tab.key)}
                   className={`
                     flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
                     text-sm font-medium transition-all duration-200
@@ -353,6 +359,7 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                       : "text-white/60 hover:text-white hover:bg-white/5"
                     }
                   `}
+                  onClick={() => handleTabChange(tab.key)}
                 >
                   {tab.icon}
                   {tab.label}
@@ -372,16 +379,16 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                   <div className="space-y-4">
                     <CustomSelect
                       label="Style Type"
+                      options={styleTypes}
                       value={styleType}
                       onChange={setStyleType}
-                      options={styleTypes}
                     />
 
                     <CustomSelect
                       label="Aspect Ratio"
+                      options={aspectRatios}
                       value={aspectRatio}
                       onChange={setAspectRatio}
-                      options={aspectRatios}
                     />
 
                     <CustomInput
@@ -405,10 +412,10 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
 
                     <CustomInput
                       label="Similarity (%)"
-                      type="number"
-                      min={0}
                       max={100}
+                      min={0}
                       placeholder="70"
+                      type="number"
                       value={remixSimilarity.toString()}
                       onChange={(e) => setRemixSimilarity(Number(e.target.value))}
                     />
@@ -421,16 +428,16 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                       {uploadedImageUrl ? (
                         <div className="relative">
                           <img
-                            src={uploadedImageUrl}
                             alt="Reference"
                             className="w-full max-h-48 object-contain rounded-xl border border-white/10"
+                            src={uploadedImageUrl}
                           />
                           <button
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/70 hover:text-red-400 transition-colors"
                             onClick={() => {
                               setSelectedImage(null);
                               setUploadedImageUrl("");
                             }}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/70 hover:text-red-400 transition-colors"
                           >
                             <CloseIcon />
                           </button>
@@ -444,9 +451,9 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                           </p>
                         </div>
                         <input
-                          type="file"
                           accept="image/*"
                           className="hidden"
+                          type="file"
                           onChange={handleImageChange}
                         />
                       </label>
@@ -470,17 +477,17 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                       {uploadedImageUrl ? (
                         <div className="relative">
                           <img
-                            src={uploadedImageUrl}
                             alt="Uploaded"
                             className="w-full max-h-48 object-contain rounded-xl border border-white/10"
+                            src={uploadedImageUrl}
                           />
                           <button
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/70 hover:text-red-400 transition-colors"
                             onClick={() => {
                               setSelectedImage(null);
                               setUploadedImageUrl("");
                               setDescriptionText("");
                             }}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/70 hover:text-red-400 transition-colors"
                           >
                             <CloseIcon />
                           </button>
@@ -497,9 +504,9 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                             </p>
                           </div>
                           <input
-                            type="file"
                             accept="image/*"
                             className="hidden"
+                            type="file"
                             onChange={handleImageChange}
                           />
                         </label>
@@ -531,7 +538,6 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
           {/* Footer */}
           <div className="relative p-6 border-t border-white/10 flex gap-4">
             <button
-              onClick={onClose}
               className="
                 flex-1 px-6 py-3 rounded-xl
                 bg-white/5 hover:bg-white/10
@@ -539,12 +545,11 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                 text-white font-medium
                 transition-all duration-200
               "
+              onClick={onClose}
             >
               {translations?.cancel || "Cancel"}
             </button>
             <button
-              onClick={handleConfirm}
-              disabled={activeTab === "describe" && !descriptionText}
               className="
                 flex-1 px-6 py-3 rounded-xl
                 bg-gradient-to-r from-purple-600 to-violet-600
@@ -554,6 +559,8 @@ const IdeogramModal: React.FC<IdeogramModalProps> = ({
                 transition-all duration-200
                 shadow-lg shadow-purple-500/25
               "
+              disabled={activeTab === "describe" && !descriptionText}
+              onClick={handleConfirm}
             >
               {activeTab === "describe"
                 ? "Use Description"

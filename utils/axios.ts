@@ -14,9 +14,11 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = Cookie.get("authToken");
+
     if (token) {
       config.headers.Authorization = token;
     }
+
     return config;
   },
   (error) => {
@@ -45,6 +47,7 @@ axiosInstance.interceptors.response.use(
         window.location.href = "/";
       }
     }
+
     return Promise.reject(error);
   }
 );

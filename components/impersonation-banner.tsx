@@ -1,7 +1,8 @@
 "use client";
 
-import { useAuth } from "@/app/auth-context";
 import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/app/auth-context";
 
 export const ImpersonationBanner = () => {
   const { isImpersonating, user, returnToAdmin } = useAuth();
@@ -20,8 +21,8 @@ export const ImpersonationBanner = () => {
         Logged in as: {user?.first_name} {user?.last_name} ({user?.email})
       </span>
       <button
-        onClick={handleReturn}
         className="px-4 py-1.5 rounded-lg bg-black text-white text-sm font-medium hover:bg-zinc-800 transition-colors"
+        onClick={handleReturn}
       >
         Return to Admin
       </button>

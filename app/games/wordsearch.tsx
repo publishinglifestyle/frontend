@@ -1,10 +1,12 @@
 "use client";
 
-import { generateWordSearch } from "@/managers/gamesManager";
 import { Button } from "@heroui/button";
 // No jsPDF needed
 import { useState } from "react";
+
 import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
+
+import { generateWordSearch } from "@/managers/gamesManager";
 
 // Interfaces remain the same...
 interface Word {
@@ -78,6 +80,7 @@ export default function WordSearch({
   // Helper to download a Data URL
   const downloadDataUrl = (dataUrl: string, filename: string) => {
     const link = document.createElement("a");
+
     link.href = dataUrl;
     link.download = filename;
     document.body.appendChild(link);
@@ -111,6 +114,7 @@ export default function WordSearch({
           "Could not generate the puzzle data. Please check the words input."
         );
         setIsGenerating(false);
+
         return;
       }
 
@@ -158,21 +162,26 @@ export default function WordSearch({
   ): Promise<void> => {
     return new Promise((resolve) => {
       const { grid, words: solutionWords } = wordSearchData;
+
       if (!grid || grid.length === 0) {
         console.warn(
           `Skipping single image generation for invalid data at index ${index}`
         );
         resolve();
+
         return;
       }
       const actualGridSize = grid.length;
       const canvas = document.createElement("canvas");
+
       canvas.width = imageWidth;
       canvas.height = imageHeight;
       const ctx = canvas.getContext("2d");
+
       if (!ctx) {
         console.error("Failed to get 2D context");
         resolve();
+
         return;
       }
 
@@ -189,11 +198,13 @@ export default function WordSearch({
         : is_sequential
         ? `Puzzle ${index + 1}`
         : custom_name || `Word Search Puzzle ${index + 1}`;
+
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.font = `bold ${titleFontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
       const titleY = margin;
+
       ctx.fillText(titleText, imageWidth / 2, titleY);
       let currentY = titleY + titleFontSize * lineSpacing;
 
@@ -208,6 +219,7 @@ export default function WordSearch({
         availableWidth / actualGridSize,
         maxGridHeightAllowed / actualGridSize
       );
+
       gridCellSizePx = Math.max(gridCellSizePx, 5);
       const gridWidthPx = actualGridSize * gridCellSizePx;
       const gridHeightPx = actualGridSize * gridCellSizePx;
@@ -251,12 +263,14 @@ export default function WordSearch({
         const sortedWords = [...solutionWords].sort((a, b) =>
           a.clean.localeCompare(b.clean)
         );
+
         sortedWords.forEach((wordData, i) => {
           const colIndex = i % wordsPerLine;
           const rowIndex = Math.floor(i / wordsPerLine);
           const wordY = currentY + rowIndex * (fontSize * lineSpacing);
 
           let wordX: number;
+
           if (colIndex === 0) {
             ctx.textAlign = "left";
             wordX = wordListStartX;
@@ -293,6 +307,7 @@ export default function WordSearch({
           ? custom_name.replace(/[^a-z0-9]/gi, "_").toLowerCase()
           : "wordsearch";
         const filename = `${baseFilename}${filenameSuffix}.png`;
+
         downloadDataUrl(dataUrl, filename);
         console.log(`Single image generated: ${filename}`);
       } catch (e: any) {
@@ -315,12 +330,15 @@ export default function WordSearch({
   ): Promise<void> => {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
+
       canvas.width = imageWidth;
       canvas.height = imageHeight;
       const ctx = canvas.getContext("2d");
+
       if (!ctx) {
         console.error("Failed to get 2D context for multi-solution page");
         resolve();
+
         return;
       }
 
@@ -342,11 +360,13 @@ export default function WordSearch({
         ? `Solutions ${startNum} - ${endNum}`
         : custom_solution_name ||
           `Word Search Solutions (Page ${pageIndex + 1})`;
+
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       ctx.font = `bold ${solutionTitleFontSize}px ${getFontFamily(font)}, Helvetica, Arial, sans-serif`;
       const titleY = margin;
+
       ctx.fillText(titleText, imageWidth / 2, titleY);
       let currentContentY = titleY + solutionTitleFontSize * lineSpacing + 20;
 
@@ -369,12 +389,14 @@ export default function WordSearch({
           "Calculated slot dimensions are invalid for multi-solution layout."
         );
         resolve();
+
         return;
       }
 
       // --- Loop through solutions for THIS page and draw grids ---
       solutionChunk.forEach((wordSearch, chunkIndex) => {
         const { grid, words: solutionWords } = wordSearch;
+
         if (!grid || grid.length === 0) return; // Skip invalid data in chunk
         const actualGridSize = grid.length;
 
@@ -391,6 +413,7 @@ export default function WordSearch({
           slotWidthPx / actualGridSize,
           slotHeightPx / actualGridSize
         );
+
         gridCellSizePx = Math.max(gridCellSizePx, 2); // Min cell size for solutions
         const gridWidthPx = actualGridSize * gridCellSizePx;
         const gridHeightPx = actualGridSize * gridCellSizePx;
@@ -426,6 +449,7 @@ export default function WordSearch({
           ? custom_solution_name.replace(/[^a-z0-9]/gi, "_").toLowerCase()
           : "wordsearch_solutions";
         const filename = `${baseFilename}_page_${pageIndex + 1}.png`;
+
         downloadDataUrl(dataUrl, filename);
         console.log(`Multi-solution image generated: ${filename}`);
       } catch (e: any) {
@@ -468,6 +492,7 @@ export default function WordSearch({
   }) => {
     if (!grid || grid.length === 0) return;
     const gridSize = grid.length;
+
     ctx.save();
     ctx.translate(offsetX, offsetY);
 
@@ -534,9 +559,11 @@ export default function WordSearch({
       for (let c = 0; c < gridSize; c++) {
         const cell = grid[r]?.[c];
         const letter = cell?.letter;
+
         if (typeof letter === "string" && letter.trim() !== "") {
           const x = c * cellSizePx + cellSizePx / 2;
           const y = r * cellSizePx + cellSizePx / 2;
+
           ctx.fillText(letter.toUpperCase(), x, y);
         }
       }
@@ -595,8 +622,8 @@ export default function WordSearch({
   return (
     <div style={{ textAlign: "center", margin: "20px" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateImages}
       >
         {isGenerating

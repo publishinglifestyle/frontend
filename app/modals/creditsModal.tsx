@@ -10,6 +10,7 @@ import {
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 
@@ -31,8 +32,10 @@ const CreditsModal: React.FC<CreditsModalProps> = ({
   useEffect(() => {
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
+
       setLanguage(browserLanguage);
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
 
@@ -50,11 +53,11 @@ const CreditsModal: React.FC<CreditsModalProps> = ({
 
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="md"
       isDismissable={false}
       isKeyboardDismissDisabled={true}
+      isOpen={isOpen}
+      size="md"
+      onClose={onClose}
     >
       <ModalContent>
         <ModalHeader className="modal-header justify-center">
@@ -70,9 +73,9 @@ const CreditsModal: React.FC<CreditsModalProps> = ({
         >
           <Select
             isRequired
-            size="sm"
             label={translations?.select_package || "Select a package"}
             placeholder={translations?.select_package || "Select a package"}
+            size="sm"
             onChange={(e) => setSelectedOption(e.target.value)}
           >
             <SelectItem key="1">9.99$ - 8M credits</SelectItem>
@@ -82,11 +85,11 @@ const CreditsModal: React.FC<CreditsModalProps> = ({
         </ModalBody>
         <ModalFooter>
           <Button
-            variant="ghost"
             fullWidth
             color="secondary"
             radius="lg"
             size="md"
+            variant="ghost"
             onPress={onClose}
           >
             {translations?.cancel || "Cancel"}

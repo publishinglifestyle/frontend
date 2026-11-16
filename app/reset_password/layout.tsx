@@ -20,33 +20,32 @@ export default function ResetPasswordLayout({
                 <head>
                     <title>Reset Your Password - Low Content AI</title>
                     <meta
-                        name="description"
                         content="Reset your password for Low Content AI. Enter your new password to regain access to your account and continue creating with AI tools."
+                        name="description"
                     />
                     <meta
-                        name="keywords"
                         content="Low Content AI, reset password, account recovery, secure password change"
+                        name="keywords"
                     />
-                    <meta name="robots" content="index, follow" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <link rel="canonical" href="https://www.lowcontent.ai/reset-password" />
-                    <meta property="og:title" content="Reset Your Password - Low Content AI" />
+                    <meta content="index, follow" name="robots" />
+                    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+                    <link href="https://www.lowcontent.ai/reset-password" rel="canonical" />
+                    <meta content="Reset Your Password - Low Content AI" property="og:title" />
                     <meta
-                        property="og:description"
                         content="Reset your password for Low Content AI to regain access to your account and continue your work."
+                        property="og:description"
                     />
-                    <meta property="og:url" content="https://www.lowcontent.ai/reset-password" />
-                    <meta property="og:image" content="/og-image.jpg" />
-                    <meta name="twitter:card" content="summary_large_image" />
-                    <meta name="twitter:title" content="Reset Your Password - Low Content AI" />
+                    <meta content="https://www.lowcontent.ai/reset-password" property="og:url" />
+                    <meta content="/og-image.jpg" property="og:image" />
+                    <meta content="summary_large_image" name="twitter:card" />
+                    <meta content="Reset Your Password - Low Content AI" name="twitter:title" />
                     <meta
-                        name="twitter:description"
                         content="Recover your Low Content AI account by resetting your password."
+                        name="twitter:description"
                     />
-                    <meta name="twitter:image" content="/og-image.jpg" />
+                    <meta content="/og-image.jpg" name="twitter:image" />
                     {/* Structured Data for SEO */}
                     <script
-                        type="application/ld+json"
                         dangerouslySetInnerHTML={{
                             __html: JSON.stringify({
                                 "@context": "https://schema.org",
@@ -61,6 +60,7 @@ export default function ResetPasswordLayout({
                                 },
                             }),
                         }}
+                        type="application/ld+json"
                     />
                 </head>
             )}

@@ -34,6 +34,7 @@ const registeredFonts = new Set<string>();
  */
 export function getFontFamily(fontName: string): string {
   const lowerName = fontName.toLowerCase();
+
   return FONT_FAMILY_MAP[lowerName] || fontName;
 }
 
@@ -94,6 +95,7 @@ export async function ensureFontsLoaded(fontNames: string[]): Promise<void> {
 
   for (const name of fontNames) {
     const lowerName = name.toLowerCase();
+
     if (CUSTOM_FONTS.includes(lowerName)) {
       loadPromises.push(registerFont(lowerName));
     }

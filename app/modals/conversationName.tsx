@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
+
 import { Conversation } from "@/types/chat.types";
 
 interface ConversationNameModalProps {
@@ -13,13 +15,13 @@ interface ConversationNameModalProps {
 
 // Icons
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="28" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="28">
     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
@@ -47,6 +49,7 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
 
@@ -89,8 +92,8 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
 
           {/* Close button */}
           <button
-            onClick={() => onClose()}
             className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/10 transition-colors text-white/50 hover:text-white z-10"
+            onClick={() => onClose()}
           >
             <CloseIcon />
           </button>
@@ -122,13 +125,6 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
                 {translations?.new_name || "New Name"}
               </label>
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={translations?.name || "Enter name..."}
-                // eslint-disable-next-line jsx-a11y/no-autofocus
-                autoFocus
                 className="
                   w-full px-4 py-3
                   bg-white/5 border border-white/10
@@ -137,13 +133,19 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
                   focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50
                   transition-all duration-200
                 "
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={translations?.name || "Enter name..."}
+                // eslint-disable-next-line jsx-a11y/no-autofocus
+                autoFocus
               />
             </div>
 
             {/* Buttons */}
             <div className="flex gap-3">
               <button
-                onClick={() => onClose()}
                 className="
                   flex-1 px-4 py-3 rounded-xl
                   bg-white/5 hover:bg-white/10
@@ -152,13 +154,12 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
                   font-medium
                   transition-all duration-200
                 "
+                onClick={() => onClose()}
               >
                 {translations?.cancel || "Cancel"}
               </button>
 
               <button
-                onClick={() => name.trim() && onClose(name)}
-                disabled={!name.trim()}
                 className={`
                   flex-1 px-6 py-3 rounded-xl
                   font-semibold
@@ -168,6 +169,8 @@ const ConversationNameModal: React.FC<ConversationNameModalProps> = ({
                     : "bg-white/5 text-white/30 cursor-not-allowed"
                   }
                 `}
+                disabled={!name.trim()}
+                onClick={() => name.trim() && onClose(name)}
               >
                 {translations?.confirm || "Confirm"}
               </button>

@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Agent } from "@/types/chat.types";
+
 import { getAgentConfig, CheckIcon } from "./agent-icons";
+
+import { Agent } from "@/types/chat.types";
 
 interface FloatingAgentSelectorProps {
   isOpen: boolean;
@@ -18,27 +20,27 @@ interface FloatingAgentSelectorProps {
 
 // Icons
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <circle cx="11" cy="11" r="8" />
     <path d="M21 21l-4.35-4.35" />
   </svg>
 );
 
 const TextIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
   </svg>
 );
 
 const ImageIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
+    <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
     <circle cx="8.5" cy="8.5" r="1.5" />
     <polyline points="21 15 16 10 5 21" />
   </svg>
@@ -61,6 +63,7 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
       activeTab === "all" ||
       (activeTab === "text" && agent.type === "text") ||
       (activeTab === "image" && agent.type === "image");
+
     return matchesSearch && matchesTab;
   });
 
@@ -110,8 +113,8 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
               {translations?.select_agent || "Select Agent"}
             </h2>
             <button
-              onClick={onClose}
               className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+              onClick={onClose}
             >
               <CloseIcon />
             </button>
@@ -122,10 +125,6 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
             {/* Search Input */}
             <div className="relative">
               <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search agents..."
                 className="
                   w-full pl-10 pr-4 py-3
                   bg-white/5 border border-white/10
@@ -134,6 +133,10 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                   focus:outline-none focus:border-purple-500/50
                   transition-colors
                 "
+                placeholder="Search agents..."
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
                 <SearchIcon />
@@ -149,7 +152,6 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as "all" | "text" | "image")}
                   className={`
                     flex items-center gap-2 px-4 py-2 rounded-xl
                     transition-all duration-200
@@ -158,6 +160,7 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                       : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-transparent"
                     }
                   `}
+                  onClick={() => setActiveTab(tab.key as "all" | "text" | "image")}
                 >
                   {tab.icon}
                   <span className="text-sm font-medium">{tab.label}</span>
@@ -171,7 +174,6 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {/* No Agent Option */}
               <button
-                onClick={handleNoAgent}
                 className={`
                   relative p-4 rounded-2xl
                   transition-all duration-200
@@ -181,17 +183,18 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                     : "bg-white/5 border-2 border-transparent hover:bg-white/10 hover:border-white/10"
                   }
                 `}
+                onClick={handleNoAgent}
               >
                 {/* Selected Checkmark */}
                 {!selectedAgentId && (
                   <div className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center bg-zinc-500">
-                    <CheckIcon size={14} className="text-white" />
+                    <CheckIcon className="text-white" size={14} />
                   </div>
                 )}
 
                 {/* Icon */}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-zinc-500/20 text-zinc-400">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M8 12h8" />
                   </svg>
@@ -215,7 +218,6 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                 return (
                   <button
                     key={agent.id}
-                    onClick={() => handleSelect(agent)}
                     className={`
                       relative p-4 rounded-2xl
                       transition-all duration-200
@@ -230,6 +232,7 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                         ? `0 0 30px ${config.glowColor}30`
                         : undefined,
                     }}
+                    onClick={() => handleSelect(agent)}
                   >
                     {/* Selected Checkmark */}
                     {isSelected && (
@@ -237,7 +240,7 @@ export const FloatingAgentSelector: React.FC<FloatingAgentSelectorProps> = ({
                         className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: config.glowColor }}
                       >
-                        <CheckIcon size={14} className="text-white" />
+                        <CheckIcon className="text-white" size={14} />
                       </div>
                     )}
 

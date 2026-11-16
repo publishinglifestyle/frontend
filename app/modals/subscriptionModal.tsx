@@ -18,6 +18,7 @@ import {
 import { Switch } from "@heroui/switch";
 import Cookie from "js-cookie";
 import React, { useEffect, useState } from "react";
+
 import { getTranslations } from "../../managers/languageManager";
 import {
   getSubscriptions,
@@ -69,6 +70,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         const filteredSubscriptions = all_subscriptions.filter(
           (subscription: { type: string }) => subscription.type === "year"
         );
+
         setSubscriptions(filteredSubscriptions);
       } catch (error) {
         console.error("Failed to fetch subscriptions:", error);
@@ -101,7 +103,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+    <Modal isOpen={isOpen} size="2xl" onClose={onClose}>
       <ModalContent>
         <ModalHeader className="modal-header justify-center">
           <h1 style={{ fontSize: "26px", textAlign: "center" }}>
@@ -120,13 +122,14 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           ) : (
             <div className="flex flex-col">
               <Switch
-                isSelected={isAnnual}
-                color="secondary"
                 className="mt-8"
+                color="secondary"
+                isSelected={isAnnual}
                 size="sm"
                 onChange={async () => {
                   setIsLoading(true);
                   let filteredSubscriptions = await getSubscriptions();
+
                   if (isAnnual) {
                     filteredSubscriptions = filteredSubscriptions.filter(
                       (subscription: { type: string }) =>
@@ -150,14 +153,14 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                 {subscriptions.map((sub) => (
                   <Card
                     key={sub.id}
-                    isPressable
                     isHoverable
-                    onPress={() => setSelectedSubscription(sub)}
+                    isPressable
                     className={`w-full mb-4 md:mb-0 ${selectedSubscription === sub
                       ? "border-4 border-purple-500 shadow-lg shadow-purple-500/50"
                       : ""
                       }`}
                     style={{ height: "200px" }}
+                    onPress={() => setSelectedSubscription(sub)}
                   >
                     <CardHeader
                       className="flex flex-col items-center justify-center"
@@ -193,9 +196,9 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         <ModalFooter className="mt-4 mb-2 justify-center">
           <Button
             color="secondary"
+            isDisabled={!selectedSubscription}
             style={{ color: "white", width: "150px" }}
             onPress={handleSubscriptionSelect}
-            isDisabled={!selectedSubscription}
           >
             {translations?.next}
           </Button>

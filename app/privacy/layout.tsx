@@ -20,33 +20,32 @@ export default function PrivacyLayout({
                 <head>
                     <title>Privacy Policy - Low Content AI</title>
                     <meta
-                        name="description"
                         content="Read the privacy policy of Low Content AI to understand how we collect, use, and protect your personal data. Learn about your rights and how to contact us."
+                        name="description"
                     />
                     <meta
-                        name="keywords"
                         content="Low Content AI, privacy policy, data protection, personal data, user rights, data security"
+                        name="keywords"
                     />
-                    <meta name="robots" content="index, follow" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <link rel="canonical" href="https://www.lowcontent.ai/privacy-policy" />
-                    <meta property="og:title" content="Privacy Policy - Low Content AI" />
+                    <meta content="index, follow" name="robots" />
+                    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+                    <link href="https://www.lowcontent.ai/privacy-policy" rel="canonical" />
+                    <meta content="Privacy Policy - Low Content AI" property="og:title" />
                     <meta
-                        property="og:description"
                         content="Learn about the privacy policy of Low Content AI, including data collection, usage, and user rights."
+                        property="og:description"
                     />
-                    <meta property="og:url" content="https://www.lowcontent.ai/privacy-policy" />
-                    <meta property="og:image" content="/og-image.jpg" />
-                    <meta name="twitter:card" content="summary_large_image" />
-                    <meta name="twitter:title" content="Privacy Policy - Low Content AI" />
+                    <meta content="https://www.lowcontent.ai/privacy-policy" property="og:url" />
+                    <meta content="/og-image.jpg" property="og:image" />
+                    <meta content="summary_large_image" name="twitter:card" />
+                    <meta content="Privacy Policy - Low Content AI" name="twitter:title" />
                     <meta
-                        name="twitter:description"
                         content="Understand how Low Content AI collects and protects your data. Read our privacy policy for more details."
+                        name="twitter:description"
                     />
-                    <meta name="twitter:image" content="/og-image.jpg" />
+                    <meta content="/og-image.jpg" name="twitter:image" />
                     {/* Structured Data for SEO */}
                     <script
-                        type="application/ld+json"
                         dangerouslySetInnerHTML={{
                             __html: JSON.stringify({
                                 "@context": "https://schema.org",
@@ -61,6 +60,7 @@ export default function PrivacyLayout({
                                 },
                             }),
                         }}
+                        type="application/ld+json"
                     />
                 </head>
             )}

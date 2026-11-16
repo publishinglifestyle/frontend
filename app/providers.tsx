@@ -5,8 +5,10 @@ import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ThemeProviderProps } from "next-themes/dist/types";
-import { AuthProvider } from "./auth-context";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+
+import { AuthProvider } from "./auth-context";
+
 import { captureUtmParams } from "@/utils/utm";
 
 export interface ProvidersProps {
@@ -27,6 +29,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   useEffect(() => {
     // Dynamically load the Post Affiliate Pro tracking script
     const script = document.createElement("script");
+
     script.src = "https://lowcontent.postaffiliatepro.com/scripts/trackjs.js";
     script.async = true;
     script.id = "pap_x2s6df8d";

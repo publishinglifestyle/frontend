@@ -23,6 +23,7 @@ export const getTranslations = async (
     const translations: Translations = await import(
       `../translations/${language}.json`
     ).then((module) => module.default);
+
     return translations;
   } catch (error) {
     console.error("Error loading translation file:", error);
@@ -30,6 +31,7 @@ export const getTranslations = async (
     const translations: Translations = await import(
       `../translations/${defaultLanguage}.json`
     ).then((module) => module.default);
+
     return translations;
   }
 };

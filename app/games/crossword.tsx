@@ -50,6 +50,7 @@ export default function Crossword({
         setError(`Grid size ${crosswordGrids} is too large for ${cross_words.length} words. Maximum recommended: ${maxRecommended}. Please reduce the grid size to avoid a mostly empty grid.`);
         setErrorModalOpen(true);
         setIsGenerating(false);
+
         return;
       }
     }
@@ -66,20 +67,24 @@ export default function Crossword({
       if (crosswordResponse) {
         // Check if all puzzles have the expected number of words
         const response = crosswordResponse.response;
+
         if (Array.isArray(response) && cross_words && cross_words.length > 0) {
           const expectedWordsPerPuzzle = wordsPerPuzzle === 1 ? cross_words.length : wordsPerPuzzle;
           const missingWordsInfo: string[] = [];
           
           response.forEach((crossword, index) => {
             const placedWordsCount = crossword.outputJson?.length || 0;
+
             if (placedWordsCount < expectedWordsPerPuzzle) {
               const missingCount = expectedWordsPerPuzzle - placedWordsCount;
+
               missingWordsInfo.push(`Puzzle ${index + 1}: ${missingCount} word(s) could not be placed`);
             }
           });
           
           if (missingWordsInfo.length > 0) {
             const warningMessage = `Warning: Some words could not be placed in the crossword grid:\n${missingWordsInfo.join('\n')}\n\nConsider:\n- Using a larger grid size\n- Using shorter words\n- Reducing the number of words per puzzle`;
+
             console.warn(warningMessage);
             // Still generate the PDF but show a warning
           }
@@ -148,6 +153,7 @@ export default function Crossword({
         }
 
         const position = startingPositions.get(key)!;
+
         if (orientation === "across") {
           position.acrossWords.push(word);
         } else {
@@ -160,14 +166,17 @@ export default function Crossword({
         .sort((a, b) => {
           const [, posA] = a;
           const [, posB] = b;
+
           if (posA.row !== posB.row) {
             return posA.row - posB.row;
           }
+
           return posA.col - posB.col;
         });
 
       // Step 3: Assign numbers to positions and update words
       const renumberedWords: any[] = [];
+
       sortedPositions.forEach(([key, position], idx) => {
         const clueNumber = idx + 1;
 
@@ -213,6 +222,7 @@ export default function Crossword({
         const activeCellSize = customCellSize || cellSize;
         const activeGridOffsetX = customGridOffsetX !== undefined ? customGridOffsetX : gridOffsetX;
         const activeGridOffsetY = customGridOffsetY !== undefined ? customGridOffsetY : gridOffsetY;
+
         for (let rowIndex = 0; rowIndex < rows; rowIndex++) {
           for (let colIndex = 0; colIndex < cols; colIndex++) {
             const x = activeGridOffsetX + colIndex * activeCellSize;
@@ -221,14 +231,17 @@ export default function Crossword({
             // Check if the current cell is part of any word
             const wordInCell = renumberedWords.some((word: any) => {
               const { startx, starty, answer, orientation } = word;
+
               for (let i = 0; i < answer.length; i++) {
                 const currentCol =
                   orientation === "across" ? startx + i : startx;
                 const currentRow = orientation === "down" ? starty + i : starty;
+
                 if (currentCol === colIndex && currentRow === rowIndex) {
                   return true;
                 }
               }
+
               return false;
             });
 
@@ -350,6 +363,7 @@ export default function Crossword({
       let currentY = gridOffsetY + rows * cellSize + headerSpacing;
 
       const headerFontSize = totalWords > 30 ? 7 : 8;
+
       doc.setFontSize(headerFontSize);
       doc.setFont(font || "times", "italic");
       doc.text("Across", leftColumnX, currentY);
@@ -364,6 +378,7 @@ export default function Crossword({
       ) => {
         // Use smaller font size for better fit when there are many clues
         const clueFontSize = totalWords > 30 ? 7 : (totalWords > 20 ? 8 : 9);
+
         doc.setFontSize(clueFontSize);
         doc.setFont(font || "times", "italic");
 
@@ -488,6 +503,7 @@ export default function Crossword({
             }
 
             const position = startingPositions.get(key)!;
+
             if (orientation === "across") {
               position.acrossWords.push(word);
             } else {
@@ -499,13 +515,16 @@ export default function Crossword({
             .sort((a, b) => {
               const [, posA] = a;
               const [, posB] = b;
+
               if (posA.row !== posB.row) {
                 return posA.row - posB.row;
               }
+
               return posA.col - posB.col;
             });
 
           const renumberedWords: any[] = [];
+
           sortedPositions.forEach(([key, position], idx) => {
             const clueNumber = idx + 1;
 
@@ -537,10 +556,12 @@ export default function Crossword({
 
           // Build a quick lookup map for letters in the grid
           const letterMap: Record<string, string> = {};
+
           renumberedWords.forEach(({ startx, starty, answer, orientation }) => {
             for (let i = 0; i < answer.length; i++) {
               const col = orientation === "across" ? startx + i : startx;
               const row = orientation === "down" ? starty + i : starty;
+
               letterMap[`${row}-${col}`] = answer[i];
             }
           });
@@ -652,6 +673,7 @@ export default function Crossword({
     // Validate grid size if provided
     if (crosswordGrids && crosswordGrids > 0) {
       const validWords = cross_words.filter(w => w.trim() !== "");
+
       if (validWords.length > 0) {
         const totalLetters = validWords.reduce((sum, w) => sum + w.trim().length, 0);
         const longestWord = Math.max(...validWords.map(w => w.trim().length), 0);

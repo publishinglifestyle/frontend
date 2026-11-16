@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@heroui/button"; // Assuming this Button component exists
-import { generateMinesweeper } from "@/managers/gamesManager"; // Assuming this fetches Minesweeper data
+
 import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
+
+import { generateMinesweeper } from "@/managers/gamesManager"; // Assuming this fetches Minesweeper data
 
 // Assuming bombSymbol is correctly imported or defined.
 // If it's a local path, ensure your build process handles it (e.g., copies it to the output directory or uses a data URL).
@@ -12,6 +14,7 @@ const bombSymbol = "./bomb.png"; // Path to your bomb image
 const downloadCanvasAsImage = (canvas: HTMLCanvasElement, filename: string) => {
   const dataUrl = canvas.toDataURL("image/png");
   const link = document.createElement("a");
+
   link.href = dataUrl;
   link.download = filename;
   document.body.appendChild(link); // Required for Firefox
@@ -23,6 +26,7 @@ const downloadCanvasAsImage = (canvas: HTMLCanvasElement, filename: string) => {
 const loadImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+
     img.onload = () => resolve(img);
     img.onerror = (err) => reject(`Failed to load image: ${src} - ${err}`);
     img.src = src;
@@ -111,6 +115,7 @@ export default function MineFinder({
         if (showBombs && cell.isMine && bombImageElement) {
           const imgX = cellX + (cellSize - bombImgSize) / 2;
           const imgY = cellY + (cellSize - bombImgSize) / 2;
+
           try {
             ctx.drawImage(
               bombImageElement,
@@ -137,9 +142,11 @@ export default function MineFinder({
             7: "#000000", // Black
             8: "#808080", // Gray
           };
+
           ctx.fillStyle = colors[cell.mines] || "#000000"; // Default to black
           const textX = cellX + cellSize / 2;
           const textY = cellY + cellSize / 2;
+
           ctx.fillText(cell.mines.toString(), textX, textY);
         }
       });
@@ -174,12 +181,14 @@ export default function MineFinder({
   const handleGenerateMineFinder = useCallback(async () => {
     if (!width || !height || !mines) {
       setErrorMsg("Please ensure Width, Height, and Mines are set.");
+
       return;
     }
     setErrorMsg(null);
     setIsGenerating(true);
 
     let bombImageElement: HTMLImageElement | null = null;
+
     try {
       // Ensure the font is loaded before drawing
       await ensureFontLoaded(font);
@@ -207,6 +216,7 @@ export default function MineFinder({
       // --- Canvas Setup ---
       const canvas = document.createElement("canvas"); // Create dynamically
       const ctx = canvas.getContext("2d");
+
       if (!ctx) {
         throw new Error("Could not get canvas context");
       }
@@ -220,6 +230,7 @@ export default function MineFinder({
       // --- Generate Puzzle Images ---
       for (let index = 0; index < minefields.length; index++) {
         const minefieldData = minefields[index];
+
         // Ensure data structure is correct (array of rows of cells)
         if (
           !Array.isArray(minefieldData.puzzle) ||
@@ -267,6 +278,7 @@ export default function MineFinder({
 
         // Download this puzzle image
         const puzzleFilename = `${puzzleTitle.replace(/\s+/g, "_")}.png`;
+
         downloadCanvasAsImage(canvas, puzzleFilename);
         await new Promise((resolve) => setTimeout(resolve, 100)); // Optional delay
       }
@@ -275,6 +287,7 @@ export default function MineFinder({
       if (num_puzzles === 1) {
         // Single puzzle, single solution image
         const minefieldData = minefields[0];
+
         if (
           !Array.isArray(minefieldData.solution) ||
           !Array.isArray(minefieldData.solution[0])
@@ -316,6 +329,7 @@ export default function MineFinder({
         );
 
         const solutionFilename = `${solutionTitle.replace(/\s+/g, "_")}.png`;
+
         downloadCanvasAsImage(canvas, solutionFilename);
       } else {
         // Multiple puzzles, generate compact solution images
@@ -356,6 +370,7 @@ export default function MineFinder({
           const pageTitle = custom_solution_name
             ? `${custom_solution_name} (Page ${page + 1})`
             : `Solutions ${startIdx + 1} - ${endIdx}`;
+
           ctx.font = `bold ${TITLE_FONT_SIZE}px ${getFontFamily(font)}`;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
@@ -367,6 +382,7 @@ export default function MineFinder({
 
           solutionsToShow.forEach((minefieldData: any, indexInPage: number) => {
             const gridIndex = startIdx + indexInPage; // Overall index
+
             if (
               !Array.isArray(minefieldData.solution) ||
               !Array.isArray(minefieldData.solution[0])
@@ -376,6 +392,7 @@ export default function MineFinder({
                   gridIndex + 1
                 } due to unexpected data structure.`
               );
+
               return; // Skip drawing this grid if data is bad
             }
 
@@ -414,6 +431,7 @@ export default function MineFinder({
           const solutionPageFilename = `${pageTitle
             .replace(/\s+/g, "_")
             .replace(/[()]/g, "")}.png`;
+
           downloadCanvasAsImage(canvas, solutionPageFilename);
           await new Promise((resolve) => setTimeout(resolve, 100)); // Delay
         }
@@ -456,8 +474,8 @@ export default function MineFinder({
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary" // Use your Button component's props
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateMineFinder} // Or onClick
       >
         {isGenerating ? "Generating..." : "Generate Mine finder Images"}

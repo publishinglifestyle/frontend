@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@heroui/button";
 import jsPDF from "jspdf";
+
 import { generateCryptogram } from "@/managers/gamesManager"; // Assuming you have this function
 
 interface CryptogramProps {
@@ -65,11 +66,13 @@ export default function Cryptogram({
 
       // Add the cryptogram text
       const cryptogramLines = doc.splitTextToSize(cryptogram, maxWidth);
+
       doc.text(cryptogramLines, margin, yPos);
       yPos += lineHeight * cryptogramLines.length;
 
       // Add the partially solved phrase below the cryptogram
       const puzzleLines = doc.splitTextToSize(partiallySolvedPhrase, maxWidth);
+
       doc.text(puzzleLines, margin, yPos);
       yPos += lineHeight * puzzleLines.length;
 
@@ -100,11 +103,13 @@ export default function Cryptogram({
 
       // Add the cryptogram text
       const cryptogramLines = doc.splitTextToSize(cryptogram, maxWidth);
+
       doc.text(cryptogramLines, margin, yPos);
       yPos += lineHeight * cryptogramLines.length;
 
       // Add the original phrase below the cryptogram
       const originalLines = doc.splitTextToSize(originalPhrase, maxWidth);
+
       doc.text(originalLines, margin, yPos);
       yPos += lineHeight * originalLines.length;
 
@@ -115,6 +120,7 @@ export default function Cryptogram({
     });
 
     const pdfDataUrl = doc.output("bloburl");
+
     window.open(pdfDataUrl, "_blank");
   };
 
@@ -131,8 +137,8 @@ export default function Cryptogram({
   return (
     <div style={{ textAlign: "center" }}>
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary"
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateCryptogram}
       >
         {isGenerating ? "Generating..." : "Generate PDF"}

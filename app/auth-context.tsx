@@ -1,6 +1,3 @@
-import { getSubscription } from "@/managers/subscriptionManager";
-import { getProfilePic, getUser } from "@/managers/userManager";
-import { IUser } from "@/types/user.types";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
@@ -14,6 +11,10 @@ import React, {
   useEffect,
   useState,
 } from "react";
+
+import { IUser } from "@/types/user.types";
+import { getProfilePic, getUser } from "@/managers/userManager";
+import { getSubscription } from "@/managers/subscriptionManager";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -63,6 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshSubscription = useCallback(async () => {
     try {
       const sub = await getSubscription();
+
       setSubscription(sub);
     } catch (error) {
       console.error(error);
@@ -83,6 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         (async () => {
           try {
             const user = await getUser(true);
+
             setUser(user);
           } catch (error) {
             console.error(error);
@@ -90,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           try {
             const logo = await getProfilePic();
+
             setProfilePic(logo);
           } catch (error) {
             console.error(error);
@@ -97,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           try {
             const sub = await getSubscription();
+
             setSubscription(sub);
           } catch (error) {
             console.error(error);
@@ -113,6 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const impersonate = async (token: string) => {
     const currentToken = Cookies.get("authToken");
+
     if (currentToken) {
       Cookies.set("adminToken", currentToken);
     }
@@ -121,10 +127,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Fetch new user data before navigating (avoids race condition)
     try {
       const newUser = await getUser(true);
+
       setUser(newUser);
       const sub = await getSubscription();
+
       setSubscription(sub);
       const logo = await getProfilePic();
+
       setProfilePic(logo);
     } catch (error) {
       console.error("Impersonate fetch error:", error);
@@ -133,16 +142,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const returnToAdmin = async () => {
     const adminToken = Cookies.get("adminToken");
+
     if (adminToken) {
       Cookies.set("authToken", adminToken);
       Cookies.remove("adminToken");
       setIsImpersonating(false);
       try {
         const newUser = await getUser(true);
+
         setUser(newUser);
         const sub = await getSubscription();
+
         setSubscription(sub);
         const logo = await getProfilePic();
+
         setProfilePic(logo);
       } catch (error) {
         console.error("Return to admin fetch error:", error);

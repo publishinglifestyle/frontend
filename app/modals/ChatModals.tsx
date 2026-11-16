@@ -1,13 +1,7 @@
-import { v4 as uuidv4 } from "uuid";
 
-import {
-  changeName,
-  describeImage,
-  remixImage,
-} from "@/managers/conversationsManager";
 
-import { Agent, Command, Conversation, Message } from "@/types/chat.types";
 import React, { Dispatch, SetStateAction } from "react";
+
 import CommandsModal from "./commandsModal";
 import ConversationNameModal from "./conversationName";
 import DalleImageSizeModal from "./dalleImageSizeModal";
@@ -17,6 +11,12 @@ import GeminiModal from "./geminiModal";
 import ImageModal from "./imageModal";
 import PromptModal from "./promptModal";
 import SuccessModal from "./successModal";
+
+import { Agent, Command, Conversation, Message } from "@/types/chat.types";
+import {
+  changeName,
+  remixImage,
+} from "@/managers/conversationsManager";
 
 interface ChatModals {
   isSuccessModalOpen: boolean;
@@ -146,6 +146,7 @@ const ChatModals = ({
     };
 
     const allMessages = [...messages, userMessage, typingMessage];
+
     setMessages(allMessages);
   };
 
@@ -153,6 +154,7 @@ const ChatModals = ({
     <>
       <SuccessModal
         isOpen={isSuccessModalOpen}
+        message={isActiveMessage}
         onClose={() => {
           setIsSuccessModalOpen(false);
           window.history.replaceState(
@@ -161,21 +163,21 @@ const ChatModals = ({
             window.location.pathname
           );
         }}
-        message={isActiveMessage}
       />
 
       <CommandsModal
         agentId={selectedAgent?.id || ""}
+        conversationId={currentConversation}
         isOpen={isCommandsModalOpen}
         onClose={() => setIsCommandsModalOpen(false)}
         onSuccess={(selected_commands) => {
           setPromptCommands(selected_commands);
           setIsCommandsModalOpen(false);
         }}
-        conversationId={currentConversation}
       />
 
       <DalleImageSizeModal
+        conversationId={currentConversation}
         isOpen={isDalleImageSizeModalOpen}
         onClose={() => setIsDalleImageSizeModalOpen(false)}
         onConfirm={(imageSize, referenceImages) => {
@@ -184,6 +186,7 @@ const ChatModals = ({
             { command: "size", value: imageSize },
             { command: "referenceImages", value: JSON.stringify(referenceImages || []) },
           ];
+
           setPromptCommands(selected_commands);
           // Show reference images in the input bar (same as attachment)
           if (referenceImages && referenceImages.length > 0) {
@@ -191,21 +194,20 @@ const ChatModals = ({
           }
           setIsDalleImageSizeModalOpen(false);
         }}
-        conversationId={currentConversation}
       />
 
       <IdeogramModal
         agentId={selectedAgent?.id}
-        selectedAspectRatio={selectedAspectRatio}
+        conversationId={currentConversation}
+        initialImageUrl={ideogramImageUrl}
+        initialPrompt={ideogramInitialPrompt}
+        initialTab={ideogramInitialTab}
         isOpen={isIdeogramModalOpen}
+        selectedAspectRatio={selectedAspectRatio}
         onClose={() => {
           setIsIdeogramModalOpen(false);
           setIdeogramInitialTab("");
         }}
-        conversationId={currentConversation}
-        initialTab={ideogramInitialTab}
-        initialImageUrl={ideogramImageUrl}
-        initialPrompt={ideogramInitialPrompt}
         onSuccess={async (
             selectedTab,
             styleType,
@@ -228,6 +230,7 @@ const ChatModals = ({
 
             if (selectedTab == "remix") {
               const convId = currentConversation;
+
               setIsGeneratingResponse(true);
 
               createMessageText(remixPrompt);
@@ -251,6 +254,7 @@ const ChatModals = ({
         />
 
       <GeminiModal
+        conversationId={currentConversation}
         isOpen={isGeminiModalOpen}
         onClose={() => setIsGeminiModalOpen(false)}
         onSuccess={(aspectRatio, useGoogleSearch, referenceImages) => {
@@ -259,6 +263,7 @@ const ChatModals = ({
             { command: "googleSearch", value: useGoogleSearch.toString() },
             { command: "referenceImages", value: JSON.stringify(referenceImages) },
           ];
+
           setPromptCommands(selected_commands);
           // Show reference images in the input bar
           if (referenceImages && referenceImages.length > 0) {
@@ -266,7 +271,6 @@ const ChatModals = ({
           }
           setIsGeminiModalOpen(false);
         }}
-        conversationId={currentConversation}
       />
 
       <ErrorModal
@@ -291,6 +295,7 @@ const ChatModals = ({
         onClose={() => setIsPromptModalOpen(false)}
         onSuccess={async (prompt) => {
           const convId = currentConversation;
+
           setIsPromptModalOpen(false);
           setIsGeneratingResponse(true);
           createMessageText(prompt);
@@ -307,8 +312,8 @@ const ChatModals = ({
       />
 
       <ConversationNameModal
-        isOpen={Boolean(isConversationNameModalOpen)}
         conversation={isConversationNameModalOpen}
+        isOpen={Boolean(isConversationNameModalOpen)}
         onClose={async (new_name) => {
           if (new_name) {
             setIsConversationNameModalOpen(null);

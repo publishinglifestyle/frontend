@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { Agent } from "@/types/chat.types";
+
 import { getAgentConfig } from "./agent-icons";
+
+import { Agent } from "@/types/chat.types";
 
 interface FloatingInputBarProps {
   value: string;
@@ -29,26 +31,26 @@ interface FloatingInputBarProps {
 
 // Icons
 const SendIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
   </svg>
 );
 
 const AttachIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
   </svg>
 );
 
 const MicIcon = ({ isRecording }: { isRecording: boolean }) => (
   <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
+    className={isRecording ? "text-red-500 animate-pulse" : ""}
     fill={isRecording ? "currentColor" : "none"}
+    height="20"
     stroke="currentColor"
     strokeWidth="2"
-    className={isRecording ? "text-red-500 animate-pulse" : ""}
+    viewBox="0 0 24 24"
+    width="20"
   >
     <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
     <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8" />
@@ -56,25 +58,25 @@ const MicIcon = ({ isRecording }: { isRecording: boolean }) => (
 );
 
 const StopIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="6" y="6" width="12" height="12" rx="2" />
+  <svg fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
+    <rect height="12" rx="2" width="12" x="6" y="6" />
   </svg>
 );
 
 const CommandIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z" />
   </svg>
 );
 
 const CloseIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const ChevronIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
@@ -102,6 +104,7 @@ const formatMessageText = (text: string): string => {
 // Check if text contains any markdown syntax
 const hasMarkdown = (text: string): boolean => {
   if (!text) return false;
+
   return /\*\*.*?\*\*|\*[^*]+\*|_[^_]+_|`[^`]+`/.test(text);
 };
 
@@ -132,6 +135,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
 
   const adjustTextareaHeight = useCallback(() => {
     const textarea = textareaRef.current;
+
     if (!textarea) return;
 
     // Reset height to auto to get the correct scrollHeight
@@ -139,6 +143,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
 
     // Calculate new height, clamped between min and max
     const newHeight = Math.min(Math.max(textarea.scrollHeight, MIN_HEIGHT), MAX_HEIGHT);
+
     textarea.style.height = `${newHeight}px`;
   }, []);
 
@@ -192,9 +197,9 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
                   className="inline-flex items-center gap-2 px-2 py-1.5 bg-white/5 border border-white/10 rounded-xl group"
                 >
                   <img
-                    src={imageUrl}
                     alt={`Reference ${index + 1}`}
                     className="h-10 w-auto rounded-lg border border-white/20"
+                    src={imageUrl}
                   />
                   {allPendingImages.length === 1 && (
                     <div className="flex flex-col">
@@ -203,9 +208,9 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
                     </div>
                   )}
                   <button
-                    onClick={() => onRemoveImage?.(index)}
                     className="p-1 rounded-lg bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
                     title="Remove"
+                    onClick={() => onRemoveImage?.(index)}
                   >
                     <CloseIcon />
                   </button>
@@ -223,7 +228,6 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
         {/* Agent Selector Button */}
         <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-white/5 overflow-x-auto scrollbar-none">
           <button
-            onClick={onOpenAgentSelector}
             className={`
               flex items-center gap-2 px-3 py-1.5 rounded-lg flex-shrink-0
               transition-all duration-200
@@ -232,6 +236,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
                 : "bg-purple-500/20 hover:bg-purple-500/30 text-purple-400"
               }
             `}
+            onClick={onOpenAgentSelector}
           >
             {selectedAgent ? (
               <>
@@ -254,8 +259,8 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
 
           {showCommands && onOpenCommands && (
             <button
-              onClick={onOpenCommands}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/70 hover:text-white flex-shrink-0"
+              onClick={onOpenCommands}
             >
               <CommandIcon />
               <span className="text-sm">Commands</span>
@@ -264,14 +269,14 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
 
           {selectedAgent?.model === "ideogram" && (
             <button
-              onClick={() => window.open("https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt", "_blank")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 transition-colors text-purple-400 hover:text-purple-300 flex-shrink-0"
+              onClick={() => window.open("https://low-content-ai-parameter-list.gitbook.io/low-content-ai/ideator-commands/ideator-prompt", "_blank")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
+                <line x1="16" x2="8" y1="13" y2="13" />
+                <line x1="16" x2="8" y1="17" y2="17" />
                 <polyline points="10 9 9 9 8 9" />
               </svg>
               <span className="text-sm">Prompts</span>
@@ -284,8 +289,8 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           <div className="px-4 py-2 border-b border-white/5">
             <div className="text-xs text-white/40 mb-1">Preview:</div>
             <div
-              className="text-sm text-white/90 [&>strong]:font-bold [&>em]:italic [&>code]:bg-white/10 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:font-mono [&>code]:text-xs"
               dangerouslySetInnerHTML={{ __html: formatMessageText(value) }}
+              className="text-sm text-white/90 [&>strong]:font-bold [&>em]:italic [&>code]:bg-white/10 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:font-mono [&>code]:text-xs"
             />
           </div>
         )}
@@ -295,14 +300,13 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           {/* Left Actions */}
           <div className="flex gap-1">
             <button
-              onClick={onAttachImage}
               className="p-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/60 hover:text-white"
               title="Attach image"
+              onClick={onAttachImage}
             >
               <AttachIcon />
             </button>
             <button
-              onClick={isRecording ? onStopRecording : onStartRecording}
               className={`
                 p-2.5 rounded-xl transition-colors
                 ${isRecording
@@ -311,6 +315,7 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
                 }
               `}
               title={isRecording ? "Stop recording" : "Start recording"}
+              onClick={isRecording ? onStopRecording : onStartRecording}
             >
               <MicIcon isRecording={isRecording} />
             </button>
@@ -319,14 +324,6 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
           {/* Textarea */}
           <textarea
             ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder={translations?.type_message || "Type your message..."}
-            disabled={disabled}
-            rows={1}
             className={`
               flex-1 bg-transparent text-white placeholder-white/40
               resize-none outline-none
@@ -334,22 +331,28 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
               overflow-y-auto
               scrollbar-thin scrollbar-thumb-white/10
             `}
+            disabled={disabled}
+            placeholder={translations?.type_message || "Type your message..."}
+            rows={1}
             style={{ minHeight: `${MIN_HEIGHT}px`, maxHeight: `${MAX_HEIGHT}px` }}
+            value={value}
+            onBlur={() => setIsFocused(false)}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onKeyDown={handleKeyDown}
           />
 
           {/* Send / Stop Button */}
           {isGenerating ? (
             <button
-              onClick={onStopGeneration}
               className="p-3 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
               title="Stop generating"
+              onClick={onStopGeneration}
             >
               <StopIcon />
             </button>
           ) : (
             <button
-              onClick={onSend}
-              disabled={(!value.trim() && !pendingImageUrl && pendingImages.length === 0) || disabled}
               className={`
                 p-3 rounded-xl transition-all duration-200
                 ${value.trim() || pendingImageUrl || pendingImages.length > 0
@@ -357,7 +360,9 @@ export const FloatingInputBar: React.FC<FloatingInputBarProps> = ({
                   : "bg-white/5 text-white/30 cursor-not-allowed"
                 }
               `}
+              disabled={(!value.trim() && !pendingImageUrl && pendingImages.length === 0) || disabled}
               title={translations?.send || "Send"}
+              onClick={onSend}
             >
               <SendIcon />
             </button>

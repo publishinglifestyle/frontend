@@ -14,43 +14,43 @@ const logo = "./logo.jpg";
 
 // Icons
 const MenuIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
     <path d="M3 12h18M3 6h18M3 18h18" />
   </svg>
 );
 
 const CloseIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const ChevronDownIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M6 9l6 6 6-6" />
   </svg>
 );
 
 const UserIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const LogoutIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
     <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
+    <line x1="21" x2="9" y1="12" y2="12" />
   </svg>
 );
 
 const ExternalLinkIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="14" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="14">
     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
     <polyline points="15 3 21 3 21 9" />
-    <line x1="10" y1="14" x2="21" y2="3" />
+    <line x1="10" x2="21" y1="14" y2="3" />
   </svg>
 );
 
@@ -82,8 +82,10 @@ export const Navbar = () => {
   useEffect(() => {
     const detectLanguage = async () => {
       const browserLanguage = navigator.language.slice(0, 2);
+
       setLanguage(browserLanguage);
       const all_translations = await getTranslations(browserLanguage);
+
       setTranslations(all_translations);
     };
 
@@ -96,6 +98,7 @@ export const Navbar = () => {
       setName("");
       setEmail("");
       setUserRole("");
+
       return;
     }
     setEmail(user.email);
@@ -142,6 +145,7 @@ export const Navbar = () => {
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
+
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
@@ -155,7 +159,9 @@ export const Navbar = () => {
         setUserDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -172,6 +178,7 @@ export const Navbar = () => {
     if (!isAuthenticatedClient) return false;
     if (item.language && item.language !== language) return false;
     if (userRole === "user" && !item.allow_user) return false;
+
     return true;
   });
 
@@ -179,6 +186,7 @@ export const Navbar = () => {
     if (!name) return false;
     if (item.language && item.language !== language) return false;
     if (userRole === "user" && !item.allow_user) return false;
+
     return true;
   });
 
@@ -193,13 +201,13 @@ export const Navbar = () => {
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
             <div className="flex items-center">
-              <NextLink href="/" className="flex items-center gap-3 group">
+              <NextLink className="flex items-center gap-3 group" href="/">
                 <div className="relative">
                   <div className="absolute inset-0 bg-purple-500/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <img
                     alt="Low Content AI"
-                    src={logo}
                     className="relative h-10 w-10 rounded-xl object-cover ring-2 ring-white/10 group-hover:ring-purple-500/50 transition-all duration-300"
+                    src={logo}
                   />
                 </div>
                 <span className="text-xl font-bold text-white group-hover:text-purple-400 transition-colors duration-300">
@@ -216,8 +224,8 @@ export const Navbar = () => {
                   {landingNavItems.map((item) => (
                     <button
                       key={item.label}
-                      onClick={() => scrollToSection(item.href)}
                       className="relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-white/70 hover:text-white hover:bg-white/5"
+                      onClick={() => scrollToSection(item.href)}
                     >
                       {item.label}
                     </button>
@@ -233,8 +241,6 @@ export const Navbar = () => {
                 return (
                   <NextLink
                     key={`${item.value}-${index}`}
-                    href={item.href}
-                    target={isExternal ? "_blank" : undefined}
                     className={`
                       relative px-4 py-2 rounded-xl text-sm font-medium
                       transition-all duration-200
@@ -244,6 +250,8 @@ export const Navbar = () => {
                         : "text-white/70 hover:text-white hover:bg-white/5"
                       }
                     `}
+                    href={item.href}
+                    target={isExternal ? "_blank" : undefined}
                   >
                     {item.label}
                     {isExternal && <ExternalLinkIcon />}
@@ -264,8 +272,8 @@ export const Navbar = () => {
                     Viewing as {authUser.first_name} ({authUser.email})
                   </span>
                   <button
-                    onClick={async () => { await returnToAdmin(); router.push("/admin"); }}
                     className="px-3 py-1.5 rounded-lg bg-amber-500 text-black text-xs font-semibold hover:bg-amber-400 transition-colors"
+                    onClick={async () => { await returnToAdmin(); router.push("/admin"); }}
                   >
                     Return to Admin
                   </button>
@@ -276,14 +284,14 @@ export const Navbar = () => {
               {isLandingPage && !isAuthenticatedClient && (
                 <>
                   <button
-                    onClick={() => router.push("/home")}
                     className="px-4 py-2 rounded-xl text-sm font-medium text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200"
+                    onClick={() => router.push("/home")}
                   >
                     Sign In
                   </button>
                   <button
-                    onClick={() => router.push("/home")}
                     className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:scale-105"
+                    onClick={() => router.push("/home")}
                   >
                     Get Started
                   </button>
@@ -293,8 +301,8 @@ export const Navbar = () => {
               {/* Landing Page - Authenticated User */}
               {isLandingPage && isAuthenticatedClient && (
                 <button
-                  onClick={() => router.push("/chat")}
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:scale-105"
+                  onClick={() => router.push("/chat")}
                 >
                   Go to App
                 </button>
@@ -302,19 +310,19 @@ export const Navbar = () => {
 
               {/* App User Profile */}
               {!isLandingPage && name && (
-                <div className="relative" ref={dropdownRef}>
+                <div ref={dropdownRef} className="relative">
                   <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                     className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-all duration-200"
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   >
                     {/* Avatar */}
                     <div className="relative">
                       <div className="absolute inset-0 bg-purple-500/30 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
                       {profilePic ? (
                         <img
-                          src={profilePic}
                           alt={name}
                           className="h-9 w-9 rounded-full object-cover ring-2 ring-purple-500/50"
+                          src={profilePic}
                         />
                       ) : (
                         <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-medium text-sm">
@@ -345,11 +353,11 @@ export const Navbar = () => {
                         {/* Menu Items */}
                         <div className="p-2">
                           <button
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200"
                             onClick={() => {
                               router.push("/profile");
                               setUserDropdownOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200"
                           >
                             <UserIcon />
                             <span className="text-sm">{translations?.my_profile || "My Profile"}</span>
@@ -358,8 +366,8 @@ export const Navbar = () => {
                           <div className="my-2 border-t border-white/10" />
 
                           <button
-                            onClick={signoutUser}
                             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200"
+                            onClick={signoutUser}
                           >
                             <LogoutIcon />
                             <span className="text-sm">Log Out</span>
@@ -375,8 +383,8 @@ export const Navbar = () => {
             {/* Mobile Menu Toggle */}
             {(showMenu || isLandingPage) && (
               <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden p-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
               </button>
@@ -407,8 +415,8 @@ export const Navbar = () => {
                   {landingNavItems.map((item) => (
                     <button
                       key={item.label}
-                      onClick={() => scrollToSection(item.href)}
                       className="w-full flex items-center px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200"
+                      onClick={() => scrollToSection(item.href)}
                     >
                       <span className="font-medium">{item.label}</span>
                     </button>
@@ -419,31 +427,31 @@ export const Navbar = () => {
                   {!isAuthenticatedClient ? (
                     <>
                       <button
+                        className="w-full px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200 font-medium"
                         onClick={() => {
                           router.push("/home");
                           setMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200 font-medium"
                       >
                         Sign In
                       </button>
                       <button
+                        className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200"
                         onClick={() => {
                           router.push("/home");
                           setMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200"
                       >
                         Get Started
                       </button>
                     </>
                   ) : (
                     <button
+                      className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200"
                       onClick={() => {
                         router.push("/chat");
                         setMobileMenuOpen(false);
                       }}
-                      className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-purple-500/25 transition-all duration-200"
                     >
                       Go to App
                     </button>
@@ -461,9 +469,9 @@ export const Navbar = () => {
                     <div className="flex items-center gap-4">
                       {profilePic ? (
                         <img
-                          src={profilePic}
                           alt={name}
                           className="h-14 w-14 rounded-2xl object-cover ring-2 ring-purple-500/50"
+                          src={profilePic}
                         />
                       ) : (
                         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-bold text-xl">
@@ -487,9 +495,6 @@ export const Navbar = () => {
                     return (
                       <NextLink
                         key={`mobile-${item.value}-${index}`}
-                        href={item.href}
-                        target={isExternal ? "_blank" : undefined}
-                        onClick={() => !isExternal && setMobileMenuOpen(false)}
                         className={`
                           flex items-center justify-between px-4 py-3 rounded-xl
                           transition-all duration-200
@@ -498,6 +503,9 @@ export const Navbar = () => {
                             : "text-white/70 hover:text-white hover:bg-white/5"
                           }
                         `}
+                        href={item.href}
+                        target={isExternal ? "_blank" : undefined}
+                        onClick={() => !isExternal && setMobileMenuOpen(false)}
                       >
                         <span className="font-medium">{item.label}</span>
                         {isExternal && <ExternalLinkIcon />}
@@ -510,27 +518,27 @@ export const Navbar = () => {
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10 bg-zinc-900/50">
                   {isImpersonating && authUser && (
                     <button
-                      onClick={async () => { await returnToAdmin(); router.push("/admin"); setMobileMenuOpen(false); }}
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-all duration-200 mb-2"
+                      onClick={async () => { await returnToAdmin(); router.push("/admin"); setMobileMenuOpen(false); }}
                     >
                       <span className="font-medium">Return to Admin</span>
                     </button>
                   )}
 
                   <button
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200 mb-2"
                     onClick={() => {
                       router.push("/profile");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/5 transition-all duration-200 mb-2"
                   >
                     <UserIcon />
                     <span className="font-medium">{translations?.my_profile || "My Profile"}</span>
                   </button>
 
                   <button
-                    onClick={signoutUser}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all duration-200"
+                    onClick={signoutUser}
                   >
                     <LogoutIcon />
                     <span className="font-medium">Log Out</span>

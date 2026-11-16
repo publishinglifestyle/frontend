@@ -1,12 +1,13 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
+
 import {
   FREE_CREDIT_KEY,
   FREE_CREDITS_NAME,
   FREE_TRIAL_NAME,
 } from "@/constant/credits";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, Suspense } from "react";
 
 const RedirectSubscription = () => {
   return (

@@ -10,11 +10,11 @@ interface IconProps {
 // DALL-E / OpenAI Icon
 export const DalleIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
@@ -26,18 +26,18 @@ export const DalleIcon: React.FC<IconProps> = ({ size = 24, className }) => (
       fill="currentColor"
       opacity={0.6}
     />
-    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <circle cx="12" cy="12" fill="currentColor" r="2" />
   </svg>
 );
 
 // Midjourney Icon
 export const MidjourneyIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
@@ -46,11 +46,11 @@ export const MidjourneyIcon: React.FC<IconProps> = ({ size = 24, className }) =>
     />
     <path
       d="M2 17l10 5 10-5M2 12l10 5 10-5"
+      fill="none"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill="none"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -58,35 +58,35 @@ export const MidjourneyIcon: React.FC<IconProps> = ({ size = 24, className }) =>
 // Ideogram Icon
 export const IdeogramIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2" fill="none" />
+    <rect fill="none" height="18" rx="3" stroke="currentColor" strokeWidth="2" width="18" x="3" y="3" />
     <path
       d="M7 12h10M12 7v10"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
+      strokeWidth="2"
     />
-    <circle cx="7" cy="7" r="1.5" fill="currentColor" />
-    <circle cx="17" cy="7" r="1.5" fill="currentColor" />
-    <circle cx="7" cy="17" r="1.5" fill="currentColor" />
-    <circle cx="17" cy="17" r="1.5" fill="currentColor" />
+    <circle cx="7" cy="7" fill="currentColor" r="1.5" />
+    <circle cx="17" cy="7" fill="currentColor" r="1.5" />
+    <circle cx="7" cy="17" fill="currentColor" r="1.5" />
+    <circle cx="17" cy="17" fill="currentColor" r="1.5" />
   </svg>
 );
 
 // Gemini Icon
 export const GeminiIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
@@ -104,21 +104,21 @@ export const GeminiIcon: React.FC<IconProps> = ({ size = 24, className }) => (
 // GPT Image Icon
 export const GptImageIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+    <rect fill="none" height="18" rx="2" stroke="currentColor" strokeWidth="2" width="18" x="3" y="3" />
+    <circle cx="8.5" cy="8.5" fill="currentColor" r="1.5" />
     <path
       d="M21 15l-5-5L5 21"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -126,11 +126,11 @@ export const GptImageIcon: React.FC<IconProps> = ({ size = 24, className }) => (
 // Text/Chat Agent Icon
 export const TextAgentIcon: React.FC<IconProps> = ({ size = 24, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
@@ -140,8 +140,8 @@ export const TextAgentIcon: React.FC<IconProps> = ({ size = 24, className }) => 
     <path
       d="M8 10h8M8 14h5"
       stroke="white"
-      strokeWidth="1.5"
       strokeLinecap="round"
+      strokeWidth="1.5"
     />
   </svg>
 );
@@ -149,21 +149,21 @@ export const TextAgentIcon: React.FC<IconProps> = ({ size = 24, className }) => 
 // Image type badge icon
 export const ImageTypeIcon: React.FC<IconProps> = ({ size = 16, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+    <rect fill="none" height="18" rx="2" stroke="currentColor" strokeWidth="2" width="18" x="3" y="3" />
+    <circle cx="8.5" cy="8.5" fill="currentColor" r="1.5" />
     <path
       d="M21 15l-5-5L5 21"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -171,19 +171,19 @@ export const ImageTypeIcon: React.FC<IconProps> = ({ size = 16, className }) => 
 // Text type badge icon
 export const TextTypeIcon: React.FC<IconProps> = ({ size = 16, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
       d="M4 7V4h16v3M9 20h6M12 4v16"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -191,38 +191,38 @@ export const TextTypeIcon: React.FC<IconProps> = ({ size = 16, className }) => (
 // Chevron icons for collapse/expand
 export const ChevronUpIcon: React.FC<IconProps> = ({ size = 20, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
       d="M18 15l-6-6-6 6"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
 
 export const ChevronDownIcon: React.FC<IconProps> = ({ size = 20, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
       d="M6 9l6 6 6-6"
       stroke="currentColor"
-      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="2"
     />
   </svg>
 );
@@ -230,19 +230,19 @@ export const ChevronDownIcon: React.FC<IconProps> = ({ size = 20, className }) =
 // Check icon for selected state
 export const CheckIcon: React.FC<IconProps> = ({ size = 16, className }) => (
   <svg
-    width={size}
+    className={className}
+    fill="none"
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
-    className={className}
+    width={size}
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
       d="M20 6L9 17l-5-5"
       stroke="currentColor"
-      strokeWidth="3"
       strokeLinecap="round"
       strokeLinejoin="round"
+      strokeWidth="3"
     />
   </svg>
 );

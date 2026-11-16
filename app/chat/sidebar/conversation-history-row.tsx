@@ -35,8 +35,8 @@ const SingleConversationRow = ({
       <div className="flex justify-end">
         <Button
           color="secondary"
-          variant="light"
           size="sm"
+          variant="light"
           onPress={() => {
             handleEditConversation(true);
           }}
@@ -45,8 +45,8 @@ const SingleConversationRow = ({
         </Button>
         <Button
           color="danger"
-          variant="light"
           size="sm"
+          variant="light"
           onPress={async () => {
             handleDeleteConversation(item.id);
           }}

@@ -5,16 +5,18 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 
-import ErrorModal from "@/app/modals/errorModal";
-import { getSubscription } from "@/managers/subscriptionManager";
-import { getUser } from "@/managers/userManager";
 import { useAuth } from "../auth-context";
 import SubscriptionModal from "../modals/subscriptionModal";
+
 import { abrilFatfaceFont } from "./fonts/abril_fatface";
 import { caveatVariableFont } from "./fonts/caveat_variable";
 import { dancingScriptFont } from "./fonts/dancing_script";
 import { shadowsIntoLightFont } from "./fonts/shadows_into_light";
 import GameSelector from "./GameSelector";
+
+import { getUser } from "@/managers/userManager";
+import { getSubscription } from "@/managers/subscriptionManager";
+import ErrorModal from "@/app/modals/errorModal";
 
 // Dynamically import the game components
 const Sudoku = dynamic(() => import("./sudoku"), {
@@ -30,16 +32,16 @@ const DotsToDots = dynamic(() => import("./dots"), { ssr: false });
 
 // Icons
 const GamepadIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <rect x="2" y="6" width="20" height="12" rx="2" />
+  <svg fill="none" height="48" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="48">
+    <rect height="12" rx="2" width="20" x="2" y="6" />
     <path d="M6 12h4M8 10v4" />
-    <circle cx="17" cy="10" r="1" fill="currentColor" />
-    <circle cx="15" cy="12" r="1" fill="currentColor" />
+    <circle cx="17" cy="10" fill="currentColor" r="1" />
+    <circle cx="15" cy="12" fill="currentColor" r="1" />
   </svg>
 );
 
 const SettingsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <circle cx="12" cy="12" r="3" />
     <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
   </svg>
@@ -127,6 +129,7 @@ export default function GamesPage() {
     if (!isAuthenticated) return;
     (async () => {
       const currentUser = await getUser();
+
       if (currentUser && currentUser?.role !== "owner") {
         showModalIfNoActiveSubscription();
       }
@@ -135,6 +138,7 @@ export default function GamesPage() {
 
   const showModalIfNoActiveSubscription = async () => {
     const currentSubscription = await getSubscription();
+
     if (currentSubscription && !currentSubscription?.is_active) {
       setShowSubscriptionModal(true);
     }
@@ -189,16 +193,17 @@ export default function GamesPage() {
     if (selectedGame === "7" && isMazeAllowed) {
       return (
         <iframe
-          src="https://lca-maze-e5a721fab7ab.herokuapp.com/"
-          width="100%"
           height="600px"
+          src="https://lca-maze-e5a721fab7ab.herokuapp.com/"
           style={{ border: "none", borderRadius: "12px" }}
           title="Maze Game"
+          width="100%"
         />
       );
     }
 
     const game = games.find((game) => game.id === selectedGame);
+
     if (game && game.component) {
       const GameComponent = game.component;
       const commonProps = {
@@ -216,19 +221,19 @@ export default function GamesPage() {
       } else if (selectedGame === "2") {
         return (
           <GameComponent
-            cross_words={crosswordWords.split(",")}
             clues={crosswordClues.split(",")}
-            wordsPerPuzzle={wordsPerPuzzle}
+            cross_words={crosswordWords.split(",")}
             crosswordGrids={crosswordGrids}
+            wordsPerPuzzle={wordsPerPuzzle}
             {...commonProps}
           />
         );
       } else if (selectedGame === "3") {
         return (
           <GameComponent
-            words={wordSearchWords.split(",")}
             fontSize={wordSearchFontSize}
             grid_size={wordSearchGridSize}
+            words={wordSearchWords.split(",")}
             {...commonProps}
           />
         );
@@ -241,9 +246,9 @@ export default function GamesPage() {
       } else if (selectedGame === "8") {
         return (
           <GameComponent
-            width={mineFinderWidth}
             height={mineFinderHeight}
             mines={mineCount}
+            width={mineFinderWidth}
             {...commonProps}
           />
         );
@@ -253,6 +258,7 @@ export default function GamesPage() {
         return <GameComponent {...commonProps} />;
       }
     }
+
     return null;
   };
 
@@ -271,9 +277,9 @@ export default function GamesPage() {
         <div className="relative max-w-7xl mx-auto">
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-5"
+            initial={{ opacity: 0, y: -20 }}
           >
             <div className="flex items-center gap-4 mb-2">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30 text-purple-400">
@@ -294,10 +300,10 @@ export default function GamesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Sidebar - Game Selection */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
               className="lg:col-span-1"
+              initial={{ opacity: 0, x: -20 }}
+              transition={{ delay: 0.1 }}
             >
               <div className="sticky top-4 bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 p-5">
                 <GameSelector
@@ -309,11 +315,11 @@ export default function GamesPage() {
 
             {/* Right Main Content - Configuration & Preview */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-2 space-y-6"
               ref={settingsRef}
+              animate={{ opacity: 1, x: 0 }}
+              className="lg:col-span-2 space-y-6"
+              initial={{ opacity: 0, x: 20 }}
+              transition={{ delay: 0.2 }}
             >
               {/* Configuration Card */}
               {selectedGame && (
@@ -343,9 +349,9 @@ export default function GamesPage() {
                         {/* Name Type */}
                         {selectedGame !== "7" && (
                           <CustomSelect
+                            defaultValue="sequential"
                             label="Name Type"
                             onChange={(e) => setIsSequential(e.target.value === "sequential")}
-                            defaultValue="sequential"
                           >
                             <option value="sequential">Sequential Name</option>
                             <option value="custom">Custom Name</option>
@@ -360,7 +366,7 @@ export default function GamesPage() {
                             onChange={(e) => setSelectedFont(e.target.value)}
                           >
                             {fonts.map((font) => (
-                              <option key={font} value={font} className="bg-zinc-900 capitalize">
+                              <option key={font} className="bg-zinc-900 capitalize" value={font}>
                                 {font}
                               </option>
                             ))}
@@ -373,15 +379,15 @@ export default function GamesPage() {
                             <CustomInput
                               label="Custom Name"
                               placeholder="Enter a custom name"
-                              onChange={(e) => setCustomName(e.target.value)}
                               value={customName}
+                              onChange={(e) => setCustomName(e.target.value)}
                             />
                             {selectedGame !== "9" && (
                               <CustomInput
                                 label="Custom Solution Name"
                                 placeholder="Enter a custom solution name"
-                                onChange={(e) => setCustomSolutionName(e.target.value)}
                                 value={customSolutionName}
+                                onChange={(e) => setCustomSolutionName(e.target.value)}
                               />
                             )}
                           </>
@@ -391,12 +397,12 @@ export default function GamesPage() {
                         {(selectedGame === "1" || selectedGame === "8") && (
                           <CustomInput
                             label="Number of Puzzles"
-                            type="number"
-                            min={1}
                             max={10}
+                            min={1}
                             placeholder="Enter number of puzzles"
-                            onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                            type="number"
                             value={numPuzzles.toString()}
+                            onChange={(e) => setNumPuzzles(Number(e.target.value))}
                           />
                         )}
 
@@ -404,11 +410,11 @@ export default function GamesPage() {
                         {(selectedGame === "1" || selectedGame === "8") && numPuzzles > 1 && (
                           <CustomSelect
                             label="Solutions per Page"
-                            onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                             value={solutionsPerPage.toString()}
+                            onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                           >
                             {[1, 2, 3, 4].map((option) => (
-                              <option key={option} value={option} className="bg-zinc-900">
+                              <option key={option} className="bg-zinc-900" value={option}>
                                 {option}
                               </option>
                             ))}
@@ -419,12 +425,12 @@ export default function GamesPage() {
                         {selectedGame === "1" && (
                           <CustomSelect
                             label="Difficulty"
-                            onChange={(e) => setSelectedDifficulty(e.target.value)}
                             value={selectedDifficulty}
+                            onChange={(e) => setSelectedDifficulty(e.target.value)}
                           >
-                            <option value="" className="bg-zinc-900">Select difficulty</option>
+                            <option className="bg-zinc-900" value="">Select difficulty</option>
                             {sudoku_difficulty.map((difficulty) => (
-                              <option key={difficulty} value={difficulty} className="bg-zinc-900 capitalize">
+                              <option key={difficulty} className="bg-zinc-900 capitalize" value={difficulty}>
                                 {difficulty}
                               </option>
                             ))}
@@ -438,63 +444,64 @@ export default function GamesPage() {
                               <CustomInput
                                 label="Words (comma separated)"
                                 placeholder="Enter words separated by commas"
-                                onChange={(e) => setCrosswordWords(e.target.value)}
                                 value={crosswordWords}
+                                onChange={(e) => setCrosswordWords(e.target.value)}
                               />
                             </div>
                             <div className="md:col-span-2">
                               <CustomInput
                                 label="Clues (comma separated)"
                                 placeholder="Enter clues separated by commas"
-                                onChange={(e) => setCrosswordClues(e.target.value)}
                                 value={crosswordClues}
+                                onChange={(e) => setCrosswordClues(e.target.value)}
                               />
                             </div>
                             <CustomInput
                               label="Number of Puzzles"
-                              type="number"
-                              min={1}
                               max={10}
+                              min={1}
                               placeholder="Enter number of puzzles"
-                              onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                              type="number"
                               value={numPuzzles.toString()}
+                              onChange={(e) => setNumPuzzles(Number(e.target.value))}
                             />
                             <CustomInput
                               label="Grid Size (0 for auto)"
-                              type="number"
-                              min={0}
                               max={30}
+                              min={0}
                               placeholder="Enter grid size or 0 for auto"
-                              onChange={(e) => setCrosswordGrids(Number(e.target.value))}
+                              type="number"
                               value={crosswordGrids.toString()}
+                              onChange={(e) => setCrosswordGrids(Number(e.target.value))}
                             />
                             {numPuzzles > 1 && (
                               <>
                                 <CustomSelect
                                   label="Solutions per Page"
-                                  onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                                   value={solutionsPerPage.toString()}
+                                  onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                                 >
                                   {[1, 2, 3, 4].map((option) => (
-                                    <option key={option} value={option} className="bg-zinc-900">
+                                    <option key={option} className="bg-zinc-900" value={option}>
                                       {option}
                                     </option>
                                   ))}
                                 </CustomSelect>
                                 <CustomInput
                                   label="Words per Puzzle"
-                                  type="number"
-                                  min={1}
                                   max={10}
+                                  min={1}
                                   placeholder="Enter number of words"
-                                  onChange={(e) => setWordsPerPuzzle(Number(e.target.value))}
+                                  type="number"
                                   value={wordsPerPuzzle.toString()}
+                                  onChange={(e) => setWordsPerPuzzle(Number(e.target.value))}
                                 />
                               </>
                             )}
                             {/* Crossword Grid Size Validation */}
                             {crosswordGrids > 0 && crosswordWords && (() => {
                               const words = crosswordWords.split(",").map(w => w.trim()).filter(w => w);
+
                               if (words.length === 0) return null;
 
                               const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
@@ -527,6 +534,7 @@ export default function GamesPage() {
                                   </p>
                                 );
                               }
+
                               return null;
                             })()}
                           </>
@@ -539,36 +547,36 @@ export default function GamesPage() {
                               <CustomInput
                                 label="Words (comma separated)"
                                 placeholder="Enter words separated by commas"
-                                onChange={(e) => setWordSearchWords(e.target.value)}
                                 value={wordSearchWords}
+                                onChange={(e) => setWordSearchWords(e.target.value)}
                               />
                             </div>
                             <CustomInput
                               label="Number of Puzzles"
-                              type="number"
-                              min={1}
                               max={10}
+                              min={1}
                               placeholder="Enter number of puzzles"
-                              onChange={(e) => setNumPuzzles(Number(e.target.value))}
+                              type="number"
                               value={numPuzzles.toString()}
+                              onChange={(e) => setNumPuzzles(Number(e.target.value))}
                             />
                             <CustomInput
                               label="Grid Size"
-                              type="number"
-                              min={8}
                               max={25}
+                              min={8}
                               placeholder="Enter grid size"
-                              onChange={(e) => setWordSearchGridSize(Number(e.target.value))}
+                              type="number"
                               value={wordSearchGridSize.toString()}
+                              onChange={(e) => setWordSearchGridSize(Number(e.target.value))}
                             />
                             {numPuzzles > 1 && (
                               <CustomSelect
                                 label="Solutions per Page"
-                                onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                                 value={solutionsPerPage.toString()}
+                                onChange={(e) => setSolutionsPerPage(Number(e.target.value))}
                               >
                                 {[1, 2, 3, 4].map((option) => (
-                                  <option key={option} value={option} className="bg-zinc-900">
+                                  <option key={option} className="bg-zinc-900" value={option}>
                                     {option}
                                   </option>
                                 ))}
@@ -576,20 +584,20 @@ export default function GamesPage() {
                             )}
                             <CustomInput
                               label="Font Size"
-                              type="number"
-                              min={30}
                               max={60}
+                              min={30}
                               placeholder="Enter font size"
-                              onChange={(e) => setWordSearchFontSize(Number(e.target.value))}
+                              type="number"
                               value={wordSearchFontSize.toString()}
+                              onChange={(e) => setWordSearchFontSize(Number(e.target.value))}
                             />
                             <CustomSelect
                               label="Invert Words"
-                              onChange={(e) => setInvertWords(Number(e.target.value))}
                               value={invertWords.toString()}
+                              onChange={(e) => setInvertWords(Number(e.target.value))}
                             >
-                              <option value="0" className="bg-zinc-900">No</option>
-                              <option value="0.5" className="bg-zinc-900">Yes</option>
+                              <option className="bg-zinc-900" value="0">No</option>
+                              <option className="bg-zinc-900" value="0.5">Yes</option>
                             </CustomSelect>
                             {/* Word Search Grid Size Validation */}
                             {(() => {
@@ -598,6 +606,7 @@ export default function GamesPage() {
                               }
 
                               const words = wordSearchWords.split(",").map(w => w.trim()).filter(w => w);
+
                               if (words.length === 0) return null;
 
                               const totalLetters = words.reduce((sum, w) => sum + w.length, 0);
@@ -634,6 +643,7 @@ export default function GamesPage() {
                                   </p>
                                 );
                               }
+
                               return null;
                             })()}
                           </>
@@ -645,8 +655,8 @@ export default function GamesPage() {
                             <CustomInput
                               label="Words (comma separated)"
                               placeholder="Enter words separated by commas"
-                              onChange={(e) => setHangmanWord(e.target.value)}
                               value={hangmanWord}
+                              onChange={(e) => setHangmanWord(e.target.value)}
                             />
                           </div>
                         )}
@@ -657,8 +667,8 @@ export default function GamesPage() {
                             <CustomInput
                               label="Words (comma separated)"
                               placeholder="Enter words separated by commas"
-                              onChange={(e) => setScrambleWordsInput(e.target.value)}
                               value={scrambleWordsInput}
+                              onChange={(e) => setScrambleWordsInput(e.target.value)}
                             />
                           </div>
                         )}
@@ -669,8 +679,8 @@ export default function GamesPage() {
                             <CustomInput
                               label="Phrases (comma separated)"
                               placeholder="Enter phrases separated by commas"
-                              onChange={(e) => setCryptogramPhrases(e.target.value)}
                               value={cryptogramPhrases}
+                              onChange={(e) => setCryptogramPhrases(e.target.value)}
                             />
                           </div>
                         )}
@@ -680,30 +690,30 @@ export default function GamesPage() {
                           <>
                             <CustomInput
                               label="Grid Width"
-                              type="number"
-                              min={3}
                               max={30}
+                              min={3}
                               placeholder="Enter grid width"
-                              onChange={(e) => setMineFinderWidth(Number(e.target.value))}
+                              type="number"
                               value={mineFinderWidth.toString()}
+                              onChange={(e) => setMineFinderWidth(Number(e.target.value))}
                             />
                             <CustomInput
                               label="Grid Height"
-                              type="number"
-                              min={3}
                               max={30}
+                              min={3}
                               placeholder="Enter grid height"
-                              onChange={(e) => setMineFinderHeight(Number(e.target.value))}
+                              type="number"
                               value={mineFinderHeight.toString()}
+                              onChange={(e) => setMineFinderHeight(Number(e.target.value))}
                             />
                             <CustomInput
                               label="Number of Mines"
-                              type="number"
-                              min={1}
                               max={mineFinderWidth * mineFinderHeight - 1}
+                              min={1}
                               placeholder="Enter number of mines"
-                              onChange={(e) => setMineCount(Number(e.target.value))}
+                              type="number"
                               value={mineCount.toString()}
+                              onChange={(e) => setMineCount(Number(e.target.value))}
                             />
                           </>
                         )}
@@ -716,10 +726,10 @@ export default function GamesPage() {
                         <div className="bg-gradient-to-r from-purple-500/10 to-violet-500/10 rounded-xl p-6 border border-purple-500/20">
                           <div className="flex flex-col items-center gap-4">
                             <div className="w-14 h-14 bg-gradient-to-br from-purple-500/30 to-violet-500/30 rounded-2xl flex items-center justify-center border border-purple-500/40">
-                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-purple-400">
+                              <svg className="text-purple-400" fill="none" height="28" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="28">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                                 <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
+                                <line x1="12" x2="12" y1="15" y2="3" />
                               </svg>
                             </div>
                             <div className="text-center">
@@ -745,9 +755,9 @@ export default function GamesPage() {
               {/* Empty State */}
               {!selectedGame && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 p-12 text-center"
+                  initial={{ opacity: 0, scale: 0.95 }}
                 >
                   <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-3xl flex items-center justify-center border border-purple-500/30 text-purple-400">
                     <GamepadIcon />
@@ -767,8 +777,8 @@ export default function GamesPage() {
 
       <ErrorModal
         isOpen={isErrorModalOpen}
-        onClose={() => setIsErrorModalOpen(false)}
         message={errorModalMessage}
+        onClose={() => setIsErrorModalOpen(false)}
       />
 
       <SubscriptionModal isOpen={showSubscriptionModal} onClose={() => {}} />

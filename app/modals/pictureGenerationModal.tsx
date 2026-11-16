@@ -10,6 +10,7 @@ import {
 } from "@heroui/modal";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
 
@@ -31,10 +32,13 @@ const PictureGenerationModal: React.FC<PictureGenerationModalProps> = ({
   useEffect(() => {
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
+
       setLanguage(browserLanguage);
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
+
     detectLanguage();
   }, []);
 
@@ -48,11 +52,11 @@ const PictureGenerationModal: React.FC<PictureGenerationModalProps> = ({
 
   return (
     <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="sm"
       isDismissable={false}
       isKeyboardDismissDisabled={true}
+      isOpen={isOpen}
+      size="sm"
+      onClose={onClose}
     >
       <ModalContent>
         <ModalHeader className="modal-header justify-center">
@@ -74,8 +78,8 @@ const PictureGenerationModal: React.FC<PictureGenerationModalProps> = ({
             label={translations?.numberOfPictures}
             placeholder={translations?.select}
             selectedKeys={[selectedNumber.toString()]}
-            size="sm"
             selectionMode="single"
+            size="sm"
             onChange={(e) => setSelectedNumber(Number(e.target.value))}
           >
             {options.map((option) => (
@@ -85,11 +89,11 @@ const PictureGenerationModal: React.FC<PictureGenerationModalProps> = ({
         </ModalBody>
         <ModalFooter>
           <Button
-            variant="ghost"
             fullWidth
             color="secondary"
             radius="lg"
             size="md"
+            variant="ghost"
             onPress={onClose}
           >
             {translations?.cancel}
@@ -97,10 +101,10 @@ const PictureGenerationModal: React.FC<PictureGenerationModalProps> = ({
           <Button
             fullWidth
             color="secondary"
+            isDisabled={selectedNumber === null}
             radius="lg"
             size="md"
             onPress={handleConfirm}
-            isDisabled={selectedNumber === null}
           >
             {translations?.confirm}
           </Button>

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState, useEffect, ChangeEvent, useCallback } from "react";
+import React, { useRef, useState, useEffect, ChangeEvent } from "react";
 import { Button } from "@heroui/button";
 import { Spacer } from "@heroui/spacer";
 import jsPDF from "jspdf";
+
 import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
 
 interface DotsToDotsProps {
@@ -26,8 +27,10 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+
     if (file) {
       const reader = new FileReader();
+
       reader.onloadend = () => {
         setImage(reader.result);
       };
@@ -99,12 +102,14 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
       // Draw the sequential number next to each dot
       const label = (index + 1).toString();
+
       ctx.fillText(label, dot.x + offset, dot.y - offset);
     });
   };
 
   const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -118,6 +123,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
     // Check if a dot is clicked
     const index = dots.findIndex((dot) => Math.hypot(dot.x - x, dot.y - y) < hitRadius);
+
     if (index !== -1) {
       setDraggingDotIndex(index);
     }
@@ -127,6 +133,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     if (draggingDotIndex === null) return;
 
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -147,6 +154,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     if (draggingDotIndex !== null) return; // Prevent adding dots while dragging
 
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
@@ -170,13 +178,16 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
     doc.text(custom_name, pageWidth / 2, margin + 10, { align: "center" });
 
     const canvas = canvasRef.current;
+
     if (!canvas) return;
 
     // Create a new canvas for the dots
     const dotsCanvas = document.createElement("canvas");
+
     dotsCanvas.width = canvas.width;
     dotsCanvas.height = canvas.height;
     const dotsCtx = dotsCanvas.getContext("2d");
+
     if (dotsCtx) {
       // Calculate dynamic sizes for PDF (smaller than canvas for printing)
       const canvasArea = canvas.width * canvas.height;
@@ -195,6 +206,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
 
         // Draw the sequential number next to each dot
         const label = (index + 1).toString();
+
         dotsCtx.fillText(label, dot.x + offset, dot.y - offset);
       });
 
@@ -209,6 +221,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
       // Generate PDF and open in a new tab
       const pdfBlob = doc.output("blob");
       const pdfUrl = URL.createObjectURL(pdfBlob);
+
       window.open(pdfUrl, "_blank");
     }
   };
@@ -217,6 +230,7 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
   useEffect(() => {
     if (image) {
       const img = new Image();
+
       img.src = image as string;
       img.onload = async () => {
         imageRef.current = img;
@@ -238,34 +252,34 @@ const DotsToDots: React.FC<DotsToDotsProps> = ({
               display: image ? "block" : "none",
               margin: "0 auto",
             }}
+            onClick={handleClick}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onClick={handleClick}
           />
           <Spacer y={4} />
         </>
       )}
 
       <input
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
         ref={fileInputRef}
+        accept="image/*"
         style={{ display: "none" }} // Hide the input
+        type="file"
+        onChange={handleImageUpload}
       />
       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
         <Button
-          onPress={generatePDF}
           color="secondary"
           isDisabled={!image || !dots.length}
+          onPress={generatePDF}
         >
           Generate PDF
         </Button>
         <Button
-          onPress={handleFileInputClick}
           color="secondary"
           variant="ghost"
+          onPress={handleFileInputClick}
         >
           Upload Image
         </Button>

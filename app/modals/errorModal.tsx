@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+
 import { getTranslations } from '../../managers/languageManager';
 import { Translations } from '../../translations.d';
 
@@ -18,17 +19,17 @@ const ErrorIcon = () => (
         {/* Icon container */}
         <div className="relative w-20 h-20 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-full flex items-center justify-center border border-red-500/30">
             <svg
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
+                className="text-red-500"
                 fill="none"
+                height="40"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="text-red-500"
+                viewBox="0 0 24 24"
+                width="40"
             >
                 <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
+                <line x1="12" x2="12" y1="8" y2="12" />
+                <line x1="12" x2="12.01" y1="16" y2="16" />
             </svg>
         </div>
     </div>
@@ -41,6 +42,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => 
         const detectLanguage = async () => {
             const browserLanguage = navigator.language;
             const translations = await getTranslations(browserLanguage);
+
             setTranslations(translations);
         };
 
@@ -77,10 +79,10 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => 
 
                     {/* Close button */}
                     <button
-                        onClick={onClose}
                         className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/10 transition-colors text-white/50 hover:text-white z-10"
+                        onClick={onClose}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
                             <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                     </button>
@@ -104,7 +106,6 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => 
 
                         {/* Button */}
                         <button
-                            onClick={onClose}
                             className="
                                 w-full max-w-xs px-8 py-3.5
                                 bg-gradient-to-r from-red-500 to-red-600
@@ -117,6 +118,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => 
                                 hover:scale-[1.02]
                                 active:scale-[0.98]
                             "
+                            onClick={onClose}
                         >
                             {translations?.understood || "Got it"}
                         </button>

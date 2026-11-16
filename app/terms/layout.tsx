@@ -20,33 +20,32 @@ export default function TermsLayout({
                 <head>
                     <title>Terms and Conditions - Low Content AI</title>
                     <meta
-                        name="description"
                         content="Read the terms and conditions of use for Low Content AI. Understand your rights and obligations when using our website and services."
+                        name="description"
                     />
                     <meta
-                        name="keywords"
                         content="Low Content AI, terms and conditions, user agreement, legal terms, site usage"
+                        name="keywords"
                     />
-                    <meta name="robots" content="index, follow" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <link rel="canonical" href="https://www.lowcontent.ai/terms-and-conditions" />
-                    <meta property="og:title" content="Terms and Conditions - Low Content AI" />
+                    <meta content="index, follow" name="robots" />
+                    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+                    <link href="https://www.lowcontent.ai/terms-and-conditions" rel="canonical" />
+                    <meta content="Terms and Conditions - Low Content AI" property="og:title" />
                     <meta
-                        property="og:description"
                         content="Review the terms and conditions for using Low Content AI's website and services."
+                        property="og:description"
                     />
-                    <meta property="og:url" content="https://www.lowcontent.ai/terms-and-conditions" />
-                    <meta property="og:image" content="/og-image.jpg" />
-                    <meta name="twitter:card" content="summary_large_image" />
-                    <meta name="twitter:title" content="Terms and Conditions - Low Content AI" />
+                    <meta content="https://www.lowcontent.ai/terms-and-conditions" property="og:url" />
+                    <meta content="/og-image.jpg" property="og:image" />
+                    <meta content="summary_large_image" name="twitter:card" />
+                    <meta content="Terms and Conditions - Low Content AI" name="twitter:title" />
                     <meta
-                        name="twitter:description"
                         content="Understand the terms and conditions of using Low Content AI's platform and services."
+                        name="twitter:description"
                     />
-                    <meta name="twitter:image" content="/og-image.jpg" />
+                    <meta content="/og-image.jpg" name="twitter:image" />
                     {/* Structured Data for SEO */}
                     <script
-                        type="application/ld+json"
                         dangerouslySetInnerHTML={{
                             __html: JSON.stringify({
                                 "@context": "https://schema.org",
@@ -61,6 +60,7 @@ export default function TermsLayout({
                                 },
                             }),
                         }}
+                        type="application/ld+json"
                     />
                 </head>
             )}

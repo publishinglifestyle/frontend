@@ -3,14 +3,16 @@
 import { useEffect, useState, useMemo } from "react";
 import { Spacer } from "@heroui/spacer";
 import { Input } from "@heroui/input";
-import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
+import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 import { useRouter } from "next/navigation";
-import { resetPassword } from "@/managers/userManager";
+
 
 import ErrorModal from "../modals/errorModal";
 import SuccessModal from "../modals/successModal";
+
+import { resetPassword } from "@/managers/userManager";
 
 export default function ResetPasswordPage() {
   const [language, setLanguage] = useState("");
@@ -35,6 +37,7 @@ export default function ResetPasswordPage() {
   );
   const isInvalidPassword_2 = useMemo(() => {
     if (password_2 === "") return null;
+
     return password !== password_2 || !validatePassword(password_2)
       ? true
       : false;
@@ -50,6 +53,7 @@ export default function ResetPasswordPage() {
     } catch (e) {
       setIsLoading(false);
       const error = e as any;
+
       if (error.response) {
         setErrorModalMessage(error.response.data);
         setIsErrorModalOpen(true);
@@ -62,6 +66,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     // Detect browser language
     const browserLanguage = navigator.language;
+
     console.log(browserLanguage);
     setLanguage(browserLanguage);
   }, []);
@@ -69,11 +74,12 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const resetToken = urlParams.get("resetToken");
+
     if (resetToken) setToken(resetToken);
   }, []);
 
   if (isLoading) {
-    return <Spinner color="secondary" aria-label="Loading..." />;
+    return <Spinner aria-label="Loading..." color="secondary" />;
   }
 
   return (
@@ -86,23 +92,8 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardBody className="pl-6">
           <Input
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-            }}
             fullWidth
-            labelPlacement="outside"
-            label="New Password"
-            type="password"
-            placeholder="Enter your password"
             isRequired
-            isInvalid={
-              isInvalidPassword == null ? undefined : isInvalidPassword
-            }
-            errorMessage={
-              isInvalidPassword &&
-              "Password must be at least 8 characters long with 1 capital letter and 1 number"
-            }
             color={
               isInvalidPassword == null
                 ? undefined
@@ -110,24 +101,26 @@ export default function ResetPasswordPage() {
                   ? "danger"
                   : "success"
             }
+            errorMessage={
+              isInvalidPassword &&
+              "Password must be at least 8 characters long with 1 capital letter and 1 number"
+            }
+            isInvalid={
+              isInvalidPassword == null ? undefined : isInvalidPassword
+            }
+            label="New Password"
+            labelPlacement="outside"
+            placeholder="Enter your password"
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
           />
           <Spacer y={4} />
           <Input
-            value={password_2}
-            onChange={(e) => setPassword_2(e.target.value)}
             fullWidth
-            labelPlacement="outside"
-            label="Confirm New Password"
-            type="password"
-            placeholder="Re-enter your password"
             isRequired
-            isInvalid={
-              isInvalidPassword_2 == null ? undefined : isInvalidPassword_2
-            }
-            errorMessage={
-              isInvalidPassword_2 &&
-              "Passwords do not match or does not meet requirements"
-            }
             color={
               isInvalidPassword_2 == null
                 ? undefined
@@ -135,13 +128,26 @@ export default function ResetPasswordPage() {
                   ? "danger"
                   : "success"
             }
+            errorMessage={
+              isInvalidPassword_2 &&
+              "Passwords do not match or does not meet requirements"
+            }
+            isInvalid={
+              isInvalidPassword_2 == null ? undefined : isInvalidPassword_2
+            }
+            label="Confirm New Password"
+            labelPlacement="outside"
+            placeholder="Re-enter your password"
+            type="password"
+            value={password_2}
+            onChange={(e) => setPassword_2(e.target.value)}
           />
           <Spacer y={14} />
           <Button
-            color="secondary"
-            style={{ color: "white" }}
-            size="md"
             fullWidth
+            color="secondary"
+            size="md"
+            style={{ color: "white" }}
             onPress={resetPasswordAction}
           >
             Reset Password
@@ -161,8 +167,8 @@ export default function ResetPasswordPage() {
 
       <ErrorModal
         isOpen={isErrorModalOpen}
-        onClose={() => setIsErrorModalOpen(false)}
         message={errorModalMessage}
+        onClose={() => setIsErrorModalOpen(false)}
       />
     </div>
   );

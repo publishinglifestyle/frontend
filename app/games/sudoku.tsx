@@ -1,13 +1,16 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Button } from "@heroui/button"; // Assuming this Button component exists
-import { generateSudoku } from "@/managers/gamesManager"; // Assuming this fetches Sudoku data
+
 import { ensureFontLoaded, getFontFamily } from "./utils/fontLoader";
+
+import { generateSudoku } from "@/managers/gamesManager"; // Assuming this fetches Sudoku data
 
 // Helper function to download canvas content with high quality
 const downloadCanvasAsImage = (canvas: HTMLCanvasElement, filename: string) => {
   // Use maximum quality PNG compression
   const dataUrl = canvas.toDataURL("image/png", 1.0);
   const link = document.createElement("a");
+
   link.href = dataUrl;
   link.download = filename;
   document.body.appendChild(link); // Required for Firefox
@@ -70,8 +73,10 @@ export default function Sudoku({
     ctx.strokeStyle = "#000000"; // Black lines
     // Scale line widths for high-res rendering
     const scaleFactor = canvas.width > 2000 ? 3 : 1; // Detect if high-res canvas
+
     for (let i = 0; i <= 9; i++) {
       const lineWidth = i % 3 === 0 ? 2 * scaleFactor : 0.5 * scaleFactor; // Thicker lines for 3x3 boxes
+
       ctx.lineWidth = lineWidth;
 
       // Vertical lines
@@ -123,15 +128,18 @@ export default function Sudoku({
       if (sudokuResponses && sudokuResponses.length > 0) {
         // --- Canvas Setup ---
         const canvas = canvasRef.current || document.createElement("canvas");
+
         if (!canvasRef.current) {
           // If dynamically created, keep a reference? Not strictly needed here.
           // Or better, create it fresh each time if sizes vary wildly.
           // Let's stick to dynamic creation per image for simplicity of sizing.
         }
         const ctx = canvas.getContext("2d");
+
         if (!ctx) {
           console.error("Could not get canvas context");
           setIsGenerating(false);
+
           return; // Early exit if canvas context fails
         }
 
@@ -187,6 +195,7 @@ export default function Sudoku({
 
           // Download this puzzle image
           const puzzleFilename = `${puzzleTitle.replace(/\s+/g, "_")}.png`;
+
           downloadCanvasAsImage(canvas, puzzleFilename);
           // Small delay might help browser handle multiple downloads, though not guaranteed
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -232,6 +241,7 @@ export default function Sudoku({
             TITLE_FONT_SIZE
           );
           const solutionFilename = `${solutionTitle.replace(/\s+/g, "_")}.png`;
+
           downloadCanvasAsImage(canvas, solutionFilename);
         } else {
           // Multiple puzzles, generate compact solution images
@@ -258,6 +268,7 @@ export default function Sudoku({
             const pageTitle = is_sequential
               ? `Solutions ${startIdx + 1} - ${endIdx}`
               : custom_solution_name || `Solutions (Page ${page + 1})`;
+
             ctx.font = `bold ${TITLE_FONT_SIZE}px ${getFontFamily(font)}`;
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
@@ -312,6 +323,7 @@ export default function Sudoku({
               /\s+/g,
               "_"
             )}.png`;
+
             downloadCanvasAsImage(canvas, solutionPageFilename);
             await new Promise((resolve) => setTimeout(resolve, 100)); // Delay
           }
@@ -353,8 +365,8 @@ export default function Sudoku({
       {/* Hidden canvas for drawing, or remove if creating dynamically */}
       {/* <canvas ref={canvasRef} style={{ display: 'none' }}></canvas> */}
       <Button
-        isDisabled={isGenerating || !isFormValid()}
         color="secondary" // Use your Button component's props
+        isDisabled={isGenerating || !isFormValid()}
         onPress={handleGenerateSudoku} // Or onClick if it's a standard HTML button
       >
         {isGenerating ? "Generating Images..." : "Generate Sudoku Images"}
