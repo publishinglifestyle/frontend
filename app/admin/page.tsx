@@ -1,9 +1,10 @@
 "use client";
 
-import { useAuth } from "@/app/auth-context";
-import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats, getPlatformCosts, createPlatformCost, updatePlatformCost, deletePlatformCost, getPnl, getTransactions } from "@/managers/userManager";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+
+import { useAuth } from "@/app/auth-context";
+import { getAllUsers, getAdminOverview, getUserDetail, impersonateUser, getUsageStats, getPlatformCosts, createPlatformCost, updatePlatformCost, deletePlatformCost, getPnl, getTransactions } from "@/managers/userManager";
 
 // ── Types ──────────────────────────────────────────────
 interface AdminUser {
@@ -75,15 +76,18 @@ const fmt = {
   credits: (c: number) => {
     if (c >= 1_000_000) return `${(c / 1_000_000).toFixed(1)}M`;
     if (c >= 1_000) return `${(c / 1_000).toFixed(1)}K`;
+
     return c.toString();
   },
   tokens: (t: number) => {
     if (t >= 1_000_000) return `${(t / 1_000_000).toFixed(2)}M`;
     if (t >= 1_000) return `${(t / 1_000).toFixed(1)}K`;
+
     return t.toString();
   },
   price: (dollars: number | null, type: string | null) => {
     if (dollars == null) return "—";
+
     return `$${Number(dollars).toFixed(2)}/${type === "year" ? "yr" : "mo"}`;
   },
   pct: (n: number) => `${n.toFixed(1)}%`,
@@ -94,6 +98,7 @@ type UserStatus = "paying" | "trial" | "churned" | "free";
 function getUserStatus(u: AdminUser): UserStatus {
   if (u.subscription_active) return "paying";
   if (u.subscription_name || u.subscription_price) return "churned";
+
   return "free";
 }
 
@@ -264,7 +269,9 @@ export default function AdminPage() {
   const [txTruncated, setTxTruncated] = useState(false);
 
   useEffect(() => {
-    if (user && user.role !== "owner") { router.push("/chat"); return; }
+    if (user && user.role !== "owner") { router.push("/chat");
+
+ return; }
     if (user) { fetchOverview(); fetchUsers(1); fetchUsageStats(); fetchPnl(); }
   }, [user]);
 
@@ -285,6 +292,7 @@ export default function AdminPage() {
         sortBy: sortKey,
         sortDir,
       });
+
       if (result) {
         setUsers(result.response || []);
         if (result.pagination) {
@@ -302,6 +310,7 @@ export default function AdminPage() {
     setDetailLoading(true);
     try {
       const data = await getUserDetail(userId);
+
       if (data) setUserDetail(data);
     } catch (err) { console.error("Failed to load user detail", err); }
     finally { setDetailLoading(false); }
@@ -315,6 +324,7 @@ export default function AdminPage() {
   const fetchOverview = async () => {
     try {
       const data = await getAdminOverview();
+
       if (data) setOverview(data);
     } catch (err) { console.error("Failed to load overview", err); }
   };
@@ -334,6 +344,7 @@ export default function AdminPage() {
       setTxLoading(true);
       setTxError("");
       const data = await getTransactions(txRange.from, txRange.to);
+
       setTransactions(data?.transactions || []);
       setTxTruncated(Boolean(data?.truncated));
       setTxLoaded(true);
@@ -350,6 +361,7 @@ export default function AdminPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     const suffix = txRange.from || txRange.to ? `_${txRange.from || "start"}_${txRange.to || "today"}` : "";
+
     link.href = url;
     link.download = `transactions${suffix}.csv`;
     document.body.appendChild(link);
@@ -365,6 +377,7 @@ export default function AdminPage() {
         getPlatformCosts(),
         getPnl(from, to),
       ]);
+
       if (costsRes) setPlatformCosts(costsRes.costs || []);
       if (pnlRes) setPnl(pnlRes);
     } catch (err) {
@@ -395,6 +408,7 @@ export default function AdminPage() {
   const handleSaveCost = async () => {
     if (!costFormName.trim() || costFormAmount === "") return;
     const amount = Number(costFormAmount);
+
     if (Number.isNaN(amount) || amount < 0) return;
     try {
       setCostSaving(true);
@@ -404,6 +418,7 @@ export default function AdminPage() {
         monthly_cost: amount,
         currency: costFormCurrency,
       };
+
       if (editingCost) {
         await updatePlatformCost(editingCost.id, payload);
       } else {
@@ -452,6 +467,7 @@ export default function AdminPage() {
     try {
       setImpersonating(targetUserId);
       const token = await impersonateUser(targetUserId);
+
       if (token) { await impersonate(token); router.push("/chat"); }
     } catch { setError("Failed to impersonate user"); setImpersonating(null); }
   };
@@ -466,9 +482,11 @@ export default function AdminPage() {
   // Agent rows
   const agentRows = useMemo(() => {
     if (!usageData) return [];
+
     return Object.entries(usageData.byAgent)
       .map(([agentId, stats]) => {
         const info = usageData.agents[agentId];
+
         return { agentId, name: info?.name || agentId.slice(0, 8), model: info?.model || "gpt-5.1 (default)", type: info?.type || "—", ...stats };
       })
       .sort((a, b) => b.requests - a.requests);
@@ -477,6 +495,7 @@ export default function AdminPage() {
   // Operation rows
   const operationRows = useMemo(() => {
     if (!usageData) return [];
+
     return Object.entries(usageData.byOperation)
       .map(([op, stats]) => ({ operation: op, ...stats }))
       .sort((a, b) => b.requests - a.requests);
@@ -507,8 +526,8 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-zinc-900/50 p-1 rounded-xl w-fit border border-white/10">
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === t.key ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+          <button key={t.key} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === t.key ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+            onClick={() => setActiveTab(t.key)}
           >{t.label}</button>
         ))}
       </div>
@@ -519,19 +538,19 @@ export default function AdminPage() {
           {/* Shared date filter — applies to financial + usage metrics */}
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div>
-              <label className="block text-xs text-white/40 mb-1">From</label>
-              <input type="date" value={dateRange.from} onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-overview-from">From</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-overview-from" type="date" value={dateRange.from}
+                onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">To</label>
-              <input type="date" value={dateRange.to} onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-overview-to">To</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-overview-to" type="date" value={dateRange.to}
+                onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))} />
             </div>
-            <button onClick={() => { fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined); fetchPnl(dateRange.from || undefined, dateRange.to || undefined); }}
-              className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium">Filter</button>
-            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); fetchPnl(); }}
-              className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm">Clear</button>
+            <button className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium"
+              onClick={() => { fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined); fetchPnl(dateRange.from || undefined, dateRange.to || undefined); }}>Filter</button>
+            <button className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm"
+              onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); fetchPnl(); }}>Clear</button>
             <div className="ml-auto text-[11px] text-white/30 self-center">
               All figures in EUR{pnl ? ` · USD→EUR @ ${pnl.usdToEurRate}` : ""}
             </div>
@@ -659,13 +678,13 @@ export default function AdminPage() {
           {/* ─── User KPIs ─── */}
           <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-3">User Base</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
-            <Card label="Total Users" value={overview ? overview.total.toLocaleString() : "—"} color="text-white" />
-            <Card label="Paying" value={overview ? overview.paying.toLocaleString() : "—"} color="text-green-400"
-              sub={overview && overview.total > 0 ? `${((overview.paying / overview.total) * 100).toFixed(1)}% conversion` : ""} />
-            <Card label="Churned" value={overview ? overview.churned.toLocaleString() : "—"} color="text-red-400" />
-            <Card label="Free" value={overview ? overview.free.toLocaleString() : "—"} color="text-white/60" />
-            <Card label="API Requests" value={usageData ? usageData.totals.totalRequests.toLocaleString() : "—"} color="text-purple-400"
-              sub={usageData && usageData.totals.totalRequests > 0 ? `${fmt.costShort(usageData.totals.totalApiCost / usageData.totals.totalRequests)} avg` : ""} />
+            <Card color="text-white" label="Total Users" value={overview ? overview.total.toLocaleString() : "—"} />
+            <Card color="text-green-400" label="Paying" sub={overview && overview.total > 0 ? `${((overview.paying / overview.total) * 100).toFixed(1)}% conversion` : ""}
+              value={overview ? overview.paying.toLocaleString() : "—"} />
+            <Card color="text-red-400" label="Churned" value={overview ? overview.churned.toLocaleString() : "—"} />
+            <Card color="text-white/60" label="Free" value={overview ? overview.free.toLocaleString() : "—"} />
+            <Card color="text-purple-400" label="API Requests" sub={usageData && usageData.totals.totalRequests > 0 ? `${fmt.costShort(usageData.totals.totalApiCost / usageData.totals.totalRequests)} avg` : ""}
+              value={usageData ? usageData.totals.totalRequests.toLocaleString() : "—"} />
           </div>
 
           {/* ─── Feature Breakdown ─── */}
@@ -689,8 +708,8 @@ export default function AdminPage() {
             <>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-white/50 uppercase tracking-wider">Top Agents</h2>
-                <button onClick={() => setActiveTab("agents")}
-                  className="text-xs text-purple-400 hover:text-purple-300">View all →</button>
+                <button className="text-xs text-purple-400 hover:text-purple-300"
+                  onClick={() => setActiveTab("agents")}>View all →</button>
               </div>
               <div className="bg-zinc-900/50 border border-white/10 rounded-2xl overflow-hidden mb-8">
                 <div className="overflow-x-auto">
@@ -735,16 +754,16 @@ export default function AdminPage() {
           {/* Filters — server-side */}
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div className="flex-1 min-w-[200px] max-w-md">
-              <label className="block text-xs text-white/40 mb-1">Search</label>
-              <input type="text" placeholder="Name or email... (press Enter)" value={searchQuery}
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-users-search">Search</label>
+              <input className="w-full px-4 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-users-search" placeholder="Name or email... (press Enter)" type="text"
+                value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") handleSearchSubmit(); }}
-                className="w-full px-4 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white placeholder-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+                onKeyDown={e => { if (e.key === "Enter") handleSearchSubmit(); }} />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">Status</label>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none">
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-users-status">Status</label>
+              <select className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none" id="admin-users-status" value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}>
                 <option value="all">All</option>
                 <option value="paying">Paying</option>
                 <option value="churned">Churned</option>
@@ -752,9 +771,9 @@ export default function AdminPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">Role</label>
-              <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none">
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-users-role">Role</label>
+              <select className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none" id="admin-users-role" value={filterRole}
+                onChange={e => setFilterRole(e.target.value)}>
                 <option value="all">All</option>
                 <option value="user">User</option>
                 <option value="owner">Owner</option>
@@ -772,13 +791,13 @@ export default function AdminPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <SortTh label="Name" sortKey="name" currentKey={sortKey} dir={sortDir} onClick={handleSort} />
-                      <SortTh label="Email" sortKey="email" currentKey={sortKey} dir={sortDir} onClick={handleSort} />
-                      <SortTh label="Status" sortKey="status" currentKey={sortKey} dir={sortDir} onClick={handleSort} />
-                      <SortTh label="Plan" sortKey="plan" currentKey={sortKey} dir={sortDir} onClick={handleSort} />
-                      <SortTh label="Credits Left" sortKey="credits_remaining" currentKey={sortKey} dir={sortDir} onClick={handleSort} align="right" />
-                      <SortTh label="Requests" sortKey="requests" currentKey={sortKey} dir={sortDir} onClick={handleSort} align="right" />
-                      <SortTh label="API Cost" sortKey="api_cost" currentKey={sortKey} dir={sortDir} onClick={handleSort} align="right" />
+                      <SortTh currentKey={sortKey} dir={sortDir} label="Name" sortKey="name" onClick={handleSort} />
+                      <SortTh currentKey={sortKey} dir={sortDir} label="Email" sortKey="email" onClick={handleSort} />
+                      <SortTh currentKey={sortKey} dir={sortDir} label="Status" sortKey="status" onClick={handleSort} />
+                      <SortTh currentKey={sortKey} dir={sortDir} label="Plan" sortKey="plan" onClick={handleSort} />
+                      <SortTh align="right" currentKey={sortKey} dir={sortDir} label="Credits Left" sortKey="credits_remaining" onClick={handleSort} />
+                      <SortTh align="right" currentKey={sortKey} dir={sortDir} label="Requests" sortKey="requests" onClick={handleSort} />
+                      <SortTh align="right" currentKey={sortKey} dir={sortDir} label="API Cost" sortKey="api_cost" onClick={handleSort} />
                       <th className="text-right px-5 py-3 text-xs font-medium text-white/50 uppercase">Actions</th>
                     </tr>
                   </thead>
@@ -786,8 +805,9 @@ export default function AdminPage() {
                     {users.map(u => {
                       const status = getUserStatus(u);
                       const sc = statusConfig[status];
+
                       return (
-                        <tr key={u.id} onClick={() => openUserDetail(u.id)} className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer">
+                        <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer" onClick={() => openUserDetail(u.id)}>
                           <td className="px-5 py-3">
                             <div className="flex items-center gap-3">
                               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-medium text-xs shrink-0">
@@ -814,20 +834,20 @@ export default function AdminPage() {
                             {u.total_api_cost > 0 ? <span className="text-red-400">{fmt.cost(u.total_api_cost)}</span> : <span className="text-white/20">$0</span>}
                           </td>
                           <td className="px-5 py-3 text-right">
-                            <button onClick={() => handleImpersonate(u.id)}
-                              disabled={u.id === user.id || impersonating === u.id}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                 u.id === user.id ? "bg-zinc-700/30 text-white/30 cursor-not-allowed"
                                 : impersonating === u.id ? "bg-purple-500/20 text-purple-400 cursor-wait"
                                 : "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20"
                               }`}
+                              disabled={u.id === user.id || impersonating === u.id}
+                              onClick={() => handleImpersonate(u.id)}
                             >{impersonating === u.id ? "..." : "Login as"}</button>
                           </td>
                         </tr>
                       );
                     })}
                     {users.length === 0 && (
-                      <tr><td colSpan={8} className="px-5 py-12 text-center text-white/40 text-sm">{searchQuery ? "No users match" : "No users"}</td></tr>
+                      <tr><td className="px-5 py-12 text-center text-white/40 text-sm" colSpan={8}>{searchQuery ? "No users match" : "No users"}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -840,12 +860,13 @@ export default function AdminPage() {
                 </span>
                 {totalPages > 1 && (
                   <div className="flex items-center gap-1">
-                    <button disabled={currentPage <= 1} onClick={() => fetchUsers(currentPage - 1)}
-                      className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                    <button className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all" disabled={currentPage <= 1}
+                      onClick={() => fetchUsers(currentPage - 1)}>
                       Prev
                     </button>
                     {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                       let page: number;
+
                       if (totalPages <= 7) {
                         page = i + 1;
                       } else if (currentPage <= 4) {
@@ -855,18 +876,19 @@ export default function AdminPage() {
                       } else {
                         page = currentPage - 3 + i;
                       }
+
                       return (
-                        <button key={page} onClick={() => fetchUsers(page)}
-                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
+                        <button key={page} className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
                             page === currentPage
                               ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
                               : "text-white/50 hover:text-white hover:bg-white/5"
                           }`}
+                          onClick={() => fetchUsers(page)}
                         >{page}</button>
                       );
                     })}
-                    <button disabled={currentPage >= totalPages} onClick={() => fetchUsers(currentPage + 1)}
-                      className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                    <button className="px-3 py-1 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all" disabled={currentPage >= totalPages}
+                      onClick={() => fetchUsers(currentPage + 1)}>
                       Next
                     </button>
                   </div>
@@ -928,21 +950,21 @@ export default function AdminPage() {
         <>
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div>
-              <label className="block text-xs text-white/40 mb-1">From</label>
-              <input type="date" value={txRange.from} onChange={e => setTxRange(r => ({ ...r, from: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-transactions-from">From</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-transactions-from" type="date" value={txRange.from}
+                onChange={e => setTxRange(r => ({ ...r, from: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">To</label>
-              <input type="date" value={txRange.to} onChange={e => setTxRange(r => ({ ...r, to: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-transactions-to">To</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-transactions-to" type="date" value={txRange.to}
+                onChange={e => setTxRange(r => ({ ...r, to: e.target.value }))} />
             </div>
-            <button onClick={fetchTransactions} disabled={txLoading}
-              className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 text-sm font-medium hover:bg-purple-500/30 disabled:opacity-50">
+            <button className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 text-sm font-medium hover:bg-purple-500/30 disabled:opacity-50" disabled={txLoading}
+              onClick={fetchTransactions}>
               {txLoading ? "Loading…" : "Load transactions"}
             </button>
-            <button onClick={downloadTransactionsCsv} disabled={!transactions.length}
-              className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed">
+            <button className="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-40 disabled:cursor-not-allowed" disabled={!transactions.length}
+              onClick={downloadTransactionsCsv}>
               Download CSV
             </button>
             {txLoaded && !txLoading && (
@@ -1008,19 +1030,19 @@ export default function AdminPage() {
           {/* Date filter */}
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div>
-              <label className="block text-xs text-white/40 mb-1">From</label>
-              <input type="date" value={dateRange.from} onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-costs-from">From</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-costs-from" type="date" value={dateRange.from}
+                onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">To</label>
-              <input type="date" value={dateRange.to} onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-costs-to">To</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-costs-to" type="date" value={dateRange.to}
+                onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))} />
             </div>
-            <button onClick={() => fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined)}
-              className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium">Filter</button>
-            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); }}
-              className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm">Clear</button>
+            <button className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium"
+              onClick={() => fetchUsageStats(dateRange.from || undefined, dateRange.to || undefined)}>Filter</button>
+            <button className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm"
+              onClick={() => { setDateRange({ from: "", to: "" }); fetchUsageStats(); }}>Clear</button>
           </div>
 
           {usageLoading ? (
@@ -1031,13 +1053,13 @@ export default function AdminPage() {
             <>
               {/* Overview cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-                <Card label="Total API Cost" value={fmt.costShort(usageData.totals.totalApiCost)} color="text-red-400" />
-                <Card label="Credits Revenue" value={fmt.costShort(usageData.totals.creditsRevenue)} color="text-green-400" />
-                <Card label="Margin" color="text-white"
+                <Card color="text-red-400" label="Total API Cost" value={fmt.costShort(usageData.totals.totalApiCost)} />
+                <Card color="text-green-400" label="Credits Revenue" value={fmt.costShort(usageData.totals.creditsRevenue)} />
+                <Card color="text-white" label="Margin"
                   value={usageData.totals.totalApiCost > 0 && usageData.totals.creditsRevenue > 0
                     ? fmt.pct(((usageData.totals.creditsRevenue - usageData.totals.totalApiCost) / usageData.totals.creditsRevenue) * 100)
                     : "N/A"} />
-                <Card label="Total Requests" value={usageData.totals.totalRequests.toLocaleString()} color="text-purple-400" />
+                <Card color="text-purple-400" label="Total Requests" value={usageData.totals.totalRequests.toLocaleString()} />
               </div>
 
               {/* By Service */}
@@ -1124,6 +1146,7 @@ export default function AdminPage() {
                           const subPrice = u?.subscription_price ?? null;
                           const subType = u?.subscription_type ?? null;
                           const monthlyRev = subPrice != null ? Number(subPrice) / (subType === "year" ? 12 : 1) : 0;
+
                           return { uid, name: u ? `${u.first_name} ${u.last_name}` : uid.slice(0,8), email: u?.email || "", subName: u?.subscription_name, subPrice, subType, monthlyRev, apiCost: stats.api_cost, netProfit: monthlyRev - stats.api_cost };
                         })
                         .sort((a, b) => b.apiCost - a.apiCost)
@@ -1159,22 +1182,22 @@ export default function AdminPage() {
           {/* Date filter — filters the measured AI API cost for the period */}
           <div className="flex flex-wrap items-end gap-3 mb-6">
             <div>
-              <label className="block text-xs text-white/40 mb-1">From</label>
-              <input type="date" value={dateRange.from} onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-pnl-from">From</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-pnl-from" type="date" value={dateRange.from}
+                onChange={e => setDateRange(d => ({ ...d, from: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1">To</label>
-              <input type="date" value={dateRange.to} onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+              <label className="block text-xs text-white/40 mb-1" htmlFor="admin-pnl-to">To</label>
+              <input className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-pnl-to" type="date" value={dateRange.to}
+                onChange={e => setDateRange(d => ({ ...d, to: e.target.value }))} />
             </div>
-            <button onClick={() => fetchPnl(dateRange.from || undefined, dateRange.to || undefined)}
-              className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium">Filter</button>
-            <button onClick={() => { setDateRange({ from: "", to: "" }); fetchPnl(); }}
-              className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm">Clear</button>
+            <button className="px-4 py-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 text-sm font-medium"
+              onClick={() => fetchPnl(dateRange.from || undefined, dateRange.to || undefined)}>Filter</button>
+            <button className="px-4 py-2 rounded-lg text-white/40 hover:text-white/60 text-sm"
+              onClick={() => { setDateRange({ from: "", to: "" }); fetchPnl(); }}>Clear</button>
             <div className="ml-auto">
-              <button onClick={openNewCostModal}
-                className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-sm font-medium">
+              <button className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 text-sm font-medium"
+                onClick={openNewCostModal}>
                 + Add Manual Cost
               </button>
             </div>
@@ -1190,10 +1213,10 @@ export default function AdminPage() {
               {pnl && (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                    <Card label="Revenue (EUR)" value={fmtEur(pnl.totalRevenue)} color="text-green-400" sub={`MRR ${fmtEur(pnl.revenueMRR)} + credits ${fmtEur(pnl.creditsRevenueEur)}`} />
-                    <Card label="Total Costs (EUR)" value={fmtEur(pnl.totalCosts)} color="text-red-400" sub={`Manual ${fmtEur(pnl.manualCostsTotalEur)} + API ${fmtEur(pnl.apiCostEur)}`} />
-                    <Card label="Profit / Loss" value={`${pnl.profitLoss >= 0 ? "+" : "-"}${fmtEur(Math.abs(pnl.profitLoss))}`} color={pnl.profitLoss >= 0 ? "text-green-400" : "text-red-400"} />
-                    <Card label="Margin" value={`${pnl.margin.toFixed(1)}%`} color={pnl.margin >= 0 ? "text-green-400" : "text-red-400"} />
+                    <Card color="text-green-400" label="Revenue (EUR)" sub={`MRR ${fmtEur(pnl.revenueMRR)} + credits ${fmtEur(pnl.creditsRevenueEur)}`} value={fmtEur(pnl.totalRevenue)} />
+                    <Card color="text-red-400" label="Total Costs (EUR)" sub={`Manual ${fmtEur(pnl.manualCostsTotalEur)} + API ${fmtEur(pnl.apiCostEur)}`} value={fmtEur(pnl.totalCosts)} />
+                    <Card color={pnl.profitLoss >= 0 ? "text-green-400" : "text-red-400"} label="Profit / Loss" value={`${pnl.profitLoss >= 0 ? "+" : "-"}${fmtEur(Math.abs(pnl.profitLoss))}`} />
+                    <Card color={pnl.margin >= 0 ? "text-green-400" : "text-red-400"} label="Margin" value={`${pnl.margin.toFixed(1)}%`} />
                   </div>
                   <p className="text-[11px] text-white/30 mb-8">
                     USD amounts converted to EUR at an estimated rate of {pnl.usdToEurRate}. Measured API cost reflects the selected date range; manual costs and MRR are monthly totals.
@@ -1208,6 +1231,7 @@ export default function AdminPage() {
                   <div className="bg-zinc-900/50 border border-white/10 rounded-2xl p-5 mb-8 space-y-3">
                     {(() => {
                       const max = Math.max(...pnl.costBreakdown.map(c => c.monthlyCost), 1);
+
                       return pnl.costBreakdown.map((c, i) => (
                         <div key={`${c.vendor}-${i}`}>
                           <div className="flex items-center justify-between mb-1">
@@ -1261,19 +1285,19 @@ export default function AdminPage() {
                           </td>
                           <td className="px-5 py-3 text-sm text-white text-right font-medium">{fmtEur(c.monthly_cost_eur)}</td>
                           <td className="px-5 py-3 text-center">
-                            <button onClick={() => handleToggleCostActive(c)}
-                              className={`inline-flex px-2 py-0.5 rounded text-xs font-medium transition-all ${c.is_active ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" : "bg-zinc-700/50 text-white/40 hover:bg-zinc-700/70"}`}>
+                            <button className={`inline-flex px-2 py-0.5 rounded text-xs font-medium transition-all ${c.is_active ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" : "bg-zinc-700/50 text-white/40 hover:bg-zinc-700/70"}`}
+                              onClick={() => handleToggleCostActive(c)}>
                               {c.is_active ? "Active" : "Inactive"}
                             </button>
                           </td>
                           <td className="px-5 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                              <button onClick={() => openEditCostModal(c)}
-                                className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-white/70 hover:bg-white/10 transition-all">
+                              <button className="px-3 py-1 rounded-lg text-xs font-medium bg-white/5 text-white/70 hover:bg-white/10 transition-all"
+                                onClick={() => openEditCostModal(c)}>
                                 Edit
                               </button>
-                              <button onClick={() => handleDeleteCost(c.id)}
-                                className="px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
+                              <button className="px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all"
+                                onClick={() => handleDeleteCost(c.id)}>
                                 Delete
                               </button>
                             </div>
@@ -1281,7 +1305,7 @@ export default function AdminPage() {
                         </tr>
                       ))}
                       {platformCosts.length === 0 && (
-                        <tr><td colSpan={6} className="px-5 py-12 text-center text-white/40 text-sm">No manual costs yet — click "+ Add Manual Cost" to add one.</td></tr>
+                        <tr><td className="px-5 py-12 text-center text-white/40 text-sm" colSpan={6}>No manual costs yet — click "+ Add Manual Cost" to add one.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -1299,39 +1323,39 @@ export default function AdminPage() {
           <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl">
             <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">{editingCost ? "Edit Manual Cost" : "Add Manual Cost"}</h3>
-              <button onClick={() => !costSaving && setCostModalOpen(false)} className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              <button className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white" onClick={() => !costSaving && setCostModalOpen(false)}>
+                <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-xs text-white/40 mb-1">Vendor Name *</label>
-                <input type="text" value={costFormName} onChange={e => setCostFormName(e.target.value)}
-                  placeholder="e.g. Supabase"
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+                <label className="block text-xs text-white/40 mb-1" htmlFor="admin-cost-vendor">Vendor Name *</label>
+                <input className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-cost-vendor" placeholder="e.g. Supabase" type="text"
+                  value={costFormName}
+                  onChange={e => setCostFormName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs text-white/40 mb-1">Description</label>
-                <input type="text" value={costFormDesc} onChange={e => setCostFormDesc(e.target.value)}
-                  placeholder="e.g. Database + storage hosting"
-                  className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+                <label className="block text-xs text-white/40 mb-1" htmlFor="admin-cost-description">Description</label>
+                <input className="w-full px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-cost-description" placeholder="e.g. Database + storage hosting" type="text"
+                  value={costFormDesc}
+                  onChange={e => setCostFormDesc(e.target.value)} />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="block text-xs text-white/40 mb-1">Monthly Cost *</label>
+                  <label className="block text-xs text-white/40 mb-1" htmlFor="admin-cost-amount">Monthly Cost *</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">
                       {costFormCurrency === "EUR" ? "€" : "$"}
                     </span>
-                    <input type="number" step="0.01" min="0" value={costFormAmount} onChange={e => setCostFormAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full pl-7 pr-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+                    <input className="w-full pl-7 pr-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" id="admin-cost-amount" min="0" placeholder="0.00" step="0.01" type="number"
+                      value={costFormAmount}
+                      onChange={e => setCostFormAmount(e.target.value)} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-white/40 mb-1">Currency</label>
-                  <select value={costFormCurrency} onChange={e => setCostFormCurrency(e.target.value as "EUR" | "USD")}
-                    className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none">
+                  <label className="block text-xs text-white/40 mb-1" htmlFor="admin-cost-currency">Currency</label>
+                  <select className="px-3 py-2 rounded-lg bg-zinc-800/50 border border-white/10 text-white text-sm focus:outline-none" id="admin-cost-currency" value={costFormCurrency}
+                    onChange={e => setCostFormCurrency(e.target.value as "EUR" | "USD")}>
                     <option value="EUR">EUR</option>
                     <option value="USD">USD</option>
                   </select>
@@ -1344,12 +1368,12 @@ export default function AdminPage() {
               )}
             </div>
             <div className="px-6 py-4 border-t border-white/10 flex items-center justify-end gap-3">
-              <button onClick={() => setCostModalOpen(false)} disabled={costSaving}
-                className="px-4 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30">
+              <button className="px-4 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30" disabled={costSaving}
+                onClick={() => setCostModalOpen(false)}>
                 Cancel
               </button>
-              <button onClick={handleSaveCost} disabled={costSaving || !costFormName.trim() || costFormAmount === ""}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+              <button className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed" disabled={costSaving || !costFormName.trim() || costFormAmount === ""}
+                onClick={handleSaveCost}>
                 {costSaving ? "Saving..." : editingCost ? "Save Changes" : "Add Cost"}
               </button>
             </div>
@@ -1364,8 +1388,8 @@ export default function AdminPage() {
           <div className="relative w-full max-w-2xl bg-zinc-900 border-l border-white/10 overflow-y-auto shadow-2xl">
             <div className="sticky top-0 z-10 bg-zinc-900/95 backdrop-blur border-b border-white/10 px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">User Profile</h2>
-              <button onClick={closeUserDetail} className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              <button className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all" onClick={closeUserDetail}>
+                <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
             </div>
 
@@ -1392,8 +1416,8 @@ export default function AdminPage() {
                       </span>
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); handleImpersonate(userDetail.user.id); }}
-                    className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition-all">
+                  <button className="px-4 py-2 rounded-xl text-sm font-medium bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition-all"
+                    onClick={(e) => { e.stopPropagation(); handleImpersonate(userDetail.user.id); }}>
                     Login as
                   </button>
                 </div>
@@ -1437,6 +1461,7 @@ export default function AdminPage() {
                   // Estimate tokens saved by summarization
                   const convsWithSummary = userDetail.conversations.filter((c: any) => c.has_summary).length;
                   const totalSummarizedMsgs = userDetail.conversations.reduce((sum: number, c: any) => sum + (c.summarized_up_to || 0), 0);
+
                   return (
                     <div className="bg-zinc-800/50 rounded-xl p-4 border border-white/5">
                       <h4 className="text-xs text-white/40 uppercase tracking-wider mb-3">Margin & Markup</h4>
@@ -1539,6 +1564,7 @@ export default function AdminPage() {
                     <div className="space-y-2">
                       {Object.entries(userDetail.usage.byAgent).sort(([,a],[,b]) => b.requests - a.requests).map(([agentId, s]) => {
                         const info = userDetail.agents[agentId];
+
                         return (
                           <div key={agentId} className="flex items-center justify-between">
                             <div>

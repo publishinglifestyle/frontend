@@ -28,6 +28,9 @@ export interface Translations {
     select_agent: string;
     greeting: string;
     agents: string;
+    search_agents?: string;
+    no_results?: string;
+    try_different_search?: string;
     new_agent: string;
     name: string;
     level: string;

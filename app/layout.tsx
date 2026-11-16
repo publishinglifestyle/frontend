@@ -107,11 +107,11 @@ export default function RootLayout({
         />
         <noscript>
           <img 
-            height="1" 
-            width="1" 
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=2042150813283387&ev=PageView&noscript=1"
             alt=""
+            height="1" 
+            src="https://www.facebook.com/tr?id=2042150813283387&ev=PageView&noscript=1"
+            style={{ display: "none" }}
+            width="1"
           />
         </noscript>
         {/* End Meta Pixel Code */}
@@ -119,8 +119,8 @@ export default function RootLayout({
         {/* Endorsely Script */}
         <script 
           async 
-          src="https://assets.endorsely.com/endorsely.js" 
           data-endorsely="2f92e228-4ddb-44e0-921b-11fb35bd7a39"
+          src="https://assets.endorsely.com/endorsely.js"
         />
         {/* End Endorsely Script */}
       </head>

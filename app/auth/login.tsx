@@ -1,15 +1,17 @@
 "use client";
 
-import ErrorModal from "@/app/modals/errorModal";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
+
 import { getTranslations } from "../../managers/languageManager";
 import { logIn, logInGoogle } from "../../managers/userManager";
 import { Translations } from "../../translations.d";
 import { useAuth } from "../auth-context";
 
-import { useGoogleLogin } from "@react-oauth/google";
-import { FaGoogle } from "react-icons/fa";
+
+import ErrorModal from "@/app/modals/errorModal";
+import { GoogleIcon } from "@/components/google-icon";
 
 type LoginProps = {
   toggleToSignUp: () => void;
@@ -49,6 +51,7 @@ const Login: React.FC<LoginProps> = ({
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
 
@@ -69,11 +72,13 @@ const Login: React.FC<LoginProps> = ({
     try {
       setIsLoading(true);
       const { token } = await logInGoogle(access_token, "login");
+
       login(token);
       router.push("/chat");
     } catch (e) {
       setIsLoading(false);
       const error = e as any;
+
       if (error.response) {
         setErrorModalMessage(error.response.data.response);
         setIsErrorModalOpen(true);
@@ -85,10 +90,12 @@ const Login: React.FC<LoginProps> = ({
     try {
       setIsLoading(true);
       const authToken = await logIn(email, password);
+
       login(authToken);
     } catch (e) {
       setIsLoading(false);
       const error = e as any;
+
       if (error.response) {
         setErrorModalMessage(error.response.data.response);
         setIsErrorModalOpen(true);
@@ -110,8 +117,8 @@ const Login: React.FC<LoginProps> = ({
             <p className="text-white/50 text-sm">
               {translations?.login_1}{" "}
               <button
-                onClick={toggleToSignUp}
                 className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                onClick={toggleToSignUp}
               >
                 {translations?.sign_up}
               </button>
@@ -125,9 +132,6 @@ const Login: React.FC<LoginProps> = ({
                 {translations?.enter_email || "Email"}
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
                   isInvalidEmail === true
                     ? "border-red-500/50"
@@ -136,6 +140,9 @@ const Login: React.FC<LoginProps> = ({
                     : "border-white/10"
                 }`}
                 placeholder="Enter your email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               {isInvalidEmail && (
                 <p className="text-red-400 text-xs mt-1">
@@ -149,9 +156,6 @@ const Login: React.FC<LoginProps> = ({
                 {translations?.enter_password || "Password"}
               </label>
               <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className={`w-full px-4 py-3 bg-white/5 border rounded-xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${
                   isInvalidPassword === true
                     ? "border-red-500/50"
@@ -160,22 +164,25 @@ const Login: React.FC<LoginProps> = ({
                     : "border-white/10"
                 }`}
                 placeholder="Enter your password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
             <div className="text-right">
               <button
-                onClick={toggleToForgotPassword}
                 className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                onClick={toggleToForgotPassword}
               >
                 {translations?.forgot_password || "Forgot password?"}
               </button>
             </div>
 
             <button
-              onClick={handleLogin}
-              disabled={!validateEmail(email) || !validatePassword(password)}
               className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 disabled:from-zinc-600 disabled:to-zinc-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-200"
+              disabled={!validateEmail(email) || !validatePassword(password)}
+              onClick={handleLogin}
             >
               Login
             </button>
@@ -183,7 +190,7 @@ const Login: React.FC<LoginProps> = ({
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
+                <div className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-zinc-900 text-white/40">or</span>
@@ -192,10 +199,10 @@ const Login: React.FC<LoginProps> = ({
 
             {/* Google Login */}
             <button
-              onClick={() => googleLogin()}
               className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-gray-800 font-medium rounded-xl flex items-center justify-center gap-3 transition-all duration-200"
+              onClick={() => googleLogin()}
             >
-              <FaGoogle className="text-red-500" />
+              <GoogleIcon className="text-red-500" />
               Continue with Google
             </button>
           </div>
@@ -203,8 +210,8 @@ const Login: React.FC<LoginProps> = ({
       )}
       <ErrorModal
         isOpen={isErrorModalOpen}
-        onClose={() => setIsErrorModalOpen(false)}
         message={errorModalMessage}
+        onClose={() => setIsErrorModalOpen(false)}
       />
     </div>
   );

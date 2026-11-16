@@ -2,8 +2,9 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Message, Agent } from "@/types/chat.types";
 import { Button } from "@heroui/react";
+
+import { Message, Agent } from "@/types/chat.types";
 
 interface MessageAreaProps {
   messages: Message[];
@@ -20,52 +21,52 @@ type ButtonClickHandler = (button: any) => void;
 
 // Icons
 const CopyIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
+    <rect height="13" rx="2" ry="2" width="13" x="9" y="9" />
     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
   </svg>
 );
 
 const CheckIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M20 6L9 17l-5-5" />
   </svg>
 );
 
 const RemixIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M23 4v6h-6M1 20v-6h6" />
     <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
   </svg>
 );
 
 const UpscaleIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
   </svg>
 );
 
 const DescribeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <circle cx="11" cy="11" r="8" />
     <path d="M21 21l-4.35-4.35" />
   </svg>
 );
 
 const ExpandIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="16" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="16">
     <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
   </svg>
 );
 
 const CloseIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const DownloadIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
   </svg>
 );
@@ -73,6 +74,7 @@ const DownloadIcon = () => (
 // Check if message content is an image URL
 const isImageUrl = (text: string) => {
   if (!text) return false;
+
   return (
     text.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i) !== null ||
     text.includes("oaidalleapiprodscus") ||
@@ -153,6 +155,7 @@ const formatMessageText = (text: string): string => {
       if (inOrderedList) { htmlLines.push("</ol>"); inOrderedList = false; }
       if (!inList) { htmlLines.push("<ul>"); inList = true; }
       const content = line.replace(/^\s*[-*]\s+/, "");
+
       htmlLines.push(`<li>${formatInline(content)}</li>`);
       continue;
     } else if (inList) {
@@ -165,6 +168,7 @@ const formatMessageText = (text: string): string => {
       if (inList) { htmlLines.push("</ul>"); inList = false; }
       if (!inOrderedList) { htmlLines.push("<ol>"); inOrderedList = true; }
       const content = line.replace(/^\s*\d+\.\s+/, "");
+
       htmlLines.push(`<li>${formatInline(content)}</li>`);
       continue;
     } else if (inOrderedList) {
@@ -175,12 +179,14 @@ const formatMessageText = (text: string): string => {
     // Table rows (lines starting with |)
     if (/^\|(.+)\|$/.test(line.trim())) {
       const trimmed = line.trim();
+
       // Check if separator row (|---|---|)
       if (/^\|[\s\-:|]+\|$/.test(trimmed)) {
         // Skip separator row, it's already handled by thead/tbody
         continue;
       }
       const cells = trimmed.slice(1, -1).split("|").map(c => c.trim());
+
       if (!inTable) {
         // First row = header
         htmlLines.push("<table>");
@@ -262,8 +268,8 @@ const ImageSkeletonLoader = () => (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
       {/* Image icon placeholder */}
       <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white/20">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <svg className="text-white/20" fill="none" height="32" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="32">
+          <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
           <circle cx="8.5" cy="8.5" r="1.5" />
           <polyline points="21 15 16 10 5 21" />
         </svg>
@@ -292,6 +298,7 @@ const ImageLightbox: React.FC<{
     setMounted(true);
     // Prevent body scroll when lightbox is open
     document.body.style.overflow = 'hidden';
+
     return () => {
       document.body.style.overflow = '';
     };
@@ -303,6 +310,7 @@ const ImageLightbox: React.FC<{
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
+
       a.href = url;
       a.download = `image-${Date.now()}.png`;
       document.body.appendChild(a);
@@ -319,7 +327,9 @@ const ImageLightbox: React.FC<{
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+
     window.addEventListener('keydown', handleEscape);
+
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
@@ -340,8 +350,8 @@ const ImageLightbox: React.FC<{
       >
         {/* Download Button */}
         <button
-          onClick={handleDownload}
           className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 transition-colors text-white flex items-center gap-2 font-medium"
+          onClick={handleDownload}
         >
           <DownloadIcon />
           <span className="text-sm">Download</span>
@@ -349,8 +359,8 @@ const ImageLightbox: React.FC<{
 
         {/* Close Button */}
         <button
-          onClick={onClose}
           className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-white"
+          onClick={onClose}
         >
           <CloseIcon />
         </button>
@@ -363,9 +373,9 @@ const ImageLightbox: React.FC<{
       >
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events */}
         <img
-          src={imageUrl}
           alt="Expanded view"
           className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl animate-scale-in"
+          src={imageUrl}
           onClick={(e) => e.stopPropagation()}
         />
       </div>
@@ -420,14 +430,19 @@ const MessageBubble: React.FC<{
         {message.image_urls && message.image_urls.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {message.image_urls.map((url, i) => (
-              <img
+              <button
                 key={i}
-                src={url}
-                alt={`Attached ${i + 1}`}
-                className="max-w-full max-h-48 object-contain rounded-xl cursor-pointer"
+                className="rounded-xl overflow-hidden"
+                type="button"
                 onClick={() => onImageClick?.(url)}
-                loading="lazy"
-              />
+              >
+                <img
+                  alt={`Attached ${i + 1}`}
+                  className="max-w-full max-h-48 object-contain"
+                  loading="lazy"
+                  src={url}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -436,10 +451,10 @@ const MessageBubble: React.FC<{
         {isImage && !message.image_urls?.length ? (
           <div className="relative cursor-pointer" onClick={() => onImageClick?.(message.text)}>
             <img
-              src={message.text}
               alt="Generated"
               className="max-w-full max-h-96 object-contain rounded-2xl"
               loading="lazy"
+              src={message.text}
             />
             {/* Image overlay with expand hint */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-end justify-center pb-4">
@@ -451,17 +466,17 @@ const MessageBubble: React.FC<{
           </div>
         ) : message.text ? (
           <div
-            className="break-words text-sm leading-relaxed [&_strong]:font-bold [&_em]:italic [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-xs [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2.5 [&_h3]:mb-1 [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_blockquote]:border-l-3 [&_blockquote]:border-white/30 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_hr]:border-white/20 [&_hr]:my-3 [&_a]:underline [&_a]:text-blue-300 hover:[&_a]:text-blue-200 [&_table]:w-full [&_table]:my-2 [&_table]:border-collapse [&_table]:text-xs [&_th]:border [&_th]:border-white/20 [&_th]:px-2 [&_th]:py-1.5 [&_th]:bg-white/10 [&_th]:font-semibold [&_th]:text-left [&_td]:border [&_td]:border-white/20 [&_td]:px-2 [&_td]:py-1.5"
             dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }}
+            className="break-words text-sm leading-relaxed [&_strong]:font-bold [&_em]:italic [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono [&_code]:text-xs [&_pre]:bg-white/10 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2.5 [&_h3]:mb-1 [&_h4]:text-sm [&_h4]:font-semibold [&_h4]:mt-2 [&_h4]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_blockquote]:border-l-3 [&_blockquote]:border-white/30 [&_blockquote]:pl-3 [&_blockquote]:my-2 [&_blockquote]:italic [&_blockquote]:opacity-80 [&_hr]:border-white/20 [&_hr]:my-3 [&_a]:underline [&_a]:text-blue-300 hover:[&_a]:text-blue-200 [&_table]:w-full [&_table]:my-2 [&_table]:border-collapse [&_table]:text-xs [&_th]:border [&_th]:border-white/20 [&_th]:px-2 [&_th]:py-1.5 [&_th]:bg-white/10 [&_th]:font-semibold [&_th]:text-left [&_td]:border [&_td]:border-white/20 [&_td]:px-2 [&_td]:py-1.5"
           />
         ) : null}
 
         {/* Copy button for text messages */}
         {!isImage && !isUser && (
           <button
-            onClick={handleCopy}
             className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
             title="Copy"
+            onClick={handleCopy}
           >
             {copied ? (
               <CheckIcon />
@@ -476,22 +491,22 @@ const MessageBubble: React.FC<{
       {isImage && message.ideogram_buttons && message.ideogram_buttons.length > 0 && onImageAction && (
         <div className="flex gap-2 mt-1">
           <button
-            onClick={() => onImageAction("remix")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/70 hover:text-white transition-colors"
+            onClick={() => onImageAction("remix")}
           >
             <RemixIcon />
             Remix
           </button>
           <button
-            onClick={() => onImageAction("upscale")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/70 hover:text-white transition-colors"
+            onClick={() => onImageAction("upscale")}
           >
             <UpscaleIcon />
             Upscale
           </button>
           <button
-            onClick={() => onImageAction("describe")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/70 hover:text-white transition-colors"
+            onClick={() => onImageAction("describe")}
           >
             <DescribeIcon />
             Describe
@@ -505,9 +520,9 @@ const MessageBubble: React.FC<{
           {message.buttons.map((button: any, index: number) => (
             <Button
               key={index}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80"
               size="sm"
               variant="flat"
-              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80"
               onPress={() => onButtonClick(button)}
             >
               {button.label || button.custom || `Option ${index + 1}`}
@@ -539,6 +554,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({
     const timer = setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
+
     return () => clearTimeout(timer);
   }, [messages, isGenerating]);
 
@@ -559,7 +575,7 @@ export const MessageArea: React.FC<MessageAreaProps> = ({
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center mb-6">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400">
+              <svg className="text-purple-400" fill="none" height="40" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="40">
                 <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
               </svg>
             </div>
@@ -579,17 +595,17 @@ export const MessageArea: React.FC<MessageAreaProps> = ({
             .map((message) => (
               <MessageBubble
                 key={message.id}
-                message={message}
                 isUser={message.username === currentUser}
+                message={message}
+                onButtonClick={
+                  onButtonClick
+                    ? (button) => onButtonClick(button, message)
+                    : undefined
+                }
                 onCopy={() => onCopyMessage(message.text)}
                 onImageAction={
                   onImageAction
                     ? (action) => onImageAction(action, message)
-                    : undefined
-                }
-                onButtonClick={
-                  onButtonClick
-                    ? (button) => onButtonClick(button, message)
                     : undefined
                 }
                 onImageClick={(imageUrl) => setExpandedImage(imageUrl)}

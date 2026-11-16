@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, ChangeEvent } from "react";
+
 import { getTranslations } from "../../managers/languageManager";
 import { Translations } from "../../translations.d";
+
 import { uploadImage } from "@/managers/conversationsManager";
 
 interface DalleImageSizeModalProps {
@@ -14,19 +16,19 @@ interface DalleImageSizeModalProps {
 
 // Icons
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const SmallCloseIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="14" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="14">
     <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
 const OpenAIIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="28" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="28">
     <path d="M12 2L2 7l10 5 10-5-10-5z" />
     <path d="M2 17l10 5 10-5" />
     <path d="M2 12l10 5 10-5" />
@@ -34,14 +36,14 @@ const OpenAIIcon = () => (
 );
 
 const UploadIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
   </svg>
 );
 
 const ImageIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+  <svg fill="none" height="20" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="20">
+    <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
     <circle cx="8.5" cy="8.5" r="1.5" />
     <polyline points="21 15 16 10 5 21" />
   </svg>
@@ -61,11 +63,13 @@ const AspectRatioPreview = ({ ratio, isSelected }: { ratio: string; isSelected: 
   const getPreviewDimensions = (ratio: string) => {
     const [w, h] = ratio.split(":").map(Number);
     const maxSize = 40;
+
     if (w > h) {
       return { width: maxSize, height: (maxSize * h) / w };
     } else if (h > w) {
       return { width: (maxSize * w) / h, height: maxSize };
     }
+
     return { width: maxSize, height: maxSize };
   };
 
@@ -114,8 +118,10 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
+
     detectLanguage();
   }, []);
 
@@ -140,8 +146,10 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
       const uploadPromises = filesToUpload.map(async (file) => {
         if (file.type.startsWith("image/")) {
           const imageUrl = await uploadImage(file);
+
           return imageUrl;
         }
+
         return null;
       });
 
@@ -172,6 +180,7 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 
   const handleConfirm = () => {
     const imageUrls = referenceImages.map((img) => img.url);
+
     onConfirm(selectedSize, imageUrls);
     onClose();
   };
@@ -223,8 +232,8 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
               </div>
             </div>
             <button
-              onClick={onClose}
               className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+              onClick={onClose}
             >
               <CloseIcon />
             </button>
@@ -237,17 +246,17 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ImageIcon />
-                  <label className="block text-sm font-medium text-white/70">
+                  <p className="block text-sm font-medium text-white/70">
                     Reference Images
-                  </label>
+                  </p>
                   <span className="text-xs text-white/40">
                     ({referenceImages.length}/{MAX_REFERENCE_IMAGES})
                   </span>
                 </div>
                 {referenceImages.length > 0 && (
                   <button
-                    onClick={handleClearAllImages}
                     className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    onClick={handleClearAllImages}
                   >
                     Clear all
                   </button>
@@ -266,18 +275,18 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                     className="relative aspect-square rounded-lg overflow-hidden border border-white/10 group"
                   >
                     <img
-                      src={`${img.url}${img.url.includes('?') ? '&' : '?'}cb=${img.id}`}
                       alt={`Reference ${index + 1}`}
                       className="w-full h-full object-cover"
+                      src={`${img.url}${img.url.includes('?') ? '&' : '?'}cb=${img.id}`}
                     />
                     <button
-                      onClick={() => handleRemoveImage(index)}
                       className="
                         absolute top-1 right-1 p-1 rounded-full
                         bg-black/60 text-white/70 hover:text-red-400
                         opacity-0 group-hover:opacity-100
                         transition-all duration-200
                       "
+                      onClick={() => handleRemoveImage(index)}
                     >
                       <SmallCloseIcon />
                     </button>
@@ -308,12 +317,12 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                       </>
                     )}
                     <input
-                      type="file"
-                      accept="image/*"
                       multiple
+                      accept="image/*"
                       className="hidden"
-                      onChange={handleImageUpload}
                       disabled={isUploading}
+                      type="file"
+                      onChange={handleImageUpload}
                     />
                   </label>
                 )}
@@ -322,14 +331,13 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
 
             {/* Image Size Section */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-white/70">
+              <p className="block text-sm font-medium text-white/70">
                 Image Size
-              </label>
+              </p>
               <div className="grid grid-cols-3 gap-3">
                 {imageSizeOptions.map((option) => (
                   <button
                     key={option.value}
-                    onClick={() => setSelectedSize(option.value)}
                     className={`
                       relative flex flex-col items-center gap-2 p-4 rounded-xl
                       border transition-all duration-200
@@ -338,8 +346,9 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                         : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                       }
                     `}
+                    onClick={() => setSelectedSize(option.value)}
                   >
-                    <AspectRatioPreview ratio={option.ratio} isSelected={selectedSize === option.value} />
+                    <AspectRatioPreview isSelected={selectedSize === option.value} ratio={option.ratio} />
                     <span className={`text-sm font-medium ${selectedSize === option.value ? "text-purple-300" : "text-white/70"}`}>
                       {option.label}
                     </span>
@@ -358,7 +367,6 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
           {/* Footer */}
           <div className="relative p-6 border-t border-white/10 flex gap-4">
             <button
-              onClick={onClose}
               className="
                 flex-1 px-6 py-3 rounded-xl
                 bg-white/5 hover:bg-white/10
@@ -366,12 +374,11 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                 text-white font-medium
                 transition-all duration-200
               "
+              onClick={onClose}
             >
               {translations?.cancel || "Cancel"}
             </button>
             <button
-              onClick={handleConfirm}
-              disabled={isUploading}
               className="
                 flex-1 px-6 py-3 rounded-xl
                 bg-gradient-to-r from-purple-600 to-violet-600
@@ -381,6 +388,8 @@ const DalleImageSizeModal: React.FC<DalleImageSizeModalProps> = ({
                 transition-all duration-200
                 shadow-lg shadow-purple-500/25
               "
+              disabled={isUploading}
+              onClick={handleConfirm}
             >
               {translations?.confirm || "Apply Settings"}
             </button>

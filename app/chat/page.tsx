@@ -133,6 +133,7 @@ function ChatPageContent() {
       if (!message.complete) {
         const buffer = streamingBufferRef.current;
         const existing = buffer.get(message.conversation_id);
+
         if (existing) {
           existing.text += message.text;
         } else {
@@ -161,6 +162,7 @@ function ChatPageContent() {
           ...updatedMessages[existingMessageIndex],
           text: updatedMessages[existingMessageIndex].text + message.text,
         };
+
         return updatedMessages;
       } else {
         return [...updatedMessages, message];
@@ -202,6 +204,7 @@ function ChatPageContent() {
         setErrorMessage(image_response.error);
         setIsErrorModalOpen(true);
       }
+
       return;
     }
 
@@ -225,9 +228,11 @@ function ChatPageContent() {
           prompt: imgResponse.prompt || "",
           role: "assistant",
         }));
+
         return [...updatedMessages, ...newMessages];
       });
       setIsGeneratingResponse(false);
+
       return;
     }
 
@@ -257,6 +262,7 @@ function ChatPageContent() {
             text: updatedMessages[existingMessageIndex].text + message.text,
             id: message.id,
           };
+
           return updatedMessages;
         } else {
           return [...updatedMessages, message];
@@ -275,6 +281,7 @@ function ChatPageContent() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
+
       if (file.type.startsWith("image/")) {
         try {
           setIsLoading(true);
@@ -294,6 +301,7 @@ function ChatPageContent() {
         } catch (error) {
           setIsLoading(false);
           const err = error as any;
+
           setErrorMessage(err.response?.data || err.message || "Failed to upload image");
           setIsErrorModalOpen(true);
           if (e.target) e.target.value = '';
@@ -318,8 +326,10 @@ function ChatPageContent() {
 
     // Create conversation if needed
     let conversationId = currentConversation;
+
     if (!conversationId) {
       const newConversation = await createConversation();
+
       conversationId = newConversation.id;
       setCurrentConversation(conversationId);
       setConversations((prev) => [newConversation, ...prev]);
@@ -345,6 +355,7 @@ function ChatPageContent() {
         ? referenceImages
         : undefined,
     };
+
     setMessages((prev) => [...prev, userMessage]);
     setIsGeneratingResponse(true);
     setGeneratingAgentType(selectedAgent?.type);
@@ -358,6 +369,7 @@ function ChatPageContent() {
         // Get size from promptCommands if available
         let size;
         const sizeCommand = promptCommands.find(cmd => cmd.command === "size");
+
         if (sizeCommand) {
           size = sizeCommand.value;
         }
@@ -367,9 +379,11 @@ function ChatPageContent() {
         let finalReferenceImages: string[] = [];
         const refImagesCommand = promptCommands.find(cmd => cmd.command === "referenceImages");
         const refImageCommand = promptCommands.find(cmd => cmd.command === "referenceImage");
+
         if (refImagesCommand && refImagesCommand.value) {
           try {
             const parsed = JSON.parse(refImagesCommand.value);
+
             if (Array.isArray(parsed)) finalReferenceImages = parsed.filter(Boolean);
           } catch {
             // Fall through to other sources
@@ -395,6 +409,7 @@ function ChatPageContent() {
           size,                           // size
           finalReferenceImages.length > 0 ? finalReferenceImages : undefined  // reference_image_url(s)
         );
+
         setImageResponse(response, conversationId);
       } catch (error: any) {
         generatingConversationsRef.current.delete(conversationId);
@@ -403,6 +418,7 @@ function ChatPageContent() {
           setIsGeneratingResponse(false);
         }
         const msg = error?.response?.data?.error || "Failed to generate image. Please try again.";
+
         setErrorMessage(msg);
         setIsErrorModalOpen(true);
       }
@@ -425,6 +441,7 @@ function ChatPageContent() {
             socket?.off("connect", onConnect);
             resolve();
           };
+
           socket?.once("connect", onConnect);
           socket?.connect();
         });
@@ -443,6 +460,7 @@ function ChatPageContent() {
   // Handle New Conversation
   const handleNewConversation = async () => {
     const newConversation = await createConversation();
+
     setConversations((prev) => [newConversation, ...prev]);
     setCurrentConversation(newConversation.id);
     currentConversationRef.current = newConversation.id;
@@ -462,6 +480,7 @@ function ChatPageContent() {
     // Check if this conversation has an active generation
     const generatingType = generatingConversationsRef.current.get(conversation.id);
     const targetIsGenerating = generatingType !== undefined;
+
     setIsGeneratingResponse(targetIsGenerating);
     if (targetIsGenerating) {
       setGeneratingAgentType(generatingType);
@@ -480,11 +499,13 @@ function ChatPageContent() {
 
       if (!freshConversation) {
         setMessages([]);
+
         return;
       }
 
       // Set agent from the fresh data
       const agent = agents.find((a) => a.id === freshConversation.agent_id);
+
       if (agent) {
         setSelectedAgent(agent);
         setSelectedAgentId(agent.id);
@@ -503,6 +524,7 @@ function ChatPageContent() {
       const conversationMessages = context
         .map((ctx: any, i: number) => {
           const textMessage = i === 0 ? GREETING_MESSAGE : ctx.content;
+
           if (!textMessage || textMessage === "NaN") return null;
 
           return {
@@ -524,10 +546,12 @@ function ChatPageContent() {
 
       // Restore pending user messages that aren't in the API context yet
       const pendingMsgs = pendingImageUserMessagesRef.current.get(conversation.id) || pendingMsgsSnapshot;
+
       if (pendingMsgs) {
         const contextUserTexts = new Set(
           conversationMessages.filter(m => m.role === "user").map(m => m.text)
         );
+
         for (const msg of pendingMsgs) {
           if (!contextUserTexts.has(msg.text)) {
             conversationMessages.push(msg);
@@ -541,6 +565,7 @@ function ChatPageContent() {
 
       // If there's buffered streaming content for this conversation, append it
       const buffer = streamingBufferRef.current.get(conversation.id);
+
       if (buffer) {
         conversationMessages.push({
           id: buffer.id,
@@ -569,6 +594,7 @@ function ChatPageContent() {
       // Fallback to local data if API fails
       const context = conversation.context || [];
       const agent = agents.find((a) => a.id === conversation.agent_id);
+
       if (agent) {
         setSelectedAgent(agent);
         setSelectedAgentId(agent.id);
@@ -580,6 +606,7 @@ function ChatPageContent() {
       const conversationMessages = context
         .map((ctx: any, i: number) => {
           const textMessage = i === 0 ? GREETING_MESSAGE : ctx.content;
+
           if (!textMessage || textMessage === "NaN") return null;
 
           return {
@@ -601,10 +628,12 @@ function ChatPageContent() {
 
       // Restore pending user messages that aren't in the API context yet
       const pendingMsgsFallback = pendingImageUserMessagesRef.current.get(conversation.id) || pendingMsgsSnapshot;
+
       if (pendingMsgsFallback) {
         const contextUserTexts = new Set(
           conversationMessages.filter(m => m.role === "user").map(m => m.text)
         );
+
         for (const msg of pendingMsgsFallback) {
           if (!contextUserTexts.has(msg.text)) {
             conversationMessages.push(msg);
@@ -617,6 +646,7 @@ function ChatPageContent() {
 
       // If there's buffered streaming content for this conversation, append it
       const bufferFallback = streamingBufferRef.current.get(conversation.id);
+
       if (bufferFallback) {
         conversationMessages.push({
           id: bufferFallback.id,
@@ -659,11 +689,13 @@ function ChatPageContent() {
   const handleToggleSelect = (conversationId: string) => {
     setSelectedConversations((prev) => {
       const newSet = new Set(prev);
+
       if (newSet.has(conversationId)) {
         newSet.delete(conversationId);
       } else {
         newSet.add(conversationId);
       }
+
       return newSet;
     });
   };
@@ -679,7 +711,7 @@ function ChatPageContent() {
 
   // Handle Bulk Delete Conversations
   const handleBulkDelete = async () => {
-    await Promise.all([...selectedConversations].map((id) => deleteConversation(id)));
+    await Promise.all(Array.from(selectedConversations, (id) => deleteConversation(id)));
     setConversations((prev) => prev.filter((c) => !selectedConversations.has(c.id)));
     if (selectedConversations.has(currentConversation)) {
       setCurrentConversation("");
@@ -696,6 +728,7 @@ function ChatPageContent() {
   // Handle Image Actions (Ideogram)
   const handleImageAction = async (action: string, message: Message) => {
     const convId = currentConversationRef.current;
+
     if (action === "remix") {
       setIdeogramInitialPrompt(message.prompt || "");
       setIdeogramImageUrl(message.text);
@@ -707,6 +740,7 @@ function ChatPageContent() {
       generatingConversationsRef.current.set(convId, "image");
       try {
         const response = await upscaleImage(convId, message.text, message.prompt || "");
+
         setImageResponse(response, convId);
       } catch {
         generatingConversationsRef.current.delete(convId);
@@ -720,6 +754,7 @@ function ChatPageContent() {
       generatingConversationsRef.current.set(convId, selectedAgent?.type || "image");
       try {
         const response = await describeImage(convId, message.text, selectedAgent?.id || "");
+
         setImageResponse(response, convId);
       } catch {
         generatingConversationsRef.current.delete(convId);
@@ -733,6 +768,7 @@ function ChatPageContent() {
   // Handle Midjourney Button Click
   const handleButtonClick = async (button: any, message: Message) => {
     const convId = currentConversationRef.current;
+
     setIsGeneratingResponse(true);
     setGeneratingAgentType("image");
     generatingConversationsRef.current.set(convId, "image");
@@ -758,6 +794,7 @@ function ChatPageContent() {
   const handleStartRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
@@ -768,10 +805,12 @@ function ChatPageContent() {
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         const formData = new FormData();
+
         formData.append("audio", audioBlob, "recording.webm");
 
         try {
           const data = await transcribeAudio(formData);
+
           if (data?.text) {
             setMessageText((prev) => (prev ? prev + " " + data.text : data.text));
           }
@@ -824,6 +863,7 @@ function ChatPageContent() {
   useEffect(() => {
     if (pageLoadedRef.current) {
       const hasToken = !!Cookies.get("authToken");
+
       if (!hasToken) {
         window.location.href = "/";
       }
@@ -878,6 +918,7 @@ function ChatPageContent() {
 
         if (response?.status === "failed" || !response.result) {
           const msg = response?.failMessage || "Failed to generate image";
+
           generatingConversationsRef.current.delete(responseConvId);
 
           // Only update UI if still on the same conversation
@@ -902,6 +943,7 @@ function ChatPageContent() {
             ]);
             setIsGeneratingResponse(false);
           }
+
           return;
         }
 
@@ -980,21 +1022,26 @@ function ChatPageContent() {
 
     const init = async () => {
       const trans = await getTranslations(browserLanguage);
+
       setTranslations(trans);
       GREETING_MESSAGE = trans?.greeting || "";
 
       const allAgents = await getAgentsPerLevel(browserLanguage);
+
       if (allAgents) {
         setAgents(allAgents);
         const allConversations = await getConversations();
+
         setConversations(allConversations);
 
         if (allConversations.length > 0) {
           const savedId = localStorage.getItem("currentConversationId");
           const conv = (savedId && allConversations.find((c: Conversation) => c.id === savedId)) || allConversations[0];
+
           setCurrentConversation(conv.id);
 
           const agent = allAgents.find((a: Agent) => a.id === conv.agent_id);
+
           if (agent) {
             setSelectedAgent(agent);
             setSelectedAgentId(conv.agent_id);
@@ -1003,7 +1050,9 @@ function ChatPageContent() {
           const msgs = conv.context
             .map((ctx: any, i: number) => {
               const text = i === 0 ? GREETING_MESSAGE : ctx.content;
+
               if (!text || text === "NaN") return null;
+
               return {
                 id: uuidv4(),
                 text,
@@ -1020,6 +1069,7 @@ function ChatPageContent() {
               } as Message;
             })
             .filter(Boolean) as Message[];
+
           setMessages(msgs);
         }
 
@@ -1049,10 +1099,10 @@ function ChatPageContent() {
       <header className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/5">
         {/* Menu Button */}
         <button
-          onClick={() => setIsDrawerOpen(true)}
           className="p-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+          onClick={() => setIsDrawerOpen(true)}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
             <path d="M3 12h18M3 6h18M3 18h18" />
           </svg>
         </button>
@@ -1064,10 +1114,10 @@ function ChatPageContent() {
 
         {/* New Chat Button */}
         <button
-          onClick={handleNewConversation}
           className="p-2.5 rounded-xl hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+          onClick={handleNewConversation}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg fill="none" height="24" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="24">
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
@@ -1075,37 +1125,29 @@ function ChatPageContent() {
 
       {/* Message Area */}
       <MessageArea
-        messages={messages}
         currentUser={fullName}
-        isGenerating={isGeneratingResponse}
         generatingAgentType={generatingAgentType}
+        isGenerating={isGeneratingResponse}
+        messages={messages}
         selectedAgent={selectedAgent}
+        onButtonClick={handleButtonClick}
         onCopyMessage={handleCopyMessage}
         onImageAction={handleImageAction}
-        onButtonClick={handleButtonClick}
       />
 
       {/* Floating Input Bar */}
       <FloatingInputBar
-        value={messageText}
-        onChange={setMessageText}
-        onSend={handleSendMessage}
-        onAttachImage={() => fileInputRef.current?.click()}
-        onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
-        onStopGeneration={() => {
-          generatingConversationsRef.current.delete(currentConversationRef.current);
-          pendingImageUserMessagesRef.current.delete(currentConversationRef.current);
-          setIsGeneratingResponse(false);
-          socket?.disconnect();
-        }}
-        onOpenAgentSelector={() => setIsAgentSelectorOpen(true)}
-        onOpenCommands={handleOpenCommands}
-        selectedAgent={selectedAgent}
         isGenerating={isGeneratingResponse}
         isRecording={isRecording}
         pendingImageUrl={pendingImageUrl}
         pendingImages={pendingImages}
+        selectedAgent={selectedAgent}
+        translations={translations}
+        value={messageText}
+        onAttachImage={() => fileInputRef.current?.click()}
+        onChange={setMessageText}
+        onOpenAgentSelector={() => setIsAgentSelectorOpen(true)}
+        onOpenCommands={handleOpenCommands}
         onRemoveImage={(index) => {
           if (index === undefined || index === 0 && pendingImageUrl) {
             // If no index or index 0 with pendingImageUrl, clear the single image
@@ -1113,18 +1155,27 @@ function ChatPageContent() {
           } else {
             // Adjust index to account for pendingImageUrl being at index 0
             const adjustedIndex = pendingImageUrl ? index - 1 : index;
+
             setPendingImages(prev => prev.filter((_, i) => i !== adjustedIndex));
           }
         }}
-        translations={translations}
+        onSend={handleSendMessage}
+        onStartRecording={handleStartRecording}
+        onStopGeneration={() => {
+          generatingConversationsRef.current.delete(currentConversationRef.current);
+          pendingImageUserMessagesRef.current.delete(currentConversationRef.current);
+          setIsGeneratingResponse(false);
+          socket?.disconnect();
+        }}
+        onStopRecording={handleStopRecording}
       />
 
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
-        type="file"
         accept="image/*"
         className="hidden"
+        type="file"
         onChange={handleImageChange}
         onClick={(e) => {
           // Reset value to allow selecting the same file again
@@ -1134,27 +1185,28 @@ function ChatPageContent() {
 
       {/* Floating Drawer */}
       <FloatingDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
         conversations={conversations}
         currentConversation={currentConversation}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-        onEditConversation={(conv) => setIsConversationNameModalOpen(conv)}
-        onDeleteConversation={handleDeleteConversation}
+        isOpen={isDrawerOpen}
         selectedConversations={selectedConversations}
-        onToggleSelect={handleToggleSelect}
-        onSelectAll={handleSelectAll}
-        onBulkDelete={handleBulkDelete}
         translations={translations}
+        onBulkDelete={handleBulkDelete}
+        onClose={() => setIsDrawerOpen(false)}
+        onDeleteConversation={handleDeleteConversation}
+        onEditConversation={(conv) => setIsConversationNameModalOpen(conv)}
+        onNewConversation={handleNewConversation}
+        onSelectAll={handleSelectAll}
+        onSelectConversation={handleSelectConversation}
+        onToggleSelect={handleToggleSelect}
       />
 
       {/* Agent Selector */}
       <FloatingAgentSelector
-        isOpen={isAgentSelectorOpen}
-        onClose={() => setIsAgentSelectorOpen(false)}
         agents={agents}
+        isOpen={isAgentSelectorOpen}
         selectedAgentId={selectedAgentId}
+        translations={translations}
+        onClose={() => setIsAgentSelectorOpen(false)}
         onSelectAgent={(agent) => {
           if (agent) {
             setSelectedAgentId(agent.id);
@@ -1164,7 +1216,6 @@ function ChatPageContent() {
             setSelectedAgent(undefined);
           }
         }}
-        translations={translations}
       />
 
       {/* Subscription Modal */}
@@ -1179,14 +1230,13 @@ function ChatPageContent() {
         ideogramImageUrl={ideogramImageUrl}
         ideogramInitialPrompt={ideogramInitialPrompt}
         ideogramInitialTab={ideogramInitialTab}
-        setIdeogramInitialTab={setIdeogramInitialTab}
         isActiveMessage={translations?.subscription_is_active || ""}
         isCommandsModalOpen={isCommandsModalOpen}
         isConversationNameModalOpen={isConversationNameModalOpen}
-        isErrorModalOpen={isErrorModalOpen}
-        isIdeogramModalOpen={isIdeogramModalOpen}
-        isGeminiModalOpen={isGeminiModalOpen}
         isDalleImageSizeModalOpen={isDalleImageSizeModalOpen}
+        isErrorModalOpen={isErrorModalOpen}
+        isGeminiModalOpen={isGeminiModalOpen}
+        isIdeogramModalOpen={isIdeogramModalOpen}
         isImageModalOpen={isImageModalOpen}
         isPromptModalOpen={isPromptModalOpen}
         isSuccessModalOpen={isSuccessModalOpen}
@@ -1197,25 +1247,26 @@ function ChatPageContent() {
         setConversations={setConversations}
         setIdeogramImageUrl={setIdeogramImageUrl}
         setIdeogramInitialPrompt={setIdeogramInitialPrompt}
+        setIdeogramInitialTab={setIdeogramInitialTab}
         setImageResponse={setImageResponse}
         setIsCommandsModalOpen={setIsCommandsModalOpen}
         setIsConversationNameModalOpen={setIsConversationNameModalOpen}
+        setIsDalleImageSizeModalOpen={setIsDalleImageSizeModalOpen}
         setIsErrorModalOpen={setIsErrorModalOpen}
+        setIsGeminiModalOpen={setIsGeminiModalOpen}
         setIsGeneratingResponse={setIsGeneratingResponse}
         setIsIdeogramModalOpen={setIsIdeogramModalOpen}
-        setIsGeminiModalOpen={setIsGeminiModalOpen}
-        setIsDalleImageSizeModalOpen={setIsDalleImageSizeModalOpen}
         setIsImageModalOpen={setIsImageModalOpen}
         setIsLoading={setIsLoading}
         setIsPromptModalOpen={setIsPromptModalOpen}
         setIsSuccessModalOpen={setIsSuccessModalOpen}
         setMessageText={setMessageText}
         setMessages={setMessages}
+        setPendingImageUrl={setPendingImageUrl}
+        setPendingImages={setPendingImages}
         setPromptCommands={setPromptCommands}
         setUploadedImageUrl={setUploadedImageUrl}
         uploadedImageUrl={uploadedImageUrl}
-        setPendingImageUrl={setPendingImageUrl}
-        setPendingImages={setPendingImages}
       />
     </div>
   );

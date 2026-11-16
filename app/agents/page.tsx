@@ -2,8 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/app/auth-context";
 import { useRouter } from "next/navigation";
+
+import { getTranslations } from "../../managers/languageManager";
+import { Translations } from "../../translations.d";
+
+import { useAuth } from "@/app/auth-context";
 import ErrorModal from "@/app/modals/errorModal";
 import {
   getAllAgents,
@@ -12,8 +16,7 @@ import {
   updateAgent,
   deleteAgent,
 } from "@/managers/agentsManager";
-import { getTranslations } from "../../managers/languageManager";
-import { Translations } from "../../translations.d";
+
 
 interface Agent {
   id: string;
@@ -68,7 +71,7 @@ const agent_levels = [
 
 // Icons
 const AgentsIcon = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <svg fill="none" height="32" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" width="32">
     <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
@@ -76,32 +79,32 @@ const AgentsIcon = () => (
 );
 
 const PlusIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
 
 const TrashIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
   </svg>
 );
 
 const EditIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
     <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
 const BackIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <path d="M19 12H5M12 19l-7-7 7-7" />
   </svg>
 );
 
 const SearchIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg fill="none" height="18" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" width="18">
     <circle cx="11" cy="11" r="8" />
     <path d="M21 21l-4.35-4.35" />
   </svg>
@@ -179,8 +182,10 @@ export default function AgentsPage() {
     const detectLanguage = async () => {
       const browserLanguage = navigator.language;
       const translations = await getTranslations(browserLanguage);
+
       setTranslations(translations);
     };
+
     detectLanguage();
   }, []);
 
@@ -189,6 +194,7 @@ export default function AgentsPage() {
       try {
         setIsLoading(true);
         const all_agents = await getAllAgents();
+
         setAgents(all_agents);
         setIsLoading(false);
       } catch (e) {
@@ -208,6 +214,7 @@ export default function AgentsPage() {
     setIsLoading(true);
     try {
       const current_agent = await getAgent(item.id);
+
       setSelectedAgentId(item.id);
       setAgentName(current_agent.name);
       setAgentLevel(current_agent.level);
@@ -273,6 +280,7 @@ export default function AgentsPage() {
         );
       }
       const all_agents = await getAllAgents();
+
       setAgents(all_agents);
       setSelectedAgentId("");
       setIsLoading(false);
@@ -328,9 +336,9 @@ export default function AgentsPage() {
       <div className="relative max-w-5xl mx-auto">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-5"
+          initial={{ opacity: 0, y: -20 }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -349,8 +357,8 @@ export default function AgentsPage() {
 
             {!selectedAgentId && (
               <button
-                onClick={handleNewAgent}
                 className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-medium hover:from-purple-500 hover:to-violet-500 transition-all duration-200 shadow-lg shadow-purple-500/25 flex-shrink-0 w-full sm:w-auto"
+                onClick={handleNewAgent}
               >
                 <PlusIcon />
                 {translations?.new_agent || "New Agent"}
@@ -362,15 +370,15 @@ export default function AgentsPage() {
         {/* Content */}
         {selectedAgentId ? (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
           >
             {/* Form Header */}
             <div className="px-6 py-4 border-b border-white/10 flex items-center gap-4">
               <button
-                onClick={handleCancel}
                 className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+                onClick={handleCancel}
               >
                 <BackIcon />
               </button>
@@ -393,9 +401,9 @@ export default function AgentsPage() {
                   value={agentLanguage}
                   onChange={(e) => setAgentLanguage(e.target.value)}
                 >
-                  <option value="" className="bg-zinc-900">Select language</option>
+                  <option className="bg-zinc-900" value="">Select language</option>
                   {agent_languages.map((lang) => (
-                    <option key={lang.value} value={lang.value} className="bg-zinc-900">
+                    <option key={lang.value} className="bg-zinc-900" value={lang.value}>
                       {lang.label}
                     </option>
                   ))}
@@ -403,9 +411,9 @@ export default function AgentsPage() {
 
                 <CustomInput
                   label={translations?.name || "Name"}
+                  placeholder="Enter agent name"
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
-                  placeholder="Enter agent name"
                 />
               </div>
 
@@ -415,9 +423,9 @@ export default function AgentsPage() {
                   value={agentType}
                   onChange={(e) => setAgentType(e.target.value)}
                 >
-                  <option value="" className="bg-zinc-900">Select type</option>
+                  <option className="bg-zinc-900" value="">Select type</option>
                   {agent_types.map((type) => (
-                    <option key={type.value} value={type.value} className="bg-zinc-900">
+                    <option key={type.value} className="bg-zinc-900" value={type.value}>
                       {type.label}
                     </option>
                   ))}
@@ -429,7 +437,7 @@ export default function AgentsPage() {
                   onChange={(e) => setAgentLevel(parseInt(e.target.value))}
                 >
                   {agent_levels.map((level) => (
-                    <option key={level.value} value={level.value} className="bg-zinc-900">
+                    <option key={level.value} className="bg-zinc-900" value={level.value}>
                       {level.label}
                     </option>
                   ))}
@@ -442,9 +450,9 @@ export default function AgentsPage() {
                   value={agentModel}
                   onChange={(e) => setAgentModel(e.target.value)}
                 >
-                  <option value="" className="bg-zinc-900">Select model</option>
+                  <option className="bg-zinc-900" value="">Select model</option>
                   {(agentType === "image" ? agent_models_image : agent_models_text).map((model) => (
-                    <option key={model.value} value={model.value} className="bg-zinc-900">
+                    <option key={model.value} className="bg-zinc-900" value={model.value}>
                       {model.label}
                     </option>
                   ))}
@@ -453,16 +461,17 @@ export default function AgentsPage() {
                 {agentType !== "image" && (
                   <CustomInput
                     label={translations?.temperature || "Temperature"}
-                    type="number"
-                    step="0.1"
-                    min="0"
                     max="2"
+                    min="0"
+                    placeholder="0.0 - 2.0"
+                    step="0.1"
+                    type="number"
                     value={agentTemperature?.toString()}
                     onChange={(e) => {
                       const newValue = parseFloat(e.target.value);
+
                       setAgentTemperature(isNaN(newValue) ? 0 : newValue);
                     }}
-                    placeholder="0.0 - 2.0"
                   />
                 )}
               </div>
@@ -470,23 +479,23 @@ export default function AgentsPage() {
               {/* Prompt */}
               <CustomTextarea
                 label="Prompt"
+                placeholder="Enter the system prompt for this agent..."
                 value={agentPrompt}
                 onChange={(e) => setAgentPrompt(e.target.value)}
-                placeholder="Enter the system prompt for this agent..."
               />
 
               {/* Bypass Prompt Improvement (all image agents) */}
               {agentType === "image" && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-white/70">Prompt Processing</label>
+                  <p className="block text-sm font-medium text-white/70">Prompt Processing</p>
                   <button
-                    type="button"
-                    onClick={() => setAgentBypassPromptImprovement(!agentBypassPromptImprovement)}
                     className={`w-full flex items-center justify-between gap-4 p-4 rounded-xl border-2 transition-all duration-200 ${
                       agentBypassPromptImprovement
                         ? "border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/20"
                         : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                     }`}
+                    type="button"
+                    onClick={() => setAgentBypassPromptImprovement(!agentBypassPromptImprovement)}
                   >
                     <div className="text-left">
                       <p className={`font-medium ${agentBypassPromptImprovement ? "text-purple-300" : "text-white"}`}>
@@ -512,7 +521,6 @@ export default function AgentsPage() {
                   {n_buttons.map((btn) => (
                     <button
                       key={btn}
-                      onClick={() => setAgentNButtons(btn)}
                       className={`
                         flex-1 py-4 rounded-xl border-2 transition-all duration-200
                         flex flex-col items-center justify-center gap-1
@@ -521,6 +529,7 @@ export default function AgentsPage() {
                           : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                         }
                       `}
+                      onClick={() => setAgentNButtons(btn)}
                     >
                       <span className={`text-2xl font-bold ${agentNButtons === btn ? "text-purple-400" : "text-white"}`}>
                         {btn}
@@ -544,29 +553,31 @@ export default function AgentsPage() {
                     >
                       <CustomInput
                         label={`Button ${index + 1} Name`}
+                        placeholder="Button label"
                         value={agentButtons[index]?.name || ""}
                         onChange={(e) => {
                           const newButtons = [...agentButtons];
+
                           if (!newButtons[index]) {
                             newButtons[index] = { id: `${index}`, name: "", prompt: "" };
                           }
                           newButtons[index].name = e.target.value;
                           setAgentButtons(newButtons);
                         }}
-                        placeholder="Button label"
                       />
                       <CustomInput
                         label={`Button ${index + 1} Prompt`}
+                        placeholder="Button action prompt"
                         value={agentButtons[index]?.prompt || ""}
                         onChange={(e) => {
                           const newButtons = [...agentButtons];
+
                           if (!newButtons[index]) {
                             newButtons[index] = { id: `${index}`, name: "", prompt: "" };
                           }
                           newButtons[index].prompt = e.target.value;
                           setAgentButtons(newButtons);
                         }}
-                        placeholder="Button action prompt"
                       />
                     </div>
                   ))}
@@ -577,14 +588,14 @@ export default function AgentsPage() {
             {/* Form Footer */}
             <div className="px-6 py-4 border-t border-white/10 flex gap-4">
               <button
-                onClick={handleCancel}
                 className="flex-1 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium transition-all duration-200"
+                onClick={handleCancel}
               >
                 {translations?.cancel || "Cancel"}
               </button>
               <button
-                onClick={handleSave}
                 className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-medium hover:from-purple-500 hover:to-violet-500 transition-all duration-200 shadow-lg shadow-purple-500/25"
+                onClick={handleSave}
               >
                 {selectedAgentId === "new" ? (translations?.new_agent || "Create Agent") : (translations?.update_agent || "Update Agent")}
               </button>
@@ -593,9 +604,9 @@ export default function AgentsPage() {
         ) : (
           /* Agents List */
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-gradient-to-b from-zinc-800/50 to-zinc-900/50 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
           >
             {/* Search and Table Header */}
             <div className="px-6 py-4 border-b border-white/10 space-y-4">
@@ -604,11 +615,11 @@ export default function AgentsPage() {
                   <SearchIcon />
                 </div>
                 <input
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-200"
+                  placeholder={translations?.search_agents || "Search agents..."}
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={translations?.search_agents || "Search agents..."}
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/50 transition-all duration-200"
                 />
               </div>
               <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider">
@@ -621,11 +632,11 @@ export default function AgentsPage() {
               {filteredAgents.map((agent, index) => (
                 <motion.div
                   key={agent.id}
-                  initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
+                  initial={{ opacity: 0, x: -20 }}
                   transition={{ delay: index * 0.05 }}
                   onClick={() => handleRowClick(agent)}
-                  className="px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors group"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center border border-purple-500/30 text-purple-400">
@@ -641,17 +652,17 @@ export default function AgentsPage() {
 
                   <div className="flex items-center gap-2">
                     <button
+                      className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-white/50 hover:text-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRowClick(agent);
                       }}
-                      className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-white/50 hover:text-white"
                     >
                       <EditIcon />
                     </button>
                     <button
-                      onClick={(e) => handleDelete(e, agent.id)}
                       className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all text-white/50 hover:text-red-400"
+                      onClick={(e) => handleDelete(e, agent.id)}
                     >
                       <TrashIcon />
                     </button>
@@ -681,8 +692,8 @@ export default function AgentsPage() {
 
       <ErrorModal
         isOpen={isErrorModalOpen}
-        onClose={() => setIsErrorModalOpen(false)}
         message={errorModalMessage}
+        onClose={() => setIsErrorModalOpen(false)}
       />
     </div>
   );

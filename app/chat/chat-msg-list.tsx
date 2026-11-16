@@ -18,6 +18,9 @@ import { v4 as uuidv4 } from "uuid";
 import { useClipboard } from "@heroui/use-clipboard";
 
 import { useAuth } from "../auth-context";
+import PictureGenerationModal from "../modals/pictureGenerationModal";
+
+import SelectedAgentBanner from "./components/AgentHub/SelectedAgentBanner";
 
 import { Agent, Conversation, Message } from "@/types/chat.types";
 import { Translations } from "@/translations";
@@ -30,8 +33,6 @@ import {
 } from "@/managers/conversationsManager";
 import { transcribeAudio } from "@/managers/audioManager";
 import { getAgent } from "@/managers/agentsManager";
-import PictureGenerationModal from "../modals/pictureGenerationModal";
-import SelectedAgentBanner from "./components/AgentHub/SelectedAgentBanner";
 
 interface ChatMessageListProps {
   agents: Agent[];
@@ -162,6 +163,7 @@ const ChatMessageList = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
+
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -175,10 +177,12 @@ const ChatMessageList = ({
           type: "audio/webm",
         });
         const formData = new FormData();
+
         formData.append("audio", audioBlob, "recording.webm");
 
         try {
           const data = await transcribeAudio(formData);
+
           setMessageText(data.text);
           handleSendMessage(data.text);
         } catch (err) {
@@ -240,6 +244,7 @@ const ChatMessageList = ({
       
       // When sending, combine message text with image URL if both exist
       const messageToSend = combineMessageWithImage(text);
+
       console.log('Message to send after combining:', messageToSend);
       
       // Only send if we have something to send
@@ -248,6 +253,7 @@ const ChatMessageList = ({
         
         // Clear the pending image URL after sending
         const currentPendingUrl = pendingImageUrlRef.current;
+
         if (currentPendingUrl) {
           console.log('Clearing pendingImageUrl after sending message:', currentPendingUrl);
           setPendingImageUrl("");
@@ -270,6 +276,7 @@ const ChatMessageList = ({
     
     if (!currentPendingUrl) {
       console.log('No pending image URL, returning text only');
+
       return text;
     }
     
@@ -284,11 +291,14 @@ const ChatMessageList = ({
       
       // Always add a space between text and URL to ensure proper separation
       const combinedMessage = `${messageText} ${currentPendingUrl}`;
+
       console.log('Final combined message:', combinedMessage);
+
       return combinedMessage;
     } else {
       // If we only have an image, return just the image URL
       console.log('Image only message:', currentPendingUrl);
+
       return currentPendingUrl;
     }
   };
@@ -302,6 +312,7 @@ const ChatMessageList = ({
     
     // Combine message text with image URL if both exist
     const messageToSend = combineMessageWithImage(messageText);
+
     sendChatMessage(
       messageToSend,
       false,
@@ -316,6 +327,7 @@ const ChatMessageList = ({
     
     // Clear the pending image URL after sending
     const currentPendingUrl = pendingImageUrlRef.current;
+
     if (currentPendingUrl) {
       console.log('Clearing pendingImageUrl after picture generation:', currentPendingUrl);
       setPendingImageUrl("");
@@ -336,6 +348,7 @@ const ChatMessageList = ({
     if (text.trim()) {
       // Create a new conversation if we don't have one
       let conversationId = currentConversation;
+
       if (!conversationId) {
         console.log("No current conversation, creating new one...");
         const newConversation = await createConversation();
@@ -370,6 +383,7 @@ const ChatMessageList = ({
           prompt: "",
           role: "system",
         };
+
         setMessages([greetingMessage]);
         
         console.log("Created new conversation:", newConversation.id);
@@ -427,8 +441,10 @@ const ChatMessageList = ({
           
           // Check if we have a size parameter in promptCommands for DALL-E
           let size;
+
           if (current_agent?.model === "dall-e" && commands) {
             const sizeCommand = commands.find(cmd => cmd.command === "size");
+
             if (sizeCommand) {
               size = sizeCommand.value;
               console.log("Using DALL-E image size:", size);
@@ -443,6 +459,7 @@ const ChatMessageList = ({
           if (current_agent?.model === "gemini") {
             // Check if the text contains an image URL (from combineMessageWithImage)
             const urlMatch = text.match(/https?:\/\/[^\s]+/);
+
             if (urlMatch) {
               referenceImageUrl = urlMatch[0];
               // Remove the URL from the message text
@@ -460,9 +477,11 @@ const ChatMessageList = ({
           // fall back to the legacy single referenceImage command.
           if (current_agent?.model === "gpt-image" && commands) {
             const refImagesCommand = commands.find(cmd => cmd.command === "referenceImages");
+
             if (refImagesCommand && refImagesCommand.value) {
               try {
                 const parsed = JSON.parse(refImagesCommand.value);
+
                 if (Array.isArray(parsed) && parsed.length > 0) {
                   referenceImageUrl = parsed.filter(Boolean);
                   console.log("Using reference images for gpt-image:", referenceImageUrl);
@@ -471,6 +490,7 @@ const ChatMessageList = ({
             }
             if (!referenceImageUrl) {
               const refImageCommand = commands.find(cmd => cmd.command === "referenceImage");
+
               if (refImageCommand && refImageCommand.value) {
                 referenceImageUrl = refImageCommand.value;
                 console.log("Using reference image for gpt-image:", referenceImageUrl);
@@ -561,18 +581,22 @@ const ChatMessageList = ({
     if (text.includes('localhost:3000') || 
         text.match(/\/(chat|login|home|dashboard|profile|settings)\/?(\?|$)/)) {
       console.log('Excluded URL as non-image:', text);
+
       return false;
     }
     
     // Check for common prefixes concatenated with URLs and remove them for checking
     const commonPrefixes = ['describe', 'show', 'display', 'generate', 'create', 'analyze', 'view'];
+
     for (const prefix of commonPrefixes) {
       if (text.toLowerCase().startsWith(prefix) && text.includes('http')) {
         // Find the http(s) part
         const httpIndex = text.indexOf('http');
+
         if (httpIndex > 0) {
           // Extract just the URL part for checking
           const urlPart = text.substring(httpIndex);
+
           // Recursively check the extracted URL
           return isImageUrl(urlPart);
         }
@@ -620,8 +644,10 @@ const ChatMessageList = ({
     
     // First check if the entire text is just a URL
     const trimmedText = text.trim();
+
     if (isImageUrl(trimmedText) && (trimmedText.startsWith('http://') || trimmedText.startsWith('https://'))) {
       console.log('Found standalone image URL:', trimmedText);
+
       return trimmedText;
     }
     
@@ -643,6 +669,7 @@ const ChatMessageList = ({
             cleanUrl.includes('imagekit.io') ||
             cleanUrl.includes('unsplash.com/photos')) {
           console.log('Found image URL via regex:', cleanUrl);
+
           return cleanUrl;
         }
       }
@@ -650,6 +677,7 @@ const ChatMessageList = ({
     
     // Fallback: Split the text by spaces and check each part
     const parts = text.split(/\s+/);
+
     for (const part of parts) {
       // Check if this part looks like a URL
       if (part.startsWith('http://') || part.startsWith('https://')) {
@@ -661,6 +689,7 @@ const ChatMessageList = ({
             cleanUrl.includes('supabase.co/storage') || 
             cleanUrl.includes('urrfcikwbcocmanctoca.supabase.co')) {
           console.log('Found image URL in text part:', cleanUrl);
+
           return cleanUrl;
         }
       }
@@ -694,6 +723,7 @@ const ChatMessageList = ({
       return url;
     } catch (e) {
       console.error('Invalid URL:', url, e);
+
       return '';
     }
   };
@@ -701,6 +731,7 @@ const ChatMessageList = ({
   // Helper function to get proper image src with additional verification
   const getProperImageSrc = (url: string): string => {
     const validUrl = ensureValidImageUrl(url);
+
     if (!validUrl) return '';
     
     // Extra verification step to avoid loading non-image URLs
@@ -708,6 +739,7 @@ const ChatMessageList = ({
         validUrl.includes('/chat') || 
         validUrl.match(/\/(login|dashboard|settings|profile)\/?$/i)) {
       console.error('Attempted to load non-image URL as image:', validUrl);
+
       return ''; // Return empty to prevent loading
     }
     
@@ -719,10 +751,12 @@ const ChatMessageList = ({
     
     if (likelyImageUrl) {
       console.log('Loading image from URL:', validUrl);
+
       return validUrl;
     }
     
     console.warn('URL might not be an image, not loading:', validUrl);
+
     return '';
   };
 
@@ -735,6 +769,7 @@ const ChatMessageList = ({
   useEffect(() => {
     // Create style element
     const styleElement = document.createElement('style');
+
     styleElement.innerHTML = imageStyles;
     document.head.appendChild(styleElement);
 
@@ -762,6 +797,7 @@ const ChatMessageList = ({
                 // Helper function to check if any property suggests it's a system message
                 const hasSystemProperty = (obj: any): boolean => {
                   if (!obj || typeof obj !== 'object') return false;
+
                   return Object.entries(obj).some(([key, value]) => {
                     if (key === 'role' && value === 'system') return true;
                     if (key === 'ref' && value) return true; // Check for ref property
@@ -769,6 +805,7 @@ const ChatMessageList = ({
                         (value.includes('ImagineAPI') || 
                          value.includes('image generated') || 
                          value.includes('system message'))) return true;
+
                     return false;
                   });
                 };
@@ -786,6 +823,7 @@ const ChatMessageList = ({
                   (message.conversation_id && typeof message.text === 'object');
                 
                 console.log(`Message ${message.id}: isSystemMessage=${isSystemMessage}, role=${message.role}, username=${message.username}`);
+
                 return !isSystemMessage;
               })
               .map((message, index) => (
@@ -860,26 +898,31 @@ const ChatMessageList = ({
                           return (
                             <div className="message-image-container">
                               <img
-                                alt="Shared content" 
-                                className="message-image"
-                                src={cacheBustedUrl}
                                 key={`${message.id}-${extractedImageUrl}`}
+                                alt="Shared content"
+                                className="message-image"
+                                crossOrigin="anonymous"
+                                src={cacheBustedUrl}
                                 onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                   const target = e.target as HTMLImageElement;
+
                                   console.error(`Failed to load image: ${target.src}`, e);
                                   target.onerror = null;
                                   
                                   // Create a parent div for error message
                                   const errorContainer = document.createElement('div');
+
                                   errorContainer.className = 'p-2 border border-red-300 rounded bg-red-50 mt-2';
                                   
                                   // Create error message with image URL
                                   const errorMsg = document.createElement('p');
+
                                   errorMsg.className = 'text-red-500 text-sm';
                                   errorMsg.innerHTML = `Failed to load image. <br/>URL: <span class="text-xs break-all">${target.src}</span>`;
                                   
                                   // Try image URL again with different format
                                   const retryLink = document.createElement('a');
+
                                   retryLink.href = target.src;
                                   retryLink.target = '_blank';
                                   retryLink.className = 'text-blue-500 text-xs block mt-1 hover:underline';
@@ -895,7 +938,6 @@ const ChatMessageList = ({
                                     target.parentNode.appendChild(errorContainer);
                                   }
                                 }}
-                                crossOrigin="anonymous"
                               />
                             </div>
                           );
@@ -917,34 +959,39 @@ const ChatMessageList = ({
                             <div className="message-with-description">
                               {textContent && (
                                 <div
-                                  className="message-text mb-2"
                                   dangerouslySetInnerHTML={{
                                     __html: formatMessageText(textContent),
                                   }}
+                                  className="message-text mb-2"
                                 />
                               )}
                               <div className="message-image-container">
                                 <img
+                                  key={`${message.id}-${extractedImageUrl}`}
                                   alt="Shared content"
                                   className="message-image"
+                                  crossOrigin="anonymous"
                                   src={cacheBustedUrl}
-                                  key={`${message.id}-${extractedImageUrl}`}
                                   onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                                     const target = e.target as HTMLImageElement;
+
                                     console.error(`Failed to load image: ${target.src}`, e);
                                     target.onerror = null;
                                     
                                     // Create a parent div for error message
                                     const errorContainer = document.createElement('div');
+
                                     errorContainer.className = 'p-2 border border-red-300 rounded bg-red-50 mt-2';
                                     
                                     // Create error message with image URL
                                     const errorMsg = document.createElement('p');
+
                                     errorMsg.className = 'text-red-500 text-sm';
                                     errorMsg.innerHTML = `Failed to load image. <br/>URL: <span class="text-xs break-all">${target.src}</span>`;
                                     
                                     // Try image URL again with different format
                                     const retryLink = document.createElement('a');
+
                                     retryLink.href = target.src;
                                     retryLink.target = '_blank';
                                     retryLink.className = 'text-blue-500 text-xs block mt-1 hover:underline';
@@ -960,7 +1007,6 @@ const ChatMessageList = ({
                                       target.parentNode.appendChild(errorContainer);
                                     }
                                   }}
-                                  crossOrigin="anonymous"
                                 />
                               </div>
                             </div>
@@ -971,10 +1017,10 @@ const ChatMessageList = ({
                         else {
                           return (
                             <div
-                              className="message-text"
                               dangerouslySetInnerHTML={{
                                 __html: formatMessageText(message.text),
                               }}
+                              className="message-text"
                             />
                           );
                         }
@@ -1024,6 +1070,7 @@ const ChatMessageList = ({
                                 if (button == "Remix") {
                                   // For remix, extract image URL if present
                                   const imageUrl = extractImageUrl(message.text) || message.text;
+
                                   if (typeof imageUrl === 'string') {
                                     setIdeogramImageUrl(imageUrl);
                                     setIsGeneratingImageDescription(true);
@@ -1045,6 +1092,7 @@ const ChatMessageList = ({
                                   createNewMessage();
                                   // For upscale, extract image URL if present
                                   const imageUrl = extractImageUrl(message.text) || message.text;
+
                                   if (typeof imageUrl === 'string') {
                                     const image_response = await upscaleImage(
                                       currentConversation,
@@ -1057,6 +1105,7 @@ const ChatMessageList = ({
                                 } else if (button == "Describe") {
                                   // For describe, extract image URL if present
                                   const imageUrl = extractImageUrl(message.text) || message.text;
+
                                   if (typeof imageUrl === 'string') {
                                     createNewMessage(imageUrl);
                                     const description = await describeImage(
@@ -1149,15 +1198,16 @@ const ChatMessageList = ({
                 <div className="w-full mb-2 relative">
                   <div className="border-2 border-green-400 rounded-md p-3 flex items-center bg-green-50">
                     <img 
-                      src={`${pendingImageUrl}${pendingImageUrl.includes('?') ? '&' : '?'}preview=${Date.now()}`}
+                      key={`preview-${pendingImageUrl}`}
                       alt="Attached preview" 
                       className="h-20 w-20 object-cover rounded mr-3"
-                      key={`preview-${pendingImageUrl}`}
                       crossOrigin="anonymous"
+                      src={`${pendingImageUrl}${pendingImageUrl.includes('?') ? '&' : '?'}preview=${Date.now()}`}
                       onError={(e) => {
                         console.error('Failed to load preview image:', pendingImageUrl);
                         // Try loading without cache-busting parameter
                         const target = e.target as HTMLImageElement;
+
                         if (target.src.includes('preview=')) {
                           target.src = pendingImageUrl;
                         }
@@ -1174,15 +1224,15 @@ const ChatMessageList = ({
                       </div>
                       <button 
                         className="text-red-500 hover:text-red-700 ml-3 p-2"
+                        title="Remove attached image"
                         onClick={() => {
                           console.log('Removing attached image:', pendingImageUrl);
                           setPendingImageUrl("");
                           pendingImageUrlRef.current = "";
                         }}
-                        title="Remove attached image"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
                         </svg>
                       </button>
                     </div>
@@ -1214,12 +1264,12 @@ const ChatMessageList = ({
                 {/* Selected Agent Banner */}
                 <SelectedAgentBanner
                   selectedAgent={selectedAgent}
-                  onChangeAgent={onExpandHub}
                   translations={{
                     change: "Change",
                     no_agent: translations?.select_agent || "Select an agent",
                     using: "Using",
                   }}
+                  onChangeAgent={onExpandHub}
                 />
 
                 {/* Agent-specific command buttons */}
@@ -1302,9 +1352,9 @@ const ChatMessageList = ({
                 }
               >
                 <MicrophoneIcon
+                  className={isRecording ? "text-red-500" : ""}
                   height={20}
                   width={20}
-                  className={isRecording ? "text-red-500" : ""}
                 />
               </Button>
 
